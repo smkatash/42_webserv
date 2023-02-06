@@ -1,0 +1,83 @@
+Layered Network Model (aka “ISO/OSI”). This Network Model
+describes a system of network functionality that has many advantages over other models. It's layers:
+• Application
+• Presentation
+• Session
+• Transport
+• Network
+• Data Link
+• Physical
+
+The Physical Layer is the hardware (serial, Ethernet, etc.). The Application Layer is just about as far from
+the physical layer as you can imagine—it’s the place where users interact with the network.
+
+A layered model more consistent with Unix might be:
+• Application Layer (telnet, ftp, etc.)
+• Host-to-Host Transport Layer (TCP, UDP)
+• Internet Layer (IP and routing)
+• Network Access Layer (Ethernet, wi-fi, or whatever)
+
+
+struct addrinfo {
+int ai_flags; // AI_PASSIVE, AI_CANONNAME, etc.
+int ai_family; // AF_INET, AF_INET6, AF_UNSPEC
+int ai_socktype; // SOCK_STREAM, SOCK_DGRAM
+int ai_protocol; // use 0 for "any"
+size_t ai_addrlen; // size of ai_addr in bytes
+struct sockaddr *ai_addr; // struct sockaddr_in or _in6
+char *ai_canonname; // full canonical hostname
+struct addrinfo *ai_next; // linked list, next node
+};
+
+struct sockaddr holds socket address information for many types of sockets.
+sa_data contains a destination address and port number for the socket.
+struct sockaddr {
+unsigned short sa_family; // address family, AF_xxx
+char sa_data[14]; // 14 bytes of protocol address
+};
+
+// (IPv4 only--see struct sockaddr_in6 for IPv6)
+struct sockaddr_in {
+short int sin_family; // Address family, AF_INET
+unsigned short int sin_port; // Port number
+struct in_addr sin_addr; // Internet address
+unsigned char sin_zero[8]; // Same size as struct sockaddr
+};
+
+// Internet address (a structure for historical reasons)
+struct in_addr {
+uint32_t s_addr; // that's a 32-bit int (4 bytes)
+};
+
+struct sockaddr_in6 {
+u_int16_t sin6_family; // address family, AF_INET6
+u_int16_t sin6_port; // port number, Network Byte Order
+u_int32_t sin6_flowinfo; // IPv6 flow information
+struct in6_addr sin6_addr; // IPv6 address
+u_int32_t sin6_scope_id; // Scope ID
+};
+struct in6_addr {
+unsigned char s6_addr[16]; // IPv6 address
+};
+
+struct sockaddr_storage that is designed to be
+large enough to hold both IPv4 and IPv6 structures. See, for some calls, sometimes you don’t know in
+advance if it’s going to fill out your struct sockaddr with an IPv4 or IPv6 address. So you pass in this
+parallel structure, very similar to struct sockaddr except larger, and then cast it to the type you need:
+struct sockaddr_storage {
+sa_family_t ss_family; // address family
+// all this is padding, implementation specific, ignore it:
+char __ss_pad1[_SS_PAD1SIZE];
+int64_t __ss_align;
+char __ss_pad2[_SS_PAD2SIZE];
+};
+
+
+The function you want to use, inet_pton(),
+converts an IP address in numbers-and-dots notation into either a struct in_addr or a struct
+in6_addr depending on whether you specify AF_INET or AF_INET6. (“pton” stands for “presentation to network”—you can call it “printable to network” if that’s easier to remember.) The conversion can be
+made as follows:
+struct sockaddr_in sa; // IPv4
+struct sockaddr_in6 sa6; // IPv6
+inet_pton(AF_INET, "10.12.110.57", &(sa.sin_addr)); // IPv4
+inet_pton(AF_INET6, "2001:db8:63b3:1::3490", &(sa6.sin6_addr)); // IPv6
