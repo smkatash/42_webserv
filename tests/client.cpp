@@ -54,7 +54,6 @@ int main(int argc, char *argv[]) {
 		cout << "Successfully connected!";
 		break;                  /* Success */
 	}
-
 	close(sfd);
 	}
 	if (rp == NULL) {               /* No address succeeded */
@@ -81,8 +80,8 @@ int main(int argc, char *argv[]) {
 	datagrams, and read responses from server. */
 
 	for (int j = 3; j < argc; j++) {
-		len = strlen(argv[j]) + 1;
-		/* +1 for terminating null byte */
+			len = strlen(argv[j]) + 1;
+			/* +1 for terminating null byte */
 
 	if (len > BUF_SIZE) {
 		cerr << "Ignoring long message in argument "<< argv[j];
@@ -99,7 +98,7 @@ int main(int argc, char *argv[]) {
 		perror("read");
 		exit(EXIT_FAILURE);
 	}
-		cout << nread << " bytes received: " << buf;
+	cout << nread << " bytes received: " << buf;
 	}
 	exit(EXIT_SUCCESS);
 }

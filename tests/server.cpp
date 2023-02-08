@@ -57,7 +57,6 @@ int main(int argc, char *argv[]) {
 			break;                  /* Success */
 
 		}
-
 		close(socketFD);
 	}
 	if (rp == NULL) {               /* No address succeeded */
