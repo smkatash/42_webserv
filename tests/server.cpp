@@ -1,12 +1,14 @@
 #include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
 #include <sys/socket.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <netdb.h>
 #include <iostream>
 #include <functional> 
+#include <arpa/inet.h> 
+#include <netinet/in.h>
 using namespace std;
 
 #define BUF_SIZE 500
@@ -14,7 +16,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
-	int sfd, s;
+	int socketFD, s;
 	struct sockaddr_storage peer_addr;
 	socklen_t peer_addr_len;
 	ssize_t nread;
@@ -39,7 +41,6 @@ int main(int argc, char *argv[]) {
 		cerr << "getaddrinfo: " << gai_strerror(s) << endl;
 		exit(EXIT_FAILURE);
 	}
-
 		/* getaddrinfo() returns a list of address structures.
 			Try each address until we successfully bind(2).
 			If socket(2) (or bind(2)) fails, we (close the socket
@@ -47,47 +48,56 @@ int main(int argc, char *argv[]) {
 		*/
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
-		sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-		if (sfd == -1)
+		socketFD = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if (socketFD == -1)
 			continue;
 
-		int res = bind(sfd, rp->ai_addr, rp->ai_addrlen);
-		if (res){
+		if (bind(socketFD, rp->ai_addr, rp->ai_addrlen) == 0) {
+			cout << "Bind successfull !" << endl;
 			break;                  /* Success */
-			close(sfd);
+
 		}
 
-		   freeaddrinfo(result);           /* No longer needed */
+		close(socketFD);
+	}
+	if (rp == NULL) {               /* No address succeeded */
+		cerr << "Could not bind\n";
+		exit(EXIT_FAILURE);
+	}
+	char ipstr[INET6_ADDRSTRLEN];
+	void *addr;
+	std::string ipver;
+	if (rp->ai_family == AF_INET) { // IPv4
+		struct sockaddr_in *ipv4 = (struct sockaddr_in *)rp->ai_addr; 
+		addr = &(ipv4->sin_addr);
+		ipver = "IPv4";
+	} else { // IPv6
+		struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)rp->ai_addr; 
+		addr = &(ipv6->sin6_addr);
+		ipver = "IPv6";
+	}
+	inet_ntop(rp->ai_family, addr, ipstr, sizeof ipstr);
+	cout << "Current IP: " << ipver << " " << ipstr << endl;
+	freeaddrinfo(result);           /* No longer needed */
 
-		   if (rp == NULL) {               /* No address succeeded */
-			   fprintf(stderr, "Could not bind\n");
-			   exit(EXIT_FAILURE);
-		   }
 
-		   /* Read datagrams and echo them back to sender. */
-
-		   for (;;) {
-			   peer_addr_len = sizeof(peer_addr);
-			   nread = recvfrom(sfd, buf, BUF_SIZE, 0,
-					   (struct sockaddr *) &peer_addr, &peer_addr_len);
-			   if (nread == -1)
-				   continue;               /* Ignore failed request */
-
-			   char host[NI_MAXHOST], service[NI_MAXSERV];
-
-			   s = getnameinfo((struct sockaddr *) &peer_addr,
-							   peer_addr_len, host, NI_MAXHOST,
-							   service, NI_MAXSERV, NI_NUMERICSERV);
-			   if (s == 0)
-				   printf("Received %zd bytes from %s:%s\n",
-						   nread, host, service);
-			   else
-				   fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
-
-			   if (sendto(sfd, buf, nread, 0,
-						   (struct sockaddr *) &peer_addr,
-						   peer_addr_len) != nread)
-				   fprintf(stderr, "Error sending response\n");
-		   }
-	   }
+	cout << "Starting to read ... " << endl;
+	/* Read datagrams and echo them back to sender. */
+	for (;;) {
+		peer_addr_len = sizeof(peer_addr);
+		nread = recvfrom(socketFD, buf, BUF_SIZE, 0,(struct sockaddr *) &peer_addr, &peer_addr_len);
+		if (nread == -1)
+				continue;               /* Ignore failed request */
+		char host[NI_MAXHOST], service[NI_MAXSERV];
+		s = getnameinfo((struct sockaddr *) &peer_addr,peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV);
+		if (s == 0)
+			cout << nread << " bytes received from " << host << ":" << service << " : " << buf << endl;
+		else
+			cerr << "getnameinfo: " << gai_strerror(s) << endl;
+		strcpy(buf, "Thank you for message! This is server.");
+		if (sendto(socketFD, buf, 40, 0, (struct sockaddr *) &peer_addr, peer_addr_len) == -1)
+			cerr << "Error sending response\n";
+		}
+	cout << "Connection closed" << endl;
+	return 0;
 }
