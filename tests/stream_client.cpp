@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <iostream>
 using namespace std;
-#define PORT "3490"
+#define PORT "9034"
 #define MAXDATASIZE 100
 
 void *getaddrinfo_helper(struct sockaddr *sa) {
