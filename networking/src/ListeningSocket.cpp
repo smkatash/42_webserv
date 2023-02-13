@@ -12,5 +12,6 @@ BindingSocket(domain, service, protocol, port, interface) {
 
 
 void	ListeningSocket::startListening() {
-	listenfd_ = listen(getConnection(), backlog_);
+	/* start listening to the network*/
+	listenfd_ = listen(getSocket(), backlog_);
 }

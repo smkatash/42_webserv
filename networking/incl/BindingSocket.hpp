@@ -5,9 +5,11 @@
 
 namespace webserv {
 	class BindingSocket: public Socket {
+		private:
+			int binding_;
 		public:
 			BindingSocket(int domain, int service, int protocol, int port, u_long interface);
-			int	establishConnection(int socket, struct sockaddr_in saddr);
+			void	establishConnection(int socket, struct sockaddr_in saddr);
 	};
 };
 

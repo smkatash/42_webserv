@@ -5,9 +5,11 @@
 
 namespace webserv {
 	class ConnectingSocket: public Socket {
+		private:
+			int connect_;
 		public:
 			ConnectingSocket(int domain, int service, int protocol, int port, u_long interface);
-			int	establishConnection(int socket, struct sockaddr_in saddr);
+			void	establishConnection(int socket, struct sockaddr_in saddr);
 	};
 };
 

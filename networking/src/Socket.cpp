@@ -29,12 +29,4 @@ struct sockaddr_in	Socket::getSaddress(void) {
 	return saddr_;
 }
 
-int	Socket::getConnection(void) {
-	return connection_;
-}
-
-void	Socket::setConnection(int connect) {
-	connection_ = connect;
-}
-
 //virtual int establishConnection(int socket, struct sockaddr_in saddr)
