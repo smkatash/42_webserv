@@ -1,7 +1,7 @@
 #include "TestServer.hpp"
 using namespace webserv;
 
-TestServer::TestServer(): Server(AF_INET, SOCK_STREAM, 0, 4950, INADDR_ANY, 10) {
+TestServer::TestServer(): Server(AF_INET, SOCK_STREAM, 0, PORT, INADDR_ANY, 10) {
 		launch();
 }
 
@@ -18,9 +18,11 @@ void	TestServer::handler() {
 }
 
 void	TestServer::responder() {
-	char resp[18] = "Hello from server";
-	numbytes_ = write(newsfd_, resp, strlen(resp));
-	testTransfer(numbytes_, strlen(resp));
+	// char resp[18] = "Hello from server";
+	char arr[]= "HTTP/1.1 200 OK\nContent-Type:text/html\nContent-Length: 14\n\n<h1>You bitch!</h1>";
+	numbytes_ = send(newsfd_, arr, sizeof(arr), 0);
+	// numbytes_ = write(newsfd_, resp, strlen(resp));
+	testTransfer(numbytes_, strlen(arr) + 1);
 	close(newsfd_);
 }
 

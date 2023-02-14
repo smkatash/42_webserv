@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <unistd.h>
 #define MAXSIZE 3000
+#define PORT 4950
 
 namespace webserv {
 	class TestServer : public Server {

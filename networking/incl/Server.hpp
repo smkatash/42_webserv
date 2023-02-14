@@ -5,8 +5,9 @@
 
 namespace webserv {
 	class Server {
-		private:
+		protected:
 			ListeningSocket	*sockfd_;
+		private:
 			virtual	void	accepter() = 0;
 			virtual	void	handler() = 0;
 			virtual	void	responder() = 0;

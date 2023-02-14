@@ -10,7 +10,6 @@
 #include <arpa/inet.h>
 #include <iostream>
 using namespace std;
-#define PORT "9034"
 #define MAXDATASIZE 100
 
 void *getaddrinfo_helper(struct sockaddr *sa) {
@@ -27,8 +26,8 @@ int main(int argc, char **argv) {
 	int rvalue;
 	char	buff[INET6_ADDRSTRLEN];
 
-	if (argc != 2) {
-		cerr << "usage: ./client hostname\n";
+	if (argc != 3) {
+		cerr << "usage: ./client hostname port\n";
 		exit(1);
 	}
 
@@ -36,21 +35,19 @@ int main(int argc, char **argv) {
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rvalue = getaddrinfo(argv[1], PORT, &hints, &result)) != 0) {
+	if ((rvalue = getaddrinfo(argv[1], argv[2], &hints, &result)) != 0) {
 		cerr << "getaddrinfo: " << gai_strerror(rvalue);
 		return 1;
 	}
 
 	for (ptr = result; ptr != nullptr; ptr = ptr->ai_next) {
 		if ((socket_fd = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol) == -1)) {
-			perror("client: socket failed");
 			continue;
 		}
 		int rv = connect(socket_fd, ptr->ai_addr, ptr->ai_addrlen);
 
 		if (rv == -1) {
 			close(socket_fd);
-			perror("client: connect failed");
 			continue;
 		}
 		break;
@@ -65,7 +62,8 @@ int main(int argc, char **argv) {
 			getaddrinfo_helper((struct sockaddr *)ptr->ai_addr), buff, sizeof(buff));
 	cout << "Connection installed with: " << buff << endl;
 	freeaddrinfo(result);
-
+	if (send(socket_fd, "Hi from client", 16, 0) == -1)
+				perror("failed to send");
 	if ((numbytes = recv(socket_fd, message, MAXDATASIZE - 1, 0)) == -1) {
 		perror("client: failed to receive");
 		exit(1);

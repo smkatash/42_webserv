@@ -7,10 +7,20 @@ Socket::Socket(int domain, int service, int protocol, int port, \
 	saddr_.sin_family = domain;
 	saddr_.sin_port = htons(port);
 	saddr_.sin_addr.s_addr = htonl(interface);
-
 	/* establish socket */
 	sfd_ = socket(domain, service, protocol);
 	testConnection(sfd_);
+	setSocketOpt();
+}
+
+void Socket::setSocketOpt() {
+	int	optval;
+	/* allow sock reuse*/
+	if (setsockopt(sfd_, SOL_SOCKET, SO_REUSEADDR, &optval,\
+			sizeof(int)) == -1) {
+				perror("setsockopt");
+				exit(1);
+	}
 }
 
 void Socket::testConnection(int fd) {

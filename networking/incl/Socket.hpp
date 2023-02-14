@@ -17,7 +17,7 @@ namespace webserv {
 			Socket(int domain, int service, int protocol, int port, u_long interface);
 			void 		testConnection(int);
 			virtual void establishConnection(int socket, struct sockaddr_in saddr) = 0;
-
+			void				setSocketOpt(void);
 			int					getSocket(void);
 			struct sockaddr_in	getSaddress(void);
 	};

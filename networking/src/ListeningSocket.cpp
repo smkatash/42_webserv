@@ -15,3 +15,7 @@ void	ListeningSocket::startListening() {
 	/* start listening to the network*/
 	listenfd_ = listen(getSocket(), backlog_);
 }
+
+void	ListeningSocket::closeConnection() {
+	close(listenfd_);
+}
