@@ -5,7 +5,7 @@
 
 namespace webserv {
 	class ConnectingSocket: public Socket {
-		private:
+		protected:
 			int connect_;
 		public:
 			ConnectingSocket(int domain, int service, int protocol, int port, u_long interface);

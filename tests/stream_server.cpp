@@ -100,6 +100,7 @@ int main(void) {
 		exit(1);
 	}
 	cout << "server is listening ... " << endl;
+	char arr[]= "HTTP/1.1 200 OK\nContent-Type:text/html\nContent-Length: 14\n\n<h1>You bitch!</h1>";
 	for (;;) {
 		sin_size = sizeof(clients);
 		new_fd = accept(socket_fd, (struct sockaddr *)&clients, &sin_size);
@@ -113,7 +114,7 @@ int main(void) {
 		if (!fork()) {
 			close(socket_fd);
 			/* child process*/
-			if (send(new_fd, "Hi there. This server!", 24, 0) == -1)
+			if (send(new_fd, arr, sizeof(arr), 0) == -1)
 				perror("failed to send");
 			close(new_fd);
 			exit(0);

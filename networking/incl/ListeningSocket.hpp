@@ -6,7 +6,7 @@
 
 namespace webserv {
 	class ListeningSocket: public BindingSocket {
-		private:
+		protected:
 			int	backlog_;
 			int	listenfd_;
 		public:

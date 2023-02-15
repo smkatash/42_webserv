@@ -84,4 +84,12 @@ inet_pton(AF_INET6, "2001:db8:63b3:1::3490", &(sa6.sin6_addr)); // IPv6
 
 
 Useful links:
+
+- Socketing
 https://www.bogotobogo.com/cplusplus/sockets_server_client.php
+
+- Nginx Config file & Siege
+https://www.netnea.com/cms/nginx-tutorial-2_minimal-nginx-configuration/
+https://medium.com/adrixus/beginners-guide-to-nginx-configuration-files-527fcd6d5efd
+
+

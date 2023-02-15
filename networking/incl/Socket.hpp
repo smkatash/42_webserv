@@ -5,11 +5,12 @@
 #include <stdio.h>
 #include <netinet/in.h>
 #include <iostream>
+#include <arpa/inet.h>
 
 namespace webserv {
 	
 	class Socket {
-		private:
+		protected:
 			int	sfd_;
 			struct sockaddr_in saddr_;
 
