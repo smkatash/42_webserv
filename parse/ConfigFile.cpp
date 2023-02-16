@@ -1,25 +1,187 @@
 #include "ConfigFile.hpp"
 
-
-ConfigFile::ConfigFile() {}
+ConfigFile::ConfigFile(): listen_(0), serverName_(nullptr), root_(nullptr), clientMaxBodySize_(0) {}
 ConfigFile::~ConfigFile() {}
 
-bool	isValid(std::string var) {
-	return var.empty();
-}
+/********************* setters *************************/
 
-void	ConfigFile::setListen(int port) {
+void	ConfigFile::setListenPort(int port) {
 	listen_ = port;
 }
 
-void	ConfigFile::setServer(std::string host) {
+void	ConfigFile::setServerName(std::string host) {
 	serverName_ = host;
 }
 
-void	ConfigFile::setRoot(std::string path) {
-	root_ = path;
+void	ConfigFile::setRoot(std::string endPoint, std::string path) {
+	if (endPoint.size()) {
+		std::map<std::string, t_endPoint>::iterator	it = location_.find(endPoint);
+		if (it != location_.end())
+			it->second.lroot = path;
+	} else {
+		root_ = path;
+	}
 }
 
-void	ConfigFile::setIndexFile(std::string file, std::string path) {
-	if 
+void	ConfigFile::setIndexFile(std::string endPoint, std::string file) {
+	if (endPoint.size()) {
+		std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+		if (it != location_.end()) {
+			it->second.lindex.push_back(file);
+		}
+	} else {
+		indexFile_.push_back(file);
+	}
+}
+
+void	ConfigFile::setErrorFile(int statusCode, std::string path) {
+	errorFile_.insert(std::pair<int, std::string>(statusCode, path));
+}
+
+void	ConfigFile::setMethod(std::string endPoint, int	method) {
+	std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+		if (it != location_.end()) {
+			it->second.lmethod.push_back(method);
+		}
+}
+
+void	ConfigFile::setCGI(std::string endPoint, std::string lang, std::string path) {
+	std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+	if (it != location_.end()) {
+		it->second.lcgi.insert(std::pair<std::string, std::string>(lang, path));
+	}
+}
+
+void	ConfigFile::setRedirect(std::string endPoint, std::string redir) {
+	std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+	if (it != location_.end()) {
+		it->second.lredirect = redir;
+	}
+}
+
+void	ConfigFile::setAutoIndex(std::string endPoint, bool opt) {
+	std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+	if (it != location_.end()) {
+		it->second.lautoindex = opt;
+	}
+}
+
+void	ConfigFile::setLocation(std::string endPoint) {
+	t_endPoint	locPath;
+	if (endPoint.compare("/") == 0)
+		locPath.lindex = indexFile_;
+	location_.insert(std::pair<std::string, t_endPoint>(endPoint, locPath));
+}
+
+void	ConfigFile::setClientMaxBodySize(unsigned long sizeMax) {
+	clientMaxBodySize_ = sizeMax;
+}
+
+/********************* getters *************************/
+
+const int	&ConfigFile::getListenPort(void) const {
+	return listen_;
+}
+
+const std::string	&ConfigFile::getServerName(void) const {
+	return	serverName_;
+}
+
+const std::string	&ConfigFile::getRoot(std::string endPoint) const {
+	if (endPoint.size()) {
+		std::map<std::string, t_endPoint>::const_iterator	it = location_.find(endPoint);
+		if (it != location_.end())
+			return it->second.lroot;
+		return nullptr;
+	} else {
+		return root_;
+	}
+}
+
+const std::vector<std::string>	&ConfigFile::getIndexFile(std::string endPoint) const {
+	if (endPoint.size()) {
+		std::map<std::string, t_endPoint>::const_iterator	it = location_.find(endPoint);
+		if (it != location_.end())
+			return it->second.lindex;
+	} else {
+		return indexFile_;
+	}
+}
+
+const std::map<int, std::string>	&ConfigFile::getErrorFile(void) const {
+	return errorFile_;
+}
+
+const std::string	&ConfigFile::getScriptCGI(std::string endPoint, std::string type) const {
+	if (!endPoint.size() && !type.size()) {
+		std::map<std::string, t_endPoint>::const_iterator it = location_.find(endPoint);
+		if (it != location_.end()) {
+			std::map<std::string, std::string>::const_iterator itc = it->second.lcgi.find(type);
+			if (itc != it->second.lcgi.end())
+				return itc->second;
+		}
+	}
+	return nullptr;
+}
+
+const t_endPoint	&ConfigFile::getLocation(std::string endPoint) const {
+	std::map<std::string, t_endPoint>::const_iterator it = location_.find(endPoint);
+	if (it != location_.end())
+		return it->second;
+	throw std::runtime_error("endpoint not found");
+}
+
+const std::string	&ConfigFile::getEndPoint(std::string name) const {
+	if (!name.size())
+		return nullptr;
+	std::map<std::string, t_endPoint>::const_iterator it = location_.find(name);
+	if (it != location_.end())
+		return it->first;
+}
+
+const unsigned long	&ConfigFile::getClientMaxBodySize(void) const {
+	return clientMaxBodySize_;
+}
+
+
+/********************* debugger *************************/
+
+void	ConfigFile::debugConfigFile(void) {
+	std::cout << "Listen port: " << listen_ << std::endl;
+	std::cout << "Server name: " << serverName_ << std::endl;
+	std::cout << "Root: " << root_ << std::endl;
+
+	std::cout << "Index files: " << std::endl;
+	std::vector<std::string>::iterator	it = indexFile_.begin();
+	for (; it != indexFile_.end(); ++it) {
+		std::cout << *it << " ";
+	}
+	std::cout << std::endl;
+
+	std::cout << "Error files: " << std::endl;
+	std::map<int, std::string>::iterator	itm = errorFile_.begin();
+	for (; itm != errorFile_.end(); ++itm) {
+		std::cout << itm->first << " " << itm->second << " | ";
+	}
+	std::cout << std::endl;
+
+	std::cout << "Max client bodysize: " <<  clientMaxBodySize_ << std::endl;
+
+	std::cout << "Location files : " << std::endl;
+	for (std::map<std::string, t_endPoint>::iterator itm = location_.begin(); itm != location_.end(); ++itm) {
+		std::cout << "location name: " << itm->first << " "; 
+		for (std::vector<int>::iterator it1 = itm->second.lmethod.begin(); it1 != itm->second.lmethod.end(); ++it1)
+			std::cout << *it1 << " ";
+		std::cout << std::endl << "root: " << itm->second.lroot;
+		std::cout << std::endl << "index files: ";
+		for (std::vector<std::string>::iterator it2 = itm->second.lindex.begin(); it2 != itm->second.lindex.end(); ++it2)
+			std::cout << *it2 << " ";
+		std::cout << std::endl << "cgi files: ";
+		for (std::map<std::string, std::string>::iterator it3 = itm->second.lcgi.begin(); it3 != itm->second.lcgi.end(); ++it3) {
+			std::cout << it3->first << ": " << it3->second << " ";
+		}
+		std::cout << std::endl << "redirects: " << itm->second.lredirect;
+		std::cout << std::endl << "autoindex: " << std::boolalpha << itm->second.lautoindex;
+	}
+	std::cout << std::endl;
 }

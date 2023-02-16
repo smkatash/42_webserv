@@ -92,4 +92,11 @@ https://www.bogotobogo.com/cplusplus/sockets_server_client.php
 https://www.netnea.com/cms/nginx-tutorial-2_minimal-nginx-configuration/
 https://medium.com/adrixus/beginners-guide-to-nginx-configuration-files-527fcd6d5efd
 
+- Status Code
+https://moz.com/learn/seo/http-status-codes
+
+
+Videos:
+- Whole series of simple server from scratch in C++: https://www.youtube.com/watch?v=YwHErWJIh6Y
+
 
