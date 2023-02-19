@@ -76,13 +76,11 @@ std::string	Parser::checkRoot(std::string r) {
 }
 
 std::string	Parser::checkIndexFile(std::string i) {
-	if (i.back() == ';') {
-		i.erase(i.end() - 1);
-		if (i.empty())
-			throw std::invalid_argument("parser: index invalid");
-	}
-	else 
-		throw std::invalid_argument("parser: index invalid");
+	const std::string html_ = ".html";
+	const std::string php_ = ".php";
+	if (i.empty() || i.find_last_of(".") == std::string::npos || (i.substr(i.find_last_of(".")) != html_ && \
+		i.substr(i.find_last_of(".")) != php_ ))
+		throw std::invalid_argument("parser: invalid index type");
 	return i;
 }
 
@@ -92,41 +90,47 @@ void	Parser::parseSyntax() {
 	bool	bracketLocation;
 	static	std::string locationDir;
 	int	i = 0;
+	std::vector<std::string> idx;
 	do {
 		Token tok = getToken(input_[i]);
 		switch (tok) {
 			case SERVER:
 				std::cout << "Found server directive" << std::endl;
-				i++;
-				if (input_[i].compare("{"))
+				if (input_[++i].compare("{"))
 					throw std::invalid_argument("parser: unbalanced brackets");
 				break;
 			case LISTEN:
-				i++;
-				conf.setListenPort(checkPort(input_[i]));
+				conf.setListenPort(checkPort(input_[++i]));
 				std::cout << "PORT " << conf.getListenPort() << "\n";
 				break;
 			case SERVER_NAME:
-				i++;
-				conf.setServerName(checkServerName(input_[i]));
+				conf.setServerName(checkServerName(input_[++i]));
 				std::cout << "ServerName " << conf.getServerName() << "\n";
 				break;
 			case ROOT:
-				i++;
-				conf.setRoot(locationDir, checkRoot(input_[i]));
+				conf.setRoot(locationDir, checkRoot(input_[++i]));
 				std::cout << "Root " << conf.getRoot(locationDir) << "\n";
 				break;
 			case INDEX:
 				std::cout << "Found index directive with argument " << input_[i] << std::endl;
 				i++;
 				while (!input_[i].empty() && input_[i].back() != ';') {
-					conf.setIndexFile(locationDir, input_[i]);
+					conf.setIndexFile(locationDir, checkIndexFile(input_[i]));
 					i++;
 				}
+				if (input_[i].empty())
+					throw std::invalid_argument("parser: invalid index type");
+				input_[i].erase(input_[i].end() - 1);
 				conf.setIndexFile(locationDir, checkIndexFile(input_[i]));
+				idx = conf.getIndexFile(locationDir);
+				for (auto it = idx.begin(); it != idx.end(); ++it) {
+					std::cout << *it << " ";
+				}
+				std::cout << std::endl;
 				break;
 			case ERROR_PAGE:
 				std::cout << "Found error_page directive with argument " << input_[i] << std::endl;
+				i++;
 				break;
 			case LOCATION:
 				std::cout << "Found location directive with argument " << input_[i] << std::endl;
