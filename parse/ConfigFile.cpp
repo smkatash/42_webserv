@@ -1,6 +1,7 @@
 #include "ConfigFile.hpp"
 
-ConfigFile::ConfigFile(): listen_(0), serverName_(nullptr), root_(nullptr), clientMaxBodySize_(0) {}
+ConfigFile::ConfigFile(): listen_(-1), serverName_(""), root_(""), clientMaxBodySize_(0) {}
+
 ConfigFile::~ConfigFile() {}
 
 /********************* setters *************************/
@@ -79,20 +80,20 @@ void	ConfigFile::setClientMaxBodySize(unsigned long sizeMax) {
 
 /********************* getters *************************/
 
-const int	&ConfigFile::getListenPort(void) const {
+const int	ConfigFile::getListenPort(void) const {
 	return listen_;
 }
 
-const std::string	&ConfigFile::getServerName(void) const {
+const std::string	ConfigFile::getServerName(void) const {
 	return	serverName_;
 }
 
-const std::string	&ConfigFile::getRoot(std::string endPoint) const {
+const std::string	ConfigFile::getRoot(std::string endPoint) const {
 	if (endPoint.size()) {
 		std::map<std::string, t_endPoint>::const_iterator	it = location_.find(endPoint);
 		if (it != location_.end())
 			return it->second.lroot;
-		return nullptr;
+		return NULL;
 	} else {
 		return root_;
 	}
@@ -103,16 +104,15 @@ const std::vector<std::string>	&ConfigFile::getIndexFile(std::string endPoint) c
 		std::map<std::string, t_endPoint>::const_iterator	it = location_.find(endPoint);
 		if (it != location_.end())
 			return it->second.lindex;
-	} else {
-		return indexFile_;
 	}
+	return indexFile_;
 }
 
 const std::map<int, std::string>	&ConfigFile::getErrorFile(void) const {
 	return errorFile_;
 }
 
-const std::string	&ConfigFile::getScriptCGI(std::string endPoint, std::string type) const {
+const std::string	ConfigFile::getScriptCGI(std::string endPoint, std::string type) const {
 	if (!endPoint.size() && !type.size()) {
 		std::map<std::string, t_endPoint>::const_iterator it = location_.find(endPoint);
 		if (it != location_.end()) {
@@ -121,7 +121,7 @@ const std::string	&ConfigFile::getScriptCGI(std::string endPoint, std::string ty
 				return itc->second;
 		}
 	}
-	return nullptr;
+	return NULL;
 }
 
 const t_endPoint	&ConfigFile::getLocation(std::string endPoint) const {
@@ -131,15 +131,16 @@ const t_endPoint	&ConfigFile::getLocation(std::string endPoint) const {
 	throw std::runtime_error("endpoint not found");
 }
 
-const std::string	&ConfigFile::getEndPoint(std::string name) const {
+const std::string	ConfigFile::getEndPoint(std::string name) const {
 	if (!name.size())
-		return nullptr;
+		return NULL;
 	std::map<std::string, t_endPoint>::const_iterator it = location_.find(name);
 	if (it != location_.end())
 		return it->first;
+	return NULL;
 }
 
-const unsigned long	&ConfigFile::getClientMaxBodySize(void) const {
+const unsigned long	ConfigFile::getClientMaxBodySize(void) const {
 	return clientMaxBodySize_;
 }
 

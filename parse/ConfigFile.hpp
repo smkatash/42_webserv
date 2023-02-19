@@ -6,7 +6,7 @@
 #include <map>
 #include <utility>
 
-enum eMethods {
+enum Methods {
 	GET = 0,
 	POST,
 	DELETE
@@ -49,18 +49,18 @@ class	ConfigFile {
 		void								setClientMaxBodySize(unsigned long sizeMax);
 
 		/* getters */
-		const int							&getListenPort(void) const;
-		const std::string					&getServerName(void) const;
-		const std::string					&getRoot(std::string endPoint) const;
+		const int							getListenPort(void) const;
+		const std::string					getServerName(void) const;
+		const std::string					getRoot(std::string endPoint) const;
 		const std::vector<std::string>		&getIndexFile(std::string endPoint) const;
 		const std::map<int, std::string>	&getErrorFile(void) const;
-		const std::string					&getScriptCGI(std::string endPoint, std::string type) const;
+		const std::string					getScriptCGI(std::string endPoint, std::string type) const;
 		const t_endPoint					&getLocation(std::string endPoint) const;
-		const std::string					&getEndPoint(std::string name) const;
-		const unsigned long					&getClientMaxBodySize(void) const;
+		const std::string					getEndPoint(std::string name) const;
+		const unsigned long					getClientMaxBodySize(void) const;
 
 		/* print to debug */
-		void	debugConfigFile(void);
+		void								debugConfigFile(void);
 };
 
 
