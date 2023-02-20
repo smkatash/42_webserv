@@ -9,7 +9,8 @@ int main(int argc, char **argv) {
 	else if (argc == 2) {
 		const std::string ext = ".conf";
 		std::string input = argv[1];
-		if (input.substr(input.find_last_of(".")) != ext) {
+		if (input.find_last_of(".") == std::string::npos || \
+			input.substr(input.find_last_of(".")) != ext) {
 			std::cerr << "error: file must have .conf extension" << std::endl;
 			exit(EXIT_FAILURE);
 		}

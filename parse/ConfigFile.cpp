@@ -12,11 +12,11 @@ void	ConfigFile::setListenPort(int port) {
 
 void	ConfigFile::setServerName(std::string host) {
 	serverName_ = host;
-}
-
-void	ConfigFile::setRoot(std::string endPoint, std::string path) {
-	if (endPoint.size()) {
-		std::map<std::string, t_endPoint>::iterator	it = location_.find(endPoint);
+}  
+  
+void	ConfigFile::setRoot(std::string endpoint, std::string path) {
+	if (endpoint.size()) {
+		std::map<std::string, t_endpoint>::iterator	it = location_.find(endpoint);
 		if (it != location_.end())
 			it->second.lroot = path;
 	} else {
@@ -24,9 +24,9 @@ void	ConfigFile::setRoot(std::string endPoint, std::string path) {
 	}
 }
 
-void	ConfigFile::setIndexFile(std::string endPoint, std::string file) {
-	if (endPoint.size()) {
-		std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+void	ConfigFile::setIndexFile(std::string endpoint, std::string file) {
+	if (endpoint.size()) {
+		std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
 		if (it != location_.end()) {
 			it->second.lindex.push_back(file);
 		}
@@ -39,39 +39,39 @@ void	ConfigFile::setErrorFile(int statusCode, std::string path) {
 	errorFile_.insert(std::pair<int, std::string>(statusCode, path));
 }
 
-void	ConfigFile::setMethod(std::string endPoint, int	method) {
-	std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+void	ConfigFile::setMethod(std::string endpoint, int	method) {
+	std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
 		if (it != location_.end()) {
 			it->second.lmethod.push_back(method);
 		}
 }
 
-void	ConfigFile::setCGI(std::string endPoint, std::string lang, std::string path) {
-	std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+void	ConfigFile::setCGI(std::string endpoint, std::string lang, std::string path) {
+	std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
 	if (it != location_.end()) {
 		it->second.lcgi.insert(std::pair<std::string, std::string>(lang, path));
 	}
 }
 
-void	ConfigFile::setRedirect(std::string endPoint, std::string redir) {
-	std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+void	ConfigFile::setRedirect(std::string endpoint, std::string redir) {
+	std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
 	if (it != location_.end()) {
 		it->second.lredirect = redir;
 	}
 }
 
-void	ConfigFile::setAutoIndex(std::string endPoint, bool opt) {
-	std::map<std::string, t_endPoint>::iterator it = location_.find(endPoint);
+void	ConfigFile::setAutoIndex(std::string endpoint, bool opt) {
+	std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
 	if (it != location_.end()) {
 		it->second.lautoindex = opt;
 	}
 }
 
-void	ConfigFile::setLocation(std::string endPoint) {
-	t_endPoint	locPath;
-	if (endPoint.compare("/") == 0)
+void	ConfigFile::setLocation(std::string endpoint) {
+	t_endpoint	locPath;
+	if (endpoint.compare("/") == 0)
 		locPath.lindex = indexFile_;
-	location_.insert(std::pair<std::string, t_endPoint>(endPoint, locPath));
+	location_.insert(std::pair<std::string, t_endpoint>(endpoint, locPath));
 }
 
 void	ConfigFile::setClientMaxBodySize(unsigned long sizeMax) {
@@ -88,9 +88,9 @@ const std::string	ConfigFile::getServerName(void) const {
 	return	serverName_;
 }
 
-const std::string	ConfigFile::getRoot(std::string endPoint) const {
-	if (endPoint.size()) {
-		std::map<std::string, t_endPoint>::const_iterator	it = location_.find(endPoint);
+const std::string	ConfigFile::getRoot(std::string endpoint) const {
+	if (endpoint.size()) {
+		std::map<std::string, t_endpoint>::const_iterator	it = location_.find(endpoint);
 		if (it != location_.end())
 			return it->second.lroot;
 		return NULL;
@@ -99,9 +99,9 @@ const std::string	ConfigFile::getRoot(std::string endPoint) const {
 	}
 }
 
-const std::vector<std::string>	&ConfigFile::getIndexFile(std::string endPoint) const {
-	if (endPoint.size()) {
-		std::map<std::string, t_endPoint>::const_iterator	it = location_.find(endPoint);
+const std::vector<std::string>	&ConfigFile::getIndexFile(std::string endpoint) const {
+	if (endpoint.size()) {
+		std::map<std::string, t_endpoint>::const_iterator	it = location_.find(endpoint);
 		if (it != location_.end())
 			return it->second.lindex;
 	}
@@ -112,9 +112,9 @@ const std::map<int, std::string>	&ConfigFile::getErrorFile(void) const {
 	return errorFile_;
 }
 
-const std::string	ConfigFile::getScriptCGI(std::string endPoint, std::string type) const {
-	if (!endPoint.size() && !type.size()) {
-		std::map<std::string, t_endPoint>::const_iterator it = location_.find(endPoint);
+const std::string	ConfigFile::getScriptCGI(std::string endpoint, std::string type) const {
+	if (!endpoint.size() && !type.size()) {
+		std::map<std::string, t_endpoint>::const_iterator it = location_.find(endpoint);
 		if (it != location_.end()) {
 			std::map<std::string, std::string>::const_iterator itc = it->second.lcgi.find(type);
 			if (itc != it->second.lcgi.end())
@@ -124,8 +124,8 @@ const std::string	ConfigFile::getScriptCGI(std::string endPoint, std::string typ
 	return NULL;
 }
 
-const t_endPoint	&ConfigFile::getLocation(std::string endPoint) const {
-	std::map<std::string, t_endPoint>::const_iterator it = location_.find(endPoint);
+const t_endpoint	&ConfigFile::getLocation(std::string endpoint) const {
+	std::map<std::string, t_endpoint>::const_iterator it = location_.find(endpoint);
 	if (it != location_.end())
 		return it->second;
 	throw std::runtime_error("endpoint not found");
@@ -134,7 +134,7 @@ const t_endPoint	&ConfigFile::getLocation(std::string endPoint) const {
 const std::string	ConfigFile::getEndPoint(std::string name) const {
 	if (!name.size())
 		return NULL;
-	std::map<std::string, t_endPoint>::const_iterator it = location_.find(name);
+	std::map<std::string, t_endpoint>::const_iterator it = location_.find(name);
 	if (it != location_.end())
 		return it->first;
 	return NULL;
@@ -169,7 +169,7 @@ void	ConfigFile::debugConfigFile(void) {
 	std::cout << "Max client bodysize: " <<  clientMaxBodySize_ << std::endl;
 
 	std::cout << "Location files : " << std::endl;
-	for (std::map<std::string, t_endPoint>::iterator itm = location_.begin(); itm != location_.end(); ++itm) {
+	for (std::map<std::string, t_endpoint>::iterator itm = location_.begin(); itm != location_.end(); ++itm) {
 		std::cout << "location name: " << itm->first << " "; 
 		for (std::vector<int>::iterator it1 = itm->second.lmethod.begin(); it1 != itm->second.lmethod.end(); ++it1)
 			std::cout << *it1 << " ";

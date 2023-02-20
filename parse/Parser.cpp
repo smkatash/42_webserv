@@ -40,22 +40,14 @@ Token	Parser::getToken(const std::string& str) {
 }
 
 int		Parser::checkPort(std::string p) {
-	if (p.back() == ';') {
-		p.erase(p.end() - 1);
-		for (int c = 0; c < p.length(); c++) {
-			if (!isdigit(p[c]))
-				throw std::invalid_argument("parser: port invalid");
-		}
-	} else
+	if (stripBrackets(&p) && isdigitString(p))
+		return std::stoi(p);
+	else
 		throw std::invalid_argument("parser: port invalid");
-	if (p.empty())
-		throw std::invalid_argument("parser: port invalid");
-	return std::stoi(p);
 }
 
 std::string	Parser::checkServerName(std::string s) {
-	if (s.back() == ';') {
-		s.erase(s.end() - 1);
+	if (stripBrackets(&s)) {
 		if (s.empty())
 			s = "localhost";
 	}
@@ -65,14 +57,11 @@ std::string	Parser::checkServerName(std::string s) {
 }
 
 std::string	Parser::checkRoot(std::string r) {
-	if (r.back() == ';') {
-		r.erase(r.end() - 1);
-		if (r.empty())
-			throw std::invalid_argument("parser: root invalid");
+	if (stripBrackets(&r)) {
+		if (!r.empty())
+			return r;
 	}
-	else 
-		throw std::invalid_argument("parser: root invalid");
-	return r;
+	throw std::invalid_argument("parser: root invalid");
 }
 
 std::string	Parser::checkIndexFile(std::string i) {
@@ -84,13 +73,68 @@ std::string	Parser::checkIndexFile(std::string i) {
 	return i;
 }
 
+int	Parser::checkErrorCode(std::string errorCode) {
+	if (isdigitString(errorCode)) {
+		int err = std::stoi(errorCode);
+		if (err == NOTFOUND || err == INTERNALERROR)
+			return err;
+	}
+	throw std::invalid_argument("parser: invalid error code");
+	
+}
+
+std::string	Parser::checkErrorPage(std::string errorPage) {
+	if (stripBrackets(&errorPage)) {
+		if (!errorPage.empty())
+			return errorPage;
+	}
+	return errorPage;
+}
+
+void	Parser::checkLocation(std::string endpoint) {
+	if (endpoint.empty())
+		throw std::invalid_argument("parser: invalid location");
+}
+
+std::string	Parser::checkPath(std::string p) {
+	if (stripBrackets(&p)) {
+		if (!p.empty())
+			return p;
+	}
+	throw std::invalid_argument("parser: invalid cgi path");
+	
+}
+
+bool	Parser::checkAutoIndex(std::string indx) {
+	if (stripBrackets(&indx)) {
+		if (!indx.empty() && (indx == "on"))
+			return true;
+		if (!indx.empty() && (indx == "off"))
+			return false;
+	}
+	throw std::invalid_argument("parser: invalid autoindex");
+}
+
+bool	Parser::endDirectiveLocation(std::string next, std::string *locationDir) {
+	if (!(*locationDir).empty() && (next == "location" || next == "}")) {
+		(*locationDir).clear();
+		return true;
+	}
+	else if (next == "server") {
+		std::cout << "next server\n";
+		return true;
+	}
+	return false;
+}
+
 void	Parser::parseSyntax() {
 	ConfigFile	conf;
-	bool	bracketServer;
-	bool	bracketLocation;
-	static	std::string locationDir;
-	int	i = 0;
-	std::vector<std::string> idx;
+	std::string locationDir;
+	int		err = -1;
+	int		i = 0;
+	std::vector<std::string>	idxv;
+	std::map<int, std::string>	idxm;
+	std::string	buff;
 	do {
 		Token tok = getToken(input_[i]);
 		switch (tok) {
@@ -112,40 +156,68 @@ void	Parser::parseSyntax() {
 				std::cout << "Root " << conf.getRoot(locationDir) << "\n";
 				break;
 			case INDEX:
-				std::cout << "Found index directive with argument " << input_[i] << std::endl;
 				i++;
 				while (!input_[i].empty() && input_[i].back() != ';') {
 					conf.setIndexFile(locationDir, checkIndexFile(input_[i]));
 					i++;
 				}
-				if (input_[i].empty())
+				if (stripBrackets(&input_[i]))
+					conf.setIndexFile(locationDir, checkIndexFile(input_[i]));
+				else
 					throw std::invalid_argument("parser: invalid index type");
-				input_[i].erase(input_[i].end() - 1);
-				conf.setIndexFile(locationDir, checkIndexFile(input_[i]));
-				idx = conf.getIndexFile(locationDir);
-				for (auto it = idx.begin(); it != idx.end(); ++it) {
+				idxv = conf.getIndexFile(locationDir);
+				for (auto it = idxv.begin(); it != idxv.end(); ++it) {
 					std::cout << *it << " ";
 				}
 				std::cout << std::endl;
 				break;
 			case ERROR_PAGE:
-				std::cout << "Found error_page directive with argument " << input_[i] << std::endl;
-				i++;
+				err = checkErrorCode(input_[++i]);
+				conf.setErrorFile(err, checkErrorPage(input_[++i]));
+				idxm = conf.getErrorFile();
+				for (auto it = idxm.begin(); it != idxm.end(); it++) {
+					std::cout << it->first << " " << it->second << ", ";
+				}
+				std::cout << std::endl;
 				break;
 			case LOCATION:
 				std::cout << "Found location directive with argument " << input_[i] << std::endl;
+				locationDir = input_[++i];
+				checkLocation(locationDir);
+				conf.setLocation(locationDir);
+				if (input_[++i].compare("{"))
+					throw std::invalid_argument("parser: unbalanced brackets");
+				std::cout << "endpoint " << conf.getEndPoint("/") << std::endl;
 				break;
 			case METHOD:
 				std::cout << "Found method directive with argument " << input_[i] << std::endl;
+				i++;
+				while (!input_[i].empty() && input_[i].back() != ';') {
+					conf.setMethod(locationDir, isValidMethod(input_[i]));
+					i++;
+				}
+				if (stripBrackets(&input_[i]))
+					conf.setMethod(locationDir, isValidMethod(input_[i]));
+				else
+					throw std::invalid_argument("parser: invalid method");
 				break;
 			case CGI:
 				std::cout << "Found CGI directive with argument " << input_[i] << std::endl;
+				buff = input_[++i];
+				isValidLanguage(buff);
+				conf.setCGI(locationDir, buff, checkPath(input_[++i]));
 				break;
 			case AUTOINDEX:
 				std::cout << "Found autoindex directive with argument " << input_[i] << std::endl;
+				conf.setAutoIndex(locationDir, checkAutoIndex(input_[++i]));
 				break;
 			default:
-				std::cout << "Unknown directive: " << input_[i] << std::endl;
+				buff = input_[i];
+				if (!input_[++i].empty() && buff == "}") {
+					if (!endDirectiveLocation(input_[i], &locationDir))
+						std::cerr << "!!! Unknown directive " << input_[i] << std::endl;
+				}
+				std::cerr << "Generic Unknown directive " << input_[i] << std::endl;
 				break;
 	}
 	} while(++i < input_.size());

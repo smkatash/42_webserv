@@ -1,15 +1,10 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "ConfigFile.hpp"
-#include <iostream>
-#include <utility>
-#include <fstream>
-#include <string>
-#include <iterator>
-#include <vector>
-#include <algorithm>
-#include <cctype>
+#include "utils.hpp"
+
+#define	SERVERNAMERROR "parser: server name invalid"
+
 
 enum Token {
 	SERVER,
@@ -44,10 +39,14 @@ class Parser {
 		std::string	checkServerName(std::string s);
 		std::string checkRoot(std::string r);
 		std::string checkIndexFile(std::string i);
-
-
-		void	setConfigFile();
-		void	debugInput();
+		int			checkErrorCode(std::string errorCode);
+		std::string	checkErrorPage(std::string errorPage);
+		void		checkLocation(std::string endpoint);
+		std::string	checkPath(std::string p);
+		bool		checkAutoIndex(std::string indx);
+		bool		endDirectiveLocation(std::string next, std::string *locationDir);
+		void		setConfigFile();
+		void		debugInput();
 
 };
 
