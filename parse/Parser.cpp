@@ -13,24 +13,13 @@ Parser::Parser(std::ifstream& file) : count_(0) {
 
 Parser::~Parser() {};
 
-void	Parser::parseBrackets() {
-	std::vector<std::string>::iterator	it = input_.begin();
-	int	openBr = 0;
-	int	closeBr = 0;
-	for (; it != input_.end(); ++it) {
-		if (*it == "{")
-			openBr++;
-		else if (*it == "}")
-			closeBr++;
-	}
-	if (openBr != closeBr)
-		throw std::invalid_argument("parser: unbalanced brackets");
-}
+/********************* tokenizer *************************/
 
 Token	Parser::getToken(const std::string& str) {
 	static std::string tokens[14] = {"server", "listen", "server_name",
-										"root", "index", "error_page", "location",
-										"method", "cgi", "autoindex"};
+									"root", "index", "error_page", "location",
+									"method", "cgi", "autoindex", "}", "return",
+									"max_client_body"};
 	for (int i = 0; i < 14; ++i) {
 		if (str == tokens[i]) {
 			return static_cast<Token>(i);
@@ -38,6 +27,8 @@ Token	Parser::getToken(const std::string& str) {
 	}
 	return NA;
 }
+
+/********************* syntax checker *************************/
 
 int		Parser::checkPort(std::string p) {
 	if (stripBrackets(&p) && isdigitString(p))
@@ -62,6 +53,23 @@ std::string	Parser::checkRoot(std::string r) {
 			return r;
 	}
 	throw std::invalid_argument("parser: root invalid");
+}
+
+std::string	Parser::checkRedirect(std::string redir) {
+	if (stripBrackets(&redir)) {
+		if (!redir.empty())
+			return redir;
+	}
+	throw std::invalid_argument("parser: invalid redirect");
+}
+
+unsigned long	Parser::isValidLimit(std::string num) {
+	if (stripBrackets(&num) && isdigitString(num)) {
+		unsigned long  max = std::stoi(num);
+		if (max > 0 && max < ULONG_MAX)
+			return max;
+	}
+	throw std::invalid_argument("parser: invalid redirect");
 }
 
 std::string	Parser::checkIndexFile(std::string i) {
@@ -102,7 +110,6 @@ std::string	Parser::checkPath(std::string p) {
 			return p;
 	}
 	throw std::invalid_argument("parser: invalid cgi path");
-	
 }
 
 bool	Parser::checkAutoIndex(std::string indx) {
@@ -116,44 +123,39 @@ bool	Parser::checkAutoIndex(std::string indx) {
 }
 
 bool	Parser::endDirectiveLocation(std::string next, std::string *locationDir) {
-	if (!(*locationDir).empty() && (next == "location" || next == "}")) {
+	if (next == "location") {
 		(*locationDir).clear();
-		return true;
-	}
-	else if (next == "server") {
-		std::cout << "next server\n";
 		return true;
 	}
 	return false;
 }
 
+
+/********************* parser *************************/
+
 void	Parser::parseSyntax() {
-	ConfigFile	conf;
-	std::string locationDir;
-	int		err = -1;
-	int		i = 0;
-	std::vector<std::string>	idxv;
-	std::map<int, std::string>	idxm;
-	std::string	buff;
+	ConfigFile					conf;
+	std::string 				locationDir;
+	std::string					buff;
+	int							server_count;
+	int							err = -1;
+	int							i = 0;
 	do {
 		Token tok = getToken(input_[i]);
 		switch (tok) {
 			case SERVER:
-				std::cout << "Found server directive" << std::endl;
 				if (input_[++i].compare("{"))
 					throw std::invalid_argument("parser: unbalanced brackets");
+				server_count++;
 				break;
 			case LISTEN:
 				conf.setListenPort(checkPort(input_[++i]));
-				std::cout << "PORT " << conf.getListenPort() << "\n";
 				break;
 			case SERVER_NAME:
 				conf.setServerName(checkServerName(input_[++i]));
-				std::cout << "ServerName " << conf.getServerName() << "\n";
 				break;
 			case ROOT:
 				conf.setRoot(locationDir, checkRoot(input_[++i]));
-				std::cout << "Root " << conf.getRoot(locationDir) << "\n";
 				break;
 			case INDEX:
 				i++;
@@ -165,32 +167,19 @@ void	Parser::parseSyntax() {
 					conf.setIndexFile(locationDir, checkIndexFile(input_[i]));
 				else
 					throw std::invalid_argument("parser: invalid index type");
-				idxv = conf.getIndexFile(locationDir);
-				for (auto it = idxv.begin(); it != idxv.end(); ++it) {
-					std::cout << *it << " ";
-				}
-				std::cout << std::endl;
 				break;
 			case ERROR_PAGE:
 				err = checkErrorCode(input_[++i]);
 				conf.setErrorFile(err, checkErrorPage(input_[++i]));
-				idxm = conf.getErrorFile();
-				for (auto it = idxm.begin(); it != idxm.end(); it++) {
-					std::cout << it->first << " " << it->second << ", ";
-				}
-				std::cout << std::endl;
 				break;
 			case LOCATION:
-				std::cout << "Found location directive with argument " << input_[i] << std::endl;
 				locationDir = input_[++i];
 				checkLocation(locationDir);
 				conf.setLocation(locationDir);
 				if (input_[++i].compare("{"))
 					throw std::invalid_argument("parser: unbalanced brackets");
-				std::cout << "endpoint " << conf.getEndPoint("/") << std::endl;
 				break;
 			case METHOD:
-				std::cout << "Found method directive with argument " << input_[i] << std::endl;
 				i++;
 				while (!input_[i].empty() && input_[i].back() != ';') {
 					conf.setMethod(locationDir, isValidMethod(input_[i]));
@@ -202,32 +191,70 @@ void	Parser::parseSyntax() {
 					throw std::invalid_argument("parser: invalid method");
 				break;
 			case CGI:
-				std::cout << "Found CGI directive with argument " << input_[i] << std::endl;
 				buff = input_[++i];
 				isValidLanguage(buff);
 				conf.setCGI(locationDir, buff, checkPath(input_[++i]));
 				break;
 			case AUTOINDEX:
-				std::cout << "Found autoindex directive with argument " << input_[i] << std::endl;
 				conf.setAutoIndex(locationDir, checkAutoIndex(input_[++i]));
 				break;
-			default:
-				buff = input_[i];
-				if (!input_[++i].empty() && buff == "}") {
-					if (!endDirectiveLocation(input_[i], &locationDir))
-						std::cerr << "!!! Unknown directive " << input_[i] << std::endl;
+			case BR:
+				if (locationDir.empty() && server_count) {
+					conf_.push_back(conf);
+					conf.clear();
+					server_count--;
 				}
+				else if (!locationDir.empty())
+					locationDir.clear();
+				else
+					throw std::invalid_argument("parser: unbalanced brackets");
+				break;
+			case REDIRECT:
+				conf.setRedirect(locationDir, checkRedirect(input_[++i]));
+				break;
+			case MAX_CLIENT:
+				conf.setClientMaxBodySize(isValidLimit(input_[++i]));
+				break;
+			default:
 				std::cerr << "Generic Unknown directive " << input_[i] << std::endl;
 				break;
 	}
 	} while(++i < input_.size());
 }
 
+void	Parser::parseBrackets() {
+	std::vector<std::string>::iterator	it = input_.begin();
+	int	openBr = 0;
+	int	closeBr = 0;
+	for (; it != input_.end(); ++it) {
+		if (*it == "{")
+			openBr++;
+		else if (*it == "}")
+			closeBr++;
+	}
+	if (openBr != closeBr)
+		throw std::invalid_argument("parser: unbalanced brackets");
+}
+
+
+/********************* setter *************************/
+
 void	Parser::setConfigFile() {
 	parseBrackets();
 	parseSyntax();
+	debugConfigVector();
 }
 
+
+/********************* debugger *************************/
+
+void	Parser::debugConfigVector() {
+	std::vector<ConfigFile>::iterator it = conf_.begin();
+	for (; it != conf_.end(); it++) {
+		(*it).debugConfigFile();
+		std::cout << std::endl;
+	}
+}
 
 void	Parser::debugInput() {
 	std::cout << "Debug: \n";

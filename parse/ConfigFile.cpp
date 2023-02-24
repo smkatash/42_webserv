@@ -145,6 +145,16 @@ const unsigned long	ConfigFile::getClientMaxBodySize(void) const {
 }
 
 
+void	ConfigFile::clear(void) {
+	listen_ = 0;
+	serverName_.clear();
+	root_.clear();
+	indexFile_.clear();
+	clientMaxBodySize_ = 0;
+	location_.clear();
+	errorFile_.clear();
+}
+
 /********************* debugger *************************/
 
 void	ConfigFile::debugConfigFile(void) {
@@ -170,7 +180,8 @@ void	ConfigFile::debugConfigFile(void) {
 
 	std::cout << "Location files : " << std::endl;
 	for (std::map<std::string, t_endpoint>::iterator itm = location_.begin(); itm != location_.end(); ++itm) {
-		std::cout << "location name: " << itm->first << " "; 
+		std::cout << std::endl << "location name: " << itm->first << " "; 
+		std::cout << std::endl << "methods: ";
 		for (std::vector<int>::iterator it1 = itm->second.lmethod.begin(); it1 != itm->second.lmethod.end(); ++it1)
 			std::cout << *it1 << " ";
 		std::cout << std::endl << "root: " << itm->second.lroot;

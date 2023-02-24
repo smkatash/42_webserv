@@ -54,6 +54,8 @@ class	ConfigFile {
 		const int							getMethod(std::string endpoint) const;
 		const unsigned long					getClientMaxBodySize(void) const;
 
+		void								clear();
+
 		/* print all to debug */
 		void								debugConfigFile(void);
 };
