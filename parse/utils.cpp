@@ -3,7 +3,7 @@
 bool	isdigitString(std::string str) {
 	if (str.empty())
 		return false;
-	for (int c = 0; c < str.length(); c++) {
+	for (unsigned long c = 0; c < str.length(); c++) {
 		if (!isdigit(str[c]))
 			return false;
 	}

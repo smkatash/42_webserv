@@ -80,7 +80,7 @@ void	ConfigFile::setClientMaxBodySize(unsigned long sizeMax) {
 
 /********************* getters *************************/
 
-const int	ConfigFile::getListenPort(void) const {
+int	ConfigFile::getListenPort(void) const {
 	return listen_;
 }
 
@@ -140,7 +140,7 @@ const std::string	ConfigFile::getEndPoint(std::string name) const {
 	return NULL;
 }
 
-const unsigned long	ConfigFile::getClientMaxBodySize(void) const {
+unsigned long	ConfigFile::getClientMaxBodySize(void) const {
 	return clientMaxBodySize_;
 }
 

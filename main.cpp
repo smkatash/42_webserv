@@ -1,11 +1,10 @@
-
-#include "Parser.hpp"
+#include "webserv.hpp"
 
 int main(int argc, char **argv) {
 	std::ifstream	file;
 
 	if (argc < 2)
-		file.open("default.conf");
+		file.open("./config/default.conf");
 	else if (argc == 2) {
 		const std::string ext = ".conf";
 		std::string input = argv[1];

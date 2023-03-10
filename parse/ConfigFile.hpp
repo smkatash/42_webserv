@@ -43,7 +43,7 @@ class	ConfigFile {
 		void								setClientMaxBodySize(unsigned long sizeMax);
 
 		/* getters */
-		const int							getListenPort(void) const;
+		int									getListenPort(void) const;
 		const std::string					getServerName(void) const;
 		const std::string					getRoot(std::string endpoint) const;
 		const std::vector<std::string>		&getIndexFile(std::string endpoint) const;
@@ -51,8 +51,7 @@ class	ConfigFile {
 		const std::string					getScriptCGI(std::string endpoint, std::string type) const;
 		const t_endpoint					&getLocation(std::string endpoint) const;
 		const std::string					getEndPoint(std::string name) const;
-		const int							getMethod(std::string endpoint) const;
-		const unsigned long					getClientMaxBodySize(void) const;
+		unsigned long						getClientMaxBodySize(void) const;
 
 		void								clear();
 

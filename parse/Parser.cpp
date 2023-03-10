@@ -1,9 +1,10 @@
 #include "Parser.hpp"
 
-Parser::Parser(std::ifstream& file) : count_(0) {
+Parser::Parser(std::ifstream& file) {
 	if (file.is_open() && file.good()) {
 		std::istream_iterator<std::string>	start(file), end;
 		input_ = std::vector<std::string>(start, end);
+		count_ = 0;
 	} else {
 		throw std::invalid_argument("parser: unable to open file");
 	}
@@ -137,9 +138,9 @@ void	Parser::parseSyntax() {
 	ConfigFile					conf;
 	std::string 				locationDir;
 	std::string					buff;
-	int							server_count;
+	int							server_count = 0;
 	int							err = -1;
-	int							i = 0;
+	unsigned long				i = 0;
 	do {
 		Token tok = getToken(input_[i]);
 		switch (tok) {
