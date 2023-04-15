@@ -13,8 +13,9 @@
 #include <iostream>
 using namespace std;
 
-#define PORT "3490"
+#define PORT "5050"
 #define BACKLOG 10
+#define MAXDATASIZE 100
 
 
 void sigchild_handler(int sig) {
@@ -101,9 +102,10 @@ int main(void) {
 	}
 	cout << "server is listening ... " << endl;
 	char arr[]= "HTTP/1.1 200 OK\nContent-Type:text/html\nContent-Length: 14\n\n<h1>You bitch!</h1>";
+	int numbytes = 0;
+	char message[MAXDATASIZE];
 	for (;;) {
 		sin_size = sizeof(clients);
-		new_fd = accept(socket_fd, (struct sockaddr *)&clients, &sin_size);
 		if (new_fd == -1) {
 			perror("accept failed");
 			continue;
@@ -111,6 +113,7 @@ int main(void) {
 		inet_ntop(clients.ss_family, \
 			getaddrinfo_helper((struct sockaddr *)&clients), buff, sizeof(buff));
 		cout << "Connection installed with: " << buff << endl;
+		new_fd = accept(socket_fd, (struct sockaddr *)&clients, &sin_size);
 		if (!fork()) {
 			close(socket_fd);
 			/* child process*/
