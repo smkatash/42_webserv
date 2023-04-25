@@ -121,7 +121,7 @@ struct	entity_header {
 
 struct s_request {
 	request_line				rline;
-	generalHeader				gheader;
+	general_header				gheader;
 	request_header				rheader;
 	entity_header				eheader;
 	std::vector<std::string>	rbody;
