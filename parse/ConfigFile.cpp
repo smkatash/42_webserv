@@ -93,7 +93,7 @@ const std::string	ConfigFile::getRoot(std::string endpoint) const {
 		std::map<std::string, t_endpoint>::const_iterator	it = location_.find(endpoint);
 		if (it != location_.end())
 			return it->second.lroot;
-		return NULL;
+		return "";
 	} else {
 		return root_;
 	}
@@ -133,11 +133,11 @@ const t_endpoint	&ConfigFile::getLocation(std::string endpoint) const {
 
 const std::string	ConfigFile::getEndPoint(std::string name) const {
 	if (!name.size())
-		return NULL;
+		return "";
 	std::map<std::string, t_endpoint>::const_iterator it = location_.find(name);
 	if (it != location_.end())
 		return it->first;
-	return NULL;
+	return "";
 }
 
 unsigned long	ConfigFile::getClientMaxBodySize(void) const {

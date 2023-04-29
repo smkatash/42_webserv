@@ -1,5 +1,8 @@
 #include <map>
+#include <algorithm>
 #include "ResponseHandler.hpp"
+#include <fstream>
+#include <string>
 
 #define RESPONSE_LINE	0
 #define GENERAL_HEADER	1
@@ -109,7 +112,44 @@ std::string ResponseHandler::getResponse() {
 	return header;
 }
 
+std::ifstream openFile(std::string name) {
+	std::ifstream file;
+	file.open(name);
+	if (file.is_open() && file.good())
+		return file;
+	else 
+		throw 1;
+}
+
 void ResponseHandler::getMethod() {
-	if (req_.rline.uri == "/")
-		
+	std::string	dir;
+	if (req_.rline.uri == "/") {					// We check if it's the index and we set directory to it
+		if ((dir = conf_.getRoot("/")) == "")
+			dir = conf_.getRoot("");
+	} else {										// Otherwise we search in the endpoints we have
+		dir = conf_.getEndPoint(req_.rline.uri.substr(0, req_.rline.uri.find_last_of('/')));
+		if (dir == "")
+			{res_.rline.statusCode = 404; return ;}
+		t_endpoint loc = conf_.getLocation(dir);	// Now we get the location and we look inside to see if it supports GET method
+		std::vector<int>::iterator it = std::find(loc.lmethod.begin(), loc.lmethod.end(), "GET");
+		if (it == loc.lmethod.end())
+			{res_.rline.statusCode = 404; return ;}
+	}
+
+	std::string fileName = dir + req_.rline.uri.substr(req_.rline.uri.find_last_of('/'));
+	try {
+		std::ifstream file = openFile(fileName);
+		std::string temp;
+		std::string body;
+		while (std::getline(file, temp)) {
+			body += temp + '\n';
+		}
+		res_.rbody = (char *)body.c_str();
+	}
+	catch (int error) {
+		if (error);
+			{res_.rline.statusCode = 404; return ;}
+	}
+	
+	// Gotta go home. Don't read code silvousplait
 }
