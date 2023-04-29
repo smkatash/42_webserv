@@ -1,0 +1,6 @@
+@endpoint = https://google.com
+
+
+GET {{endpoint}}
+
+
