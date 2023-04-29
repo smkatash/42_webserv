@@ -3,6 +3,9 @@
 
 #include "utils.hpp"
 
+#define NOTFOUND		404
+#define	INTERNALERROR	500
+
 enum Token {
 	SERVER,
 	LISTEN,
