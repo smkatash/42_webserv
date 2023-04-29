@@ -3,25 +3,29 @@
 
 #include <iostream>
 #include "Response.hpp"
+#include "Request.hpp"
+#include "ConfigFile.hpp"
 
 class ResponseHandler {
 private:
-	Response res_;
-	void fillResponseLine(response_line* rline);
-	void fillGeneralHeader(general_header* gheader);
-	void fillResponseHeader(response_header* rheader);
-	void fillEntityHeader(entity_header* eheader);
+	Response	res_;
+	Request		req_;
+	ConfigFile	conf_;
 
-	std::string appendResponseLine();
-	std::string appendGeneralHeader();
-	std::string appendResponseHeader();
-	std::string appendEntityHeader();
+	std::string	appendResponseLine();
+	std::string	appendGeneralHeader();
+	std::string	appendResponseHeader();
+	std::string	appendEntityHeader();
 public:
-	ResponseHandler();
+	ResponseHandler(Request req, ConfigFile conf);
 	~ResponseHandler();
 
-	void		fill(int identifier, void *header);
 	std::string	getResponse();
+
+	void		getMethod();
+	void		postMethod();
+	void		deleteMethod();
+	void		headMethod();
 };
 
 #endif
