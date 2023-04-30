@@ -61,7 +61,6 @@ std::string getListedDir(std::string root) {
 }
 
 std::string	initAutoIndex(std::string endpoint, std::string root) {
-	
 	std::string templateFile = insertHeader(endpoint);
 	std::string	targetPos = "<ul class=\"item5\">";
 	size_t pos = templateFile.find(targetPos);
