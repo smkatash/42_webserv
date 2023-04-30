@@ -2,11 +2,39 @@
 #include <dirent.h>
 #include <vector>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
 
+std::string getTemplateHtml() {
+	std::ifstream templateFile("./template.html");
+	if (!templateFile.is_open() || !templateFile.good()) {
+		std::cerr << "Autoindex html failed to open!" << std::endl;
+		return "";
+	}
+	std::stringstream	buffer;
+	buffer << templateFile.rdbuf();
+	return buffer.str();;
+}
 
-std::string	initAutoIndex(std::string endpoint, std::string root) {
+std::string insertHeader(std::string endpoint) {
+	std::string templateFile = getTemplateHtml();
+	std::string	targetPos = "<header>";
+	std::string	header = "\n<h1>...";
+	header += endpoint;
+	header += "</h1>";
+	size_t pos = templateFile.find(targetPos);
+	if (pos != std::string::npos) {
+		templateFile.insert(pos + targetPos.length(), header);
+	}
+	return templateFile;
+
+}
+
+std::string getListedDir(std::string root) {
 	struct dirent *dir;
 	std::vector<std::string> dir_content;
+	std::string files;
 
 	DIR *dh = opendir(root.c_str());
 	/* dir not found or does not exist */
@@ -22,15 +50,29 @@ std::string	initAutoIndex(std::string endpoint, std::string root) {
 	}
 	/* sorted content */
 	std::sort(dir_content.begin(), dir_content.end());
+	
 	std::vector<std::string>::iterator it = dir_content.begin();
 	for (; it != dir_content.end(); it++) {
-		std::cout << *it << " | ";
+		files += "\n<li>";
+		files += *it;
+		files += "</li>";
 	}
-	std::cout << std::endl;
-	return "done";
+	return files;
+}
+
+std::string	initAutoIndex(std::string endpoint, std::string root) {
+	
+	std::string templateFile = insertHeader(endpoint);
+	std::string	targetPos = "<ul class=\"item5\">";
+	size_t pos = templateFile.find(targetPos);
+	std::string files = getListedDir(root);
+	if (pos != std::string::npos) {
+		templateFile.insert(pos + targetPos.length(), files);
+	}
+	return templateFile;
 }
 
 int main() {
+	// If empty, should set to not found
 	std::cout << std::endl << initAutoIndex("/test/","../responseHandler");
-
 }
