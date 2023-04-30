@@ -31,5 +31,49 @@ int main(int argc, char **argv) {
 		std::cerr << e.what() << "\n";
 		exit(EXIT_FAILURE);
 	}
+
+	Core core(conf.conf_);
+	Socket socket (); 
 	
 }
+/*
+	1) -Create a socket: The first step in creating a server is to create a socket that listens for incoming connections. 
+		This can be achieved using the socket() function.
+
+	2) -Bind the socket to an address: Once the socket is created, it needs to be bound to a specific address and port on the server.
+		This can be achieved using the bind() function.
+
+	3) -Listen for incoming connections: After binding the socket, the server needs to start listening for incoming connections. 
+		This can be achieved using the listen() function.
+
+	4) -Initialize the kqueue: The next step is to initialize the kqueue data structure, which will be used to monitor events on the socket.
+		This can be achieved using the kqueue() function.
+
+	5) -Add the socket to the kqueue: Once the kqueue is initialized, the server needs to add the socket to the kqueue
+		This, using the kevent() function, will allow the server to monitor for incoming connections and data.
+	
+	6) -Monitor events using kqueue: The server can now monitor events using the kqueue data structure.
+		This can be achieved using the kevent() function to check for new events on the socket.
+
+	7) -Accept incoming connections: When a new connection is detected, the server can accept it using the accept() function.
+		This will create a new socket for communication with the client.
+
+	8) -Handle incoming data: Once a connection is established, the server can handle incoming data from the client. 
+		This require recv() function.
+		
+	9) -Send data back to the client: Finally, the server can send data back to the client.
+		This use the send() function.
+*/
+
+/*
+	1) -Create a kqueue object using the kqueue() function;
+
+	2) -Create an array of kevent structures to describe the events that the server is interested in monitoring.
+		In this case, you would create a kevent structure for each socket file descriptor that the server is listening on;
+
+	3) -Call the kevent() function to monitor the events on the sockets;
+
+	4) -When a socket event is detected, the kevent() function will return 
+		the corresponding kevent structure in the eventlist array.
+		You can use the file descriptor in the kevent structure to determine which socket has an event pending:
+*/
