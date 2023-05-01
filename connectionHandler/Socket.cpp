@@ -53,6 +53,7 @@ bool Socket::setServerSd()
 
 void Socket::setServerAddress()
 {
+	//should work with an IP but right now it takes a random one.;
 	memset(&(this->serverAddress_), 0, sizeof(this->serverAddress_));
 	this->serverAddress_.sin_family = AF_INET;
 	this->serverAddress_.sin_addr.s_addr = INADDR_ANY;

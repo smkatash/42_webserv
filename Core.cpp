@@ -14,3 +14,4 @@ Core::Core (std::vector <ConfigFile> config, int kqFd) : kqFd_(kqFd)
 	}
 	this->servers_ = servers;
 }
+
