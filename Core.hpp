@@ -11,10 +11,6 @@
 
 class Core
 {
-	public:
-		Core( std::vector <ConfigFile> servers);
-		~Core();
-
 	private:
 
 	std::vector <Server> servers_;
@@ -22,6 +18,10 @@ class Core
 	int kqFd_; //the kqueue() return a fd;
 
 	std::vector <Socket> initSocket(int max);
-	std::vector <ConfigFile> servers_ initServers(ConfigFile);
-};
+	std::vector <Server> initServers(ConfigFile conf);
 
+	public: //
+	Core( std::vector <ConfigFile> servers, int kqFd);
+	~Core();
+
+};

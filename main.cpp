@@ -1,4 +1,6 @@
 #include "webserv.hpp"
+#include <sys/event.h>
+
 
 int main(int argc, char **argv) {
 	std::ifstream	file;
@@ -31,8 +33,8 @@ int main(int argc, char **argv) {
 		std::cerr << e.what() << "\n";
 		exit(EXIT_FAILURE);
 	}
-
-	Core core(conf.conf_);
+	kq = kqueue();
+	Core core(conf.conf_, kq);
 	Socket socket (); 
 	
 }
