@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 
 		Parser	confParser(file);
 		confParser.setConfigFile();
-		// confParser.debugInput();
+		confParser.debugConfigVector();
 		RequestParser req(request);
 		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
 		resp.get();
