@@ -1,14 +1,9 @@
 #include <map>
 #include <algorithm>
 #include "ResponseHandler.hpp"
+#include "parser_utils.hpp" // Methods enum
 #include <fstream>
 #include <string>
-
-#define RESPONSE_LINE	0
-#define GENERAL_HEADER	1
-#define RESPONSE_HEADER	2
-#define ENTITY_HEADER	3
-#define BODY			4
 
 ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 : req_(req), conf_(conf) {
@@ -108,48 +103,121 @@ std::string ResponseHandler::getResponse() {
 	header = appendResponseLine() + appendGeneralHeader()
 				+ appendResponseHeader() + appendEntityHeader();
 	if (res_.rbody != nullptr)
-		header.append('\n' + res_.rbody);
+	{
+		header += '\n';
+		header.append(res_.rbody);
+	}
 	return header;
 }
 
-std::ifstream openFile(std::string name) {
-	std::ifstream file;
-	file.open(name);
-	if (file.is_open() && file.good())
-		return file;
-	else 
-		throw 1;
+
+
+bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAllowed)
+{
+	if (methodsAllowed.empty())
+		return true;
+	std::vector<int>::iterator it = std::find(methodsAllowed.begin(), methodsAllowed.end(), method);
+	if (it == methodsAllowed.end())
+	{
+		setCode("405");
+		return false;
+	}
+	return true;
 }
 
-void ResponseHandler::getMethod() {
-	std::string	dir;
-	if (req_.rline.uri == "/") {					// We check if it's the index and we set directory to it
-		if ((dir = conf_.getRoot("/")) == "")
-			dir = conf_.getRoot("");
-	} else {										// Otherwise we search in the endpoints we have
-		dir = conf_.getEndPoint(req_.rline.uri.substr(0, req_.rline.uri.find_last_of('/')));
-		if (dir == "")
-			{res_.rline.statusCode = 404; return ;}
-		t_endpoint loc = conf_.getLocation(dir);	// Now we get the location and we look inside to see if it supports GET method
-		std::vector<int>::iterator it = std::find(loc.lmethod.begin(), loc.lmethod.end(), "GET");
-		if (it == loc.lmethod.end())
-			{res_.rline.statusCode = 404; return ;}
-	}
+void	ResponseHandler::setResponseBody(std::string fileName)
+{
+	std::ifstream file;
+	file.open(fileName);
+	if (!file.is_open() || !file.good())
+		return setCode("404");
+	std::string temp;
+	std::string body;
+	while (std::getline(file, temp))
+		body += temp + '\n';
+	res_.rbody = (char*)body.c_str();
+	return setCode("200");
+}
 
-	std::string fileName = dir + req_.rline.uri.substr(req_.rline.uri.find_last_of('/'));
-	try {
-		std::ifstream file = openFile(fileName);
-		std::string temp;
-		std::string body;
-		while (std::getline(file, temp)) {
-			body += temp + '\n';
-		}
-		res_.rbody = (char *)body.c_str();
-	}
-	catch (int error) {
-		if (error);
-			{res_.rline.statusCode = 404; return ;}
-	}
-	
-	// Gotta go home. Don't read code silvousplait
+void	ResponseHandler::setCode(std::string code)
+{
+	res_.rline.statusCode = code;
+	if (code == "200")
+		res_.rline.reasonPhrase = "OK";
+	if (code == "404")
+		res_.rline.reasonPhrase = "Not Found";
+	if (code == "405")
+		res_.rline.reasonPhrase = "Not Allowed";
+}
+
+void ResponseHandler::directoryRequest(const t_endpoint& loc)
+{
+	// if (loc.lautoindex)
+	// 	;// Do autoindex
+	// else if (loc.lindex.empty())
+	// 	return setCode("404");
+	// if (loc.lindex.empty())
+	// 	return setCode("404");
+	std::string uri = loc.lindex.front(); // TODO: Needs changing to work with index vector
+	if (loc.lroot.empty())
+		uri.insert(0, conf_.getRoot(""));
+	else
+		uri.insert(0, loc.lroot);
+	std::cout << uri << std::endl;
+	return setResponseBody(uri);
+}
+
+bool Pred(char a, char b)
+{
+	if (a == b && a == '/')
+		return 1;
+	return 0;
+}
+
+std::string removeDuplicateSlashes(const std::string& str)
+{
+	std::string res = str;
+	std::string::iterator last = res.begin();
+	last = std::unique(res.begin(), res.end(), &Pred);
+	res.erase(last, res.end());
+	return res;
+}
+
+std::string ResponseHandler::getUriEndpoint(const std::string& uri)
+{
+	if (uri == "")
+		return "";
+	std::string ep = conf_.getEndPoint(uri);
+	if (ep == "")
+		return getUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start to '/' (basically with every function call we step back a directory)
+	return ep;
+}
+
+/* Prepares URI to be opened as a file by appending it to the root folder,
+	removing a forward slash from the end, and adding a '.' to the front */
+void ResponseHandler::prepUriFile(std::string& uri, const t_endpoint& loc)
+{
+	if (loc.lroot.empty())
+		uri.insert(0, conf_.getRoot(""));
+	else
+		uri.insert(0, loc.lroot);
+	if (uri.back() == '/')
+		uri.erase(uri.end());
+	if (uri.front() == '/')
+		uri.insert(0, ".");
+}
+
+void ResponseHandler::get()
+{
+	std::string uri = removeDuplicateSlashes(req_.rline.uri);
+	std::string ep = getUriEndpoint(uri);
+	if (ep == "")
+		return setCode("404");
+	t_endpoint loc = conf_.getLocation(ep);
+	if (!isMethodAllowed(GET, loc.lmethod))
+		setCode("405");
+	if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
+		return directoryRequest(loc);
+	prepUriFile(uri, loc);
+	return setResponseBody(uri);
 }

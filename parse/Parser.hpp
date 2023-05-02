@@ -1,7 +1,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "utils.hpp"
+#include "parser_utils.hpp"
 
 #define NOTFOUND		404
 #define	INTERNALERROR	500
@@ -26,7 +26,7 @@ enum Token {
 class Parser {
 	private:
 		std::vector<std::string>	input_;
-		std::vector<ConfigFile>		conf_;
+		std::vector<ConfigFile>		conf_;		// Why are you using vector if we have one config for running every time
 		int							count_;
 
 	public:
@@ -48,6 +48,7 @@ class Parser {
 		int				checkPort(std::string p);
 		void			checkLocation(std::string endpoint);
 		void			setConfigFile();
+		ConfigFile		getConfigFile();
 		bool			checkAutoIndex(std::string indx);
 		bool			endDirectiveLocation(std::string next, std::string *locationDir);
 		std::string		checkRedirect(std::string redir);

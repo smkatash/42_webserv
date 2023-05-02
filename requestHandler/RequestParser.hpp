@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "utils.hpp"
 #include "Request.hpp"
 
 
@@ -23,6 +22,7 @@ class	RequestParser {
 	public:
 		RequestParser(std::string input);
 		~RequestParser();
+		Request	getRequest();
 		void	debug();
 
 

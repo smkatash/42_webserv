@@ -1,4 +1,7 @@
-#include "webserv.hpp"
+#include "Parser.hpp"
+#include "RequestParser.hpp"
+#include "ResponseHandler.hpp"
+#include <fstream>
 
 int main(int argc, char **argv) {
 	std::ifstream	file;
@@ -20,16 +23,29 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
+	std::string request = "GET / HTTP/1.1\n\
+							Accept: text/html";
 	try {
-		Parser	conf(file);
-		conf.setConfigFile();
-		conf.debugInput();
+
+
+		Parser	confParser(file);
+		confParser.setConfigFile();
+		// confParser.debugInput();
+		RequestParser req(request);
+		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
+		resp.get();
+		std::cout << resp.getResponse() << std::endl;
+
+
 	} catch (std::invalid_argument& e) {
 		std::cerr << e.what() << '\n';
 		exit(EXIT_FAILURE);
 	} catch (const std::out_of_range & e) {
 		std::cerr << e.what() << "\n";
 		exit(EXIT_FAILURE);
+	} catch(const std::runtime_error& e) {
+		std::cout << e.what() << std::endl;
 	}
+
 	
 }

@@ -1,5 +1,5 @@
 #include "RequestParser.hpp"
-
+#include "request_utils.hpp"
 
 RequestParser::RequestParser(std::string input) {
 	initParser_(input);
@@ -145,6 +145,10 @@ void	RequestParser::parseEntityHeader_(std::string line) {
 void	RequestParser::parseRequestBody_(std::string line) {
 	if (!line.empty())
 		req_.rbody.push_back(line);
+}
+
+Request	RequestParser::getRequest() {
+	return req_;
 }
 
 void	RequestParser::debug() {

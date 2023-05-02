@@ -243,9 +243,14 @@ void	Parser::parseBrackets() {
 void	Parser::setConfigFile() {
 	parseBrackets();
 	parseSyntax();
-	debugConfigVector();
+	// debugConfigVector();
 }
 
+/********************* getter *************************/
+
+ConfigFile	Parser::getConfigFile() {
+	return conf_.front(); // TODO: Needs attention
+}
 
 /********************* debugger *************************/
 

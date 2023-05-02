@@ -1,11 +1,16 @@
-VPATH	= parse
+VPATH	=	parse requestHandler responseHandler
 CC		=	c++
 CFLAGS	=	-std=c++98 -Wall -Wextra -Werror -MD
 
 NAME	=	webserv
-SRC		=	main.cpp ConfigFile.cpp Parser.cpp utils.cpp
+
+SRC		=	main.cpp \
+			ConfigFile.cpp parser_utils.cpp Parser.cpp \
+			request_utils.cpp RequestParser.cpp \
+			ResponseHandler.cpp
+
 OBJ		=	$(addprefix obj/,$(notdir $(SRC:.cpp=.o)))
-INC		=	-I include
+INC		=	-I parse -I requestHandler -I responseHandler
 
 all : $(NAME)
 
