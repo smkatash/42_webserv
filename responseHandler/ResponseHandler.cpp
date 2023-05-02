@@ -1,68 +1,16 @@
 #include <map>
+#include <algorithm>
 #include "ResponseHandler.hpp"
+#include "parser_utils.hpp" // Methods enum
+#include <fstream>
+#include <string>
 
-#define RESPONSE_LINE	0
-#define GENERAL_HEADER	1
-#define RESPONSE_HEADER	2
-#define ENTITY_HEADER	3
-#define BODY			4
-
-ResponseHandler::ResponseHandler() {
+ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
+: req_(req), conf_(conf) {
 	res_.rbody = nullptr;
 }
 
 ResponseHandler::~ResponseHandler() {}
-
-/*
-	I know this is crappy code. This is why I suggest we use vectors or some
-	container instead of using structs. But if we must, then this is the only way
-	as I can't loop through struct members.
-*/
-
-void	ResponseHandler::fillResponseLine(response_line* rline) {
-	res_.rline.reasonPhrase = rline->reasonPhrase;
-	res_.rline.statusCode = rline->statusCode;
-	res_.rline.version = rline->version;
-}
-
-void	ResponseHandler::fillGeneralHeader(general_header* gheader) {
-	res_.gheader.cache = gheader->cache;
-	res_.gheader.connection = gheader->connection;
-	res_.gheader.date = gheader->date;
-	res_.gheader.pragma = gheader->pragma;
-	res_.gheader.trailer = gheader->trailer;
-	res_.gheader.transferEncoding = gheader->transferEncoding;
-	res_.gheader.upgrade = gheader->upgrade;
-	res_.gheader.via = gheader->via;
-	res_.gheader.warning = gheader->warning;
-}
-
-void	ResponseHandler::fillResponseHeader(response_header* rheader) {
-	res_.rheader.age = rheader->age;
-	res_.rheader.publicMethods = rheader->publicMethods;
-	res_.rheader.retryAfter = rheader->retryAfter;
-	res_.rheader.server = rheader->server;
-	res_.rheader.title = rheader->title;
-	res_.rheader.warning = rheader->warning;
-	res_.rheader.acceptRanges = rheader->acceptRanges;
-	res_.rheader.vary = rheader->vary;
-	res_.rheader.proxyAuth = rheader->proxyAuth;
-	res_.rheader.cookie = rheader->cookie;
-	res_.rheader.wwwAuth = rheader->wwwAuth;
-}
-
-void	ResponseHandler::fillEntityHeader(entity_header* eheader) {
-	res_.eheader.allow = eheader->allow;
-	res_.eheader.contentEncoding = eheader->contentEncoding;
-	res_.eheader.contentLanguage = eheader->contentLanguage;
-	res_.eheader.contentLength = eheader->contentLength;
-	res_.eheader.contentLocation = eheader->contentLocation;
-	res_.eheader.contentMd = eheader->contentMd;
-	res_.eheader.contentRange = eheader->contentRange;
-	res_.eheader.contentType = eheader->contentType;
-	res_.eheader.expires = eheader->expires;
-	res_.eheader.lastModified = eheader->lastModified;
-}
 
 std::string ResponseHandler::appendResponseLine() {
 	std::string line;
@@ -150,43 +98,126 @@ std::string ResponseHandler::appendEntityHeader() {
 	return line;
 }
 
-/*
-	You have to fill one of these structs and you give it to the function along with 
-	an identifier indicating which struct:
-
-	response_line
-	general_header
-	response_header
-	entity_header
-*/
-void ResponseHandler::fill(int identifier, void *header) {
-	switch (identifier)
-	{
-	case RESPONSE_LINE:
-		fillResponseLine((response_line*)header);
-		break;
-	case GENERAL_HEADER:
-		fillGeneralHeader((general_header*)header);
-		break;
-	case RESPONSE_HEADER:
-		fillResponseHeader((response_header*)header);
-		break;
-	case ENTITY_HEADER:
-		fillEntityHeader((entity_header*)header);
-		break;
-	case BODY:
-		res_.rbody = (char*)header;
-		break;
-	default:
-		break;
-	}
-}
-
 std::string ResponseHandler::getResponse() {
 	std::string	header;
 	header = appendResponseLine() + appendGeneralHeader()
 				+ appendResponseHeader() + appendEntityHeader();
 	if (res_.rbody != nullptr)
-		header.append('\n' + res_.rbody);
+	{
+		header += '\n';
+		header.append(res_.rbody);
+	}
 	return header;
+}
+
+
+
+bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAllowed)
+{
+	if (methodsAllowed.empty())
+		return true;
+	std::vector<int>::iterator it = std::find(methodsAllowed.begin(), methodsAllowed.end(), method);
+	if (it == methodsAllowed.end())
+	{
+		setCode("405");
+		return false;
+	}
+	return true;
+}
+
+void	ResponseHandler::setResponseBody(std::string fileName)
+{
+	std::ifstream file;
+	file.open(fileName);
+	if (!file.is_open() || !file.good())
+		return setCode("404");
+	std::string temp;
+	std::string body;
+	while (std::getline(file, temp))
+		body += temp + '\n';
+	res_.rbody = (char*)body.c_str();
+	return setCode("200");
+}
+
+void	ResponseHandler::setCode(std::string code)
+{
+	res_.rline.statusCode = code;
+	if (code == "200")
+		res_.rline.reasonPhrase = "OK";
+	if (code == "404")
+		res_.rline.reasonPhrase = "Not Found";
+	if (code == "405")
+		res_.rline.reasonPhrase = "Not Allowed";
+}
+
+void ResponseHandler::directoryRequest(const t_endpoint& loc)
+{
+	// if (loc.lautoindex)
+	// 	;// Do autoindex
+	// else if (loc.lindex.empty())
+	// 	return setCode("404");
+	// if (loc.lindex.empty())
+	// 	return setCode("404");
+	std::string uri = loc.lindex.front(); // TODO: Needs changing to work with index vector
+	if (loc.lroot.empty())
+		uri.insert(0, conf_.getRoot(""));
+	else
+		uri.insert(0, loc.lroot);
+	std::cout << uri << std::endl;
+	return setResponseBody(uri);
+}
+
+bool Pred(char a, char b)
+{
+	if (a == b && a == '/')
+		return 1;
+	return 0;
+}
+
+std::string removeDuplicateSlashes(const std::string& str)
+{
+	std::string res = str;
+	std::string::iterator last = res.begin();
+	last = std::unique(res.begin(), res.end(), &Pred);
+	res.erase(last, res.end());
+	return res;
+}
+
+std::string ResponseHandler::getUriEndpoint(const std::string& uri)
+{
+	if (uri == "")
+		return "";
+	std::string ep = conf_.getEndPoint(uri);
+	if (ep == "")
+		return getUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start to '/' (basically with every function call we step back a directory)
+	return ep;
+}
+
+/* Prepares URI to be opened as a file by appending it to the root folder,
+	removing a forward slash from the end, and adding a '.' to the front */
+void ResponseHandler::prepUriFile(std::string& uri, const t_endpoint& loc)
+{
+	if (loc.lroot.empty())
+		uri.insert(0, conf_.getRoot(""));
+	else
+		uri.insert(0, loc.lroot);
+	if (uri.back() == '/')
+		uri.erase(uri.end());
+	if (uri.front() == '/')
+		uri.insert(0, ".");
+}
+
+void ResponseHandler::get()
+{
+	std::string uri = removeDuplicateSlashes(req_.rline.uri);
+	std::string ep = getUriEndpoint(uri);
+	if (ep == "")
+		return setCode("404");
+	t_endpoint loc = conf_.getLocation(ep);
+	if (!isMethodAllowed(GET, loc.lmethod))
+		setCode("405");
+	if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
+		return directoryRequest(loc);
+	prepUriFile(uri, loc);
+	return setResponseBody(uri);
 }
