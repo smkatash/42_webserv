@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 
 		Parser	confParser(file);
 		confParser.setConfigFile();
-		confParser.debugConfigVector();
+		// confParser.debugConfigVector();
 		RequestParser req(request);
 		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
 		resp.get();
@@ -47,5 +47,4 @@ int main(int argc, char **argv) {
 		std::cout << e.what() << std::endl;
 	}
 
-	
 }

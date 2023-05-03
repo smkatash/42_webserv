@@ -7,16 +7,18 @@
 #include "ConfigFile.hpp"
 #include "parser_utils.hpp" // Methods enum
 
+std::string	initAutoIndex(std::string endpoint, std::string root);
+
 class ResponseHandler {
 private:
 	Response	res_;
 	Request		req_;
 	ConfigFile	conf_;
 
-	std::string	appendResponseLine();
-	std::string	appendGeneralHeader();
-	std::string	appendResponseHeader();
-	std::string	appendEntityHeader();
+	std::string	responseLine();
+	std::string	generalHeader();
+	std::string	responseHeader();
+	std::string	entityHeader();
 
 
 	bool		isMethodAllowed(Methods method, std::vector<int> methods);
@@ -26,7 +28,7 @@ private:
 
 
 	void		setResponseBody(std::string fileName);
-	void		directoryRequest(const t_endpoint& loc);
+	void		uriDirResponse(const t_endpoint& loc, std::string ep);
 
 	void		setCode(std::string code);
 public:

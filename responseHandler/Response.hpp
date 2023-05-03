@@ -21,44 +21,18 @@ struct response_line {
 	std::string version;
 	std::string statusCode;
 	std::string reasonPhrase;
-	
-	// Debugging Purposes
-	friend std::ostream& operator<<(std::ostream& os, const response_line& resLine) {
-		os << "version......: " << resLine.version << std::endl;
-		os << "status code..: " << resLine.statusCode << std::endl;
-		os << "reason phrase: " << resLine.reasonPhrase << std::endl;
-		return os;
-	}
 };
 
 struct response_header {
-	std::string age;
-	std::string publicMethods;
-	std::string retryAfter;
-	std::string server;
-	std::string title;
-	std::string warning;
 	std::string acceptRanges;
-	std::string vary;
+	std::string age;
+	std::string	eTag;
+	std::string location;
+	std::string retryAfter;
 	std::string proxyAuth;
-	std::string	cookie;
+	std::string server;
+	std::string vary;
 	std::string wwwAuth;
-
-	// Debugging Purposes
-	friend std::ostream& operator<<(std::ostream& os, const response_header& rh) {
-		os << "age............: " << rh.age << std::endl;
-		os << "publicMethods..: " << rh.publicMethods << std::endl;
-		os << "retryAfter.....: " << rh.retryAfter << std::endl;
-		os << "server.........: " << rh.server << std::endl;
-		os << "title..........: " << rh.title << std::endl;
-		os << "warning........: " << rh.warning << std::endl;
-		os << "acceptRanges...: " << rh.acceptRanges << std::endl;
-		os << "vary...........: " << rh.vary << std::endl;
-		os << "proxyAuth......: " << rh.proxyAuth << std::endl;
-		os << "cookie.........: " << rh.cookie << std::endl;
-		os << "wwwAuth........: " << rh.wwwAuth << std::endl;
-		return os;
-	}
 };
 
 struct s_response {

@@ -1,10 +1,11 @@
-VPATH	=	parse requestHandler responseHandler
+VPATH	=	parse requestHandler responseHandler responseHandler/autoindex
 CC		=	c++
-CFLAGS	=	-std=c++98 -Wall -Wextra -Werror -MD
+CFLAGS	=	-std=c++98 -Wall -Wextra -Werror -MD #-fsanitize=address
 
 NAME	=	webserv
 
 SRC		=	main.cpp \
+			autoindex.cpp \
 			ConfigFile.cpp parser_utils.cpp Parser.cpp \
 			request_utils.cpp RequestParser.cpp \
 			ResponseHandler.cpp
