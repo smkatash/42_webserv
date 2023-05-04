@@ -15,7 +15,7 @@ void	ConfigFile::setServerName(std::string host) {
 }  
   
 void	ConfigFile::setRoot(std::string endpoint, std::string path) {
-	if (path[path.length() - 1] != '/') {
+	if (path.length() > 1 && path[path.length() - 1] != '/') {
 		path += '/';
 	}
 	if (endpoint.size()) {
