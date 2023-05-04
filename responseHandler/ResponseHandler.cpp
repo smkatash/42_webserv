@@ -39,78 +39,78 @@ std::string ResponseHandler::responseLine() {
 	if (!res_.rline.statusCode.empty())
 		line.append(res_.rline.statusCode + ' ');
 	if (!res_.rline.reasonPhrase.empty())
-		line.append(res_.rline.reasonPhrase + '\n');
+		line.append(res_.rline.reasonPhrase + "\r\n");
 	return line;
 }
 
 std::string ResponseHandler::generalHeader() {
 	std::string line;
 	if (!res_.gheader.cache.empty())
-		line.append("Cache-Control: " + res_.gheader.cache + '\n');
+		line.append("Cache-Control: " + res_.gheader.cache + "\r\n");
 	if (!res_.gheader.connection.empty())
-		line.append("Connection: " + res_.gheader.connection + '\n');
+		line.append("Connection: " + res_.gheader.connection + "\r\n");
 	if (!res_.gheader.date.empty())
-		line.append("Date: " + res_.gheader.date + '\n');
+		line.append("Date: " + res_.gheader.date + "\r\n");
 	if (!res_.gheader.pragma.empty())
-		line.append("Pragma: " + res_.gheader.pragma + '\n');
+		line.append("Pragma: " + res_.gheader.pragma + "\r\n");
 	if (!res_.gheader.trailer.empty())
-		line.append("Trailer: " + res_.gheader.trailer + '\n');
+		line.append("Trailer: " + res_.gheader.trailer + "\r\n");
 	if (!res_.gheader.transferEncoding.empty())
-		line.append("Transfer-Encoding: " + res_.gheader.transferEncoding + '\n');
+		line.append("Transfer-Encoding: " + res_.gheader.transferEncoding + "\r\n");
 	if (!res_.gheader.upgrade.empty())
-		line.append("Upgrade: " + res_.gheader.upgrade + '\n');
+		line.append("Upgrade: " + res_.gheader.upgrade + "\r\n");
 	if (!res_.gheader.via.empty())
-		line.append("Via: " + res_.gheader.via + '\n');
+		line.append("Via: " + res_.gheader.via + "\r\n");
 	if (!res_.gheader.warning.empty())
-		line.append("Warning: " + res_.gheader.warning + '\n');
+		line.append("Warning: " + res_.gheader.warning + "\r\n");
 	return line;
 }
 
 std::string ResponseHandler::responseHeader() {
 	std::string line;
 	if (!res_.rheader.acceptRanges.empty())
-		line.append("Accept-Ranges: " + res_.rheader.acceptRanges + '\n');
+		line.append("Accept-Ranges: " + res_.rheader.acceptRanges + "\r\n");
 	if (!res_.rheader.age.empty())
-		line.append("Age: " + res_.rheader.age + '\n');
+		line.append("Age: " + res_.rheader.age + "\r\n");
 	if (!res_.rheader.eTag.empty())
-		line.append("ETag: " + res_.rheader.eTag + '\n');
+		line.append("ETag: " + res_.rheader.eTag + "\r\n");
 	if (!res_.rheader.location.empty())
-		line.append("Location: " + res_.rheader.location + '\n');
+		line.append("Location: " + res_.rheader.location + "\r\n");
 	if (!res_.rheader.proxyAuth.empty())
-		line.append("Proxy-Authenticate: " + res_.rheader.proxyAuth + '\n');
+		line.append("Proxy-Authenticate: " + res_.rheader.proxyAuth + "\r\n");
 	if (!res_.rheader.retryAfter.empty())
-		line.append("Retry-After: " + res_.rheader.retryAfter + '\n');
+		line.append("Retry-After: " + res_.rheader.retryAfter + "\r\n");
 	if (!res_.rheader.server.empty())
-		line.append("Server: " + res_.rheader.server + '\n');
+		line.append("Server: " + res_.rheader.server + "\r\n");
 	if (!res_.rheader.vary.empty())
-		line.append("Vary: " + res_.rheader.vary + '\n');
+		line.append("Vary: " + res_.rheader.vary + "\r\n");
 	if (!res_.rheader.wwwAuth.empty())
-		line.append("WWW-Authenticate: " + res_.rheader.wwwAuth + '\n');
+		line.append("WWW-Authenticate: " + res_.rheader.wwwAuth + "\r\n");
 	return line;
 }
 
 std::string ResponseHandler::entityHeader() {
 	std::string line;
 	if (!res_.eheader.allow.empty())
-		line.append("Allow: " + res_.eheader.allow + '\n');
+		line.append("Allow: " + res_.eheader.allow + "\r\n");
 	if (!res_.eheader.contentEncoding.empty())
-		line.append("Content-Encoding: " + res_.eheader.contentEncoding + '\n');
+		line.append("Content-Encoding: " + res_.eheader.contentEncoding + "\r\n");
 	if (!res_.eheader.contentLanguage.empty())
-		line.append("Content-Language: " + res_.eheader.contentLanguage + '\n');
+		line.append("Content-Language: " + res_.eheader.contentLanguage + "\r\n");
 	if (!res_.eheader.contentLength.empty())
-		line.append("Content-Length: " + res_.eheader.contentLength + '\n');
+		line.append("Content-Length: " + res_.eheader.contentLength + "\r\n");
 	if (!res_.eheader.contentLocation.empty())
-		line.append("Content-Location: " + res_.eheader.contentLocation + '\n');
+		line.append("Content-Location: " + res_.eheader.contentLocation + "\r\n");
 	if (!res_.eheader.contentMd.empty())
-		line.append("Content-MD5: " + res_.eheader.contentMd + '\n');
+		line.append("Content-MD5: " + res_.eheader.contentMd + "\r\n");
 	if (!res_.eheader.contentRange.empty())
-		line.append("Content-Range: " + res_.eheader.contentRange + '\n');
+		line.append("Content-Range: " + res_.eheader.contentRange + "\r\n");
 	if (!res_.eheader.contentType.empty())
-		line.append("Content-Type: " + res_.eheader.contentType + '\n');
+		line.append("Content-Type: " + res_.eheader.contentType + "\r\n");
 	if (!res_.eheader.expires.empty())
-		line.append("Expires: " + res_.eheader.expires + '\n');
+		line.append("Expires: " + res_.eheader.expires + "\r\n");
 	if (!res_.eheader.lastModified.empty())
-		line.append("Last-Modified: " + res_.eheader.lastModified + '\n');
+		line.append("Last-Modified: " + res_.eheader.lastModified + "\r\n");
 	return line;
 }
 
@@ -120,13 +120,11 @@ std::string ResponseHandler::getResponse() {
 				+ responseHeader() + entityHeader();
 	if (res_.rbody != nullptr)
 	{
-		header.append("\n");
+		header.append("\r\n");
 		header.append(std::string(res_.rbody));
 	}
 	return header;
 }
-
-
 
 bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAllowed)
 {
