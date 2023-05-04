@@ -6,8 +6,8 @@
 #include <sstream>
 #include <string>
 
-std::string getTemplateHtml() {
-	std::ifstream templateFile("./template.html");
+static std::string getTemplateHtml() {
+	std::ifstream templateFile("./responseHandler/autoindex/template.html");
 	if (!templateFile.is_open() || !templateFile.good()) {
 		std::cerr << "Autoindex html failed to open!" << std::endl;
 		return "";
@@ -17,7 +17,7 @@ std::string getTemplateHtml() {
 	return buffer.str();;
 }
 
-std::string insertHeader(std::string endpoint) {
+static std::string insertHeader(std::string endpoint) {
 	std::string templateFile = getTemplateHtml();
 	std::string	targetPos = "<header>";
 	std::string	header = "\n<h1>...";
@@ -31,11 +31,12 @@ std::string insertHeader(std::string endpoint) {
 
 }
 
-std::string getListedDir(std::string root) {
+static std::string getListedDir(std::string root) {
 	struct dirent *dir;
 	std::vector<std::string> dir_content;
 	std::string files;
 
+	root.insert(0, ".");
 	DIR *dh = opendir(root.c_str());
 	/* dir not found or does not exist */
 	if (!dh) {
@@ -71,7 +72,7 @@ std::string	initAutoIndex(std::string endpoint, std::string root) {
 	return templateFile;
 }
 
-int main() {
-	// If empty, should set to not found
-	std::cout << std::endl << initAutoIndex("/test/","../responseHandler");
-}
+// int main() {
+// 	// If empty, should set to not found
+// 	std::cout << std::endl << initAutoIndex("/","../../var/www/pages/");
+// }

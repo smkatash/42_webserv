@@ -5,112 +5,126 @@
 #include <fstream>
 #include <string>
 
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+
+std::string getCurrentTimeGMT()
+{
+	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+	std::time_t timeNow = std::chrono::system_clock::to_time_t(now);
+
+	std::tm* gmTimeNow = std::gmtime(&timeNow);
+
+	std::stringstream ss("");
+	ss << std::put_time(gmTimeNow, "%a, %d %b %Y %H:%M:%S GMT");
+	return ss.str();
+}
+
 ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
-: req_(req), conf_(conf) {
+: req_(req), conf_(conf)
+{
 	res_.rbody = nullptr;
+	res_.rline.version = "HTTP/1.1";
+	res_.rheader.server = "Francesco's Pizzaria/2.0 (MacOS)";
 }
 
 ResponseHandler::~ResponseHandler() {}
 
-std::string ResponseHandler::appendResponseLine() {
+std::string ResponseHandler::responseLine() {
 	std::string line;
 	if (!res_.rline.version.empty())
-		line.append(res_.rline.version + '\n');
+		line.append(res_.rline.version + ' ');
 	if (!res_.rline.statusCode.empty())
-		line.append(res_.rline.statusCode + '\n');
+		line.append(res_.rline.statusCode + ' ');
 	if (!res_.rline.reasonPhrase.empty())
-		line.append(res_.rline.reasonPhrase + '\n');
+		line.append(res_.rline.reasonPhrase + "\r\n");
 	return line;
 }
 
-std::string ResponseHandler::appendGeneralHeader() {
+std::string ResponseHandler::generalHeader() {
 	std::string line;
 	if (!res_.gheader.cache.empty())
-		line.append(res_.gheader.cache + '\n');
+		line.append("Cache-Control: " + res_.gheader.cache + "\r\n");
 	if (!res_.gheader.connection.empty())
-		line.append(res_.gheader.connection + '\n');
+		line.append("Connection: " + res_.gheader.connection + "\r\n");
 	if (!res_.gheader.date.empty())
-		line.append(res_.gheader.date + '\n');
+		line.append("Date: " + res_.gheader.date + "\r\n");
 	if (!res_.gheader.pragma.empty())
-		line.append(res_.gheader.pragma + '\n');
+		line.append("Pragma: " + res_.gheader.pragma + "\r\n");
 	if (!res_.gheader.trailer.empty())
-		line.append(res_.gheader.trailer + '\n');
+		line.append("Trailer: " + res_.gheader.trailer + "\r\n");
 	if (!res_.gheader.transferEncoding.empty())
-		line.append(res_.gheader.transferEncoding + '\n');
+		line.append("Transfer-Encoding: " + res_.gheader.transferEncoding + "\r\n");
 	if (!res_.gheader.upgrade.empty())
-		line.append(res_.gheader.upgrade + '\n');
+		line.append("Upgrade: " + res_.gheader.upgrade + "\r\n");
 	if (!res_.gheader.via.empty())
-		line.append(res_.gheader.via + '\n');
+		line.append("Via: " + res_.gheader.via + "\r\n");
 	if (!res_.gheader.warning.empty())
-		line.append(res_.gheader.warning + '\n');
+		line.append("Warning: " + res_.gheader.warning + "\r\n");
 	return line;
 }
 
-std::string ResponseHandler::appendResponseHeader() {
+std::string ResponseHandler::responseHeader() {
 	std::string line;
-	if (!res_.rheader.age.empty())
-		line.append(res_.rheader.age + '\n');
-	if (!res_.rheader.publicMethods.empty())
-		line.append(res_.rheader.publicMethods + '\n');
-	if (!res_.rheader.retryAfter.empty())
-		line.append(res_.rheader.retryAfter + '\n');
-	if (!res_.rheader.server.empty())
-		line.append(res_.rheader.server + '\n');
-	if (!res_.rheader.title.empty())
-		line.append(res_.rheader.title + '\n');
-	if (!res_.rheader.warning.empty())
-		line.append(res_.rheader.warning + '\n');
 	if (!res_.rheader.acceptRanges.empty())
-		line.append(res_.rheader.acceptRanges + '\n');
-	if (!res_.rheader.vary.empty())
-		line.append(res_.rheader.vary + '\n');
+		line.append("Accept-Ranges: " + res_.rheader.acceptRanges + "\r\n");
+	if (!res_.rheader.age.empty())
+		line.append("Age: " + res_.rheader.age + "\r\n");
+	if (!res_.rheader.eTag.empty())
+		line.append("ETag: " + res_.rheader.eTag + "\r\n");
+	if (!res_.rheader.location.empty())
+		line.append("Location: " + res_.rheader.location + "\r\n");
 	if (!res_.rheader.proxyAuth.empty())
-		line.append(res_.rheader.proxyAuth + '\n');
-	if (!res_.rheader.cookie.empty())
-		line.append(res_.rheader.cookie + '\n');
+		line.append("Proxy-Authenticate: " + res_.rheader.proxyAuth + "\r\n");
+	if (!res_.rheader.retryAfter.empty())
+		line.append("Retry-After: " + res_.rheader.retryAfter + "\r\n");
+	if (!res_.rheader.server.empty())
+		line.append("Server: " + res_.rheader.server + "\r\n");
+	if (!res_.rheader.vary.empty())
+		line.append("Vary: " + res_.rheader.vary + "\r\n");
 	if (!res_.rheader.wwwAuth.empty())
-		line.append(res_.rheader.wwwAuth + '\n');
+		line.append("WWW-Authenticate: " + res_.rheader.wwwAuth + "\r\n");
 	return line;
 }
 
-std::string ResponseHandler::appendEntityHeader() {
+std::string ResponseHandler::entityHeader() {
 	std::string line;
 	if (!res_.eheader.allow.empty())
-		line.append(res_.eheader.allow + '\n');
+		line.append("Allow: " + res_.eheader.allow + "\r\n");
 	if (!res_.eheader.contentEncoding.empty())
-		line.append(res_.eheader.contentEncoding + '\n');
+		line.append("Content-Encoding: " + res_.eheader.contentEncoding + "\r\n");
 	if (!res_.eheader.contentLanguage.empty())
-		line.append(res_.eheader.contentLanguage + '\n');
+		line.append("Content-Language: " + res_.eheader.contentLanguage + "\r\n");
 	if (!res_.eheader.contentLength.empty())
-		line.append(res_.eheader.contentLength + '\n');
+		line.append("Content-Length: " + res_.eheader.contentLength + "\r\n");
 	if (!res_.eheader.contentLocation.empty())
-		line.append(res_.eheader.contentLocation + '\n');
+		line.append("Content-Location: " + res_.eheader.contentLocation + "\r\n");
 	if (!res_.eheader.contentMd.empty())
-		line.append(res_.eheader.contentMd + '\n');
+		line.append("Content-MD5: " + res_.eheader.contentMd + "\r\n");
 	if (!res_.eheader.contentRange.empty())
-		line.append(res_.eheader.contentRange + '\n');
+		line.append("Content-Range: " + res_.eheader.contentRange + "\r\n");
 	if (!res_.eheader.contentType.empty())
-		line.append(res_.eheader.contentType + '\n');
+		line.append("Content-Type: " + res_.eheader.contentType + "\r\n");
 	if (!res_.eheader.expires.empty())
-		line.append(res_.eheader.expires + '\n');
+		line.append("Expires: " + res_.eheader.expires + "\r\n");
 	if (!res_.eheader.lastModified.empty())
-		line.append(res_.eheader.lastModified + '\n');
+		line.append("Last-Modified: " + res_.eheader.lastModified + "\r\n");
 	return line;
 }
 
 std::string ResponseHandler::getResponse() {
 	std::string	header;
-	header = appendResponseLine() + appendGeneralHeader()
-				+ appendResponseHeader() + appendEntityHeader();
+	header = responseLine() + generalHeader()
+				+ responseHeader() + entityHeader();
 	if (res_.rbody != nullptr)
 	{
-		header += '\n';
-		header.append(res_.rbody);
+		header.append("\r\n");
+		header.append(std::string(res_.rbody));
 	}
 	return header;
 }
-
-
 
 bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAllowed)
 {
@@ -125,6 +139,19 @@ bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAl
 	return true;
 }
 
+template <typename T>
+std::string to_string(const T& value)
+{
+	std::stringstream ss;
+	ss << value;
+	return ss.str();
+}
+
+std::string findContentType(std::ifstream file)
+{
+	// Maybe parse mime.type in a map container and find based on what extension we have
+}
+
 void	ResponseHandler::setResponseBody(std::string fileName)
 {
 	std::ifstream file;
@@ -136,7 +163,35 @@ void	ResponseHandler::setResponseBody(std::string fileName)
 	while (std::getline(file, temp))
 		body += temp + '\n';
 	res_.rbody = (char*)body.c_str();
+	res_.eheader.contentLength = to_string(body.length());
+	// res_.eheader.contentType = findContentType(file);
+	file.close();
 	return setCode("200");
+}
+
+/* When URI is a directory */
+void ResponseHandler::uriDirResponse(const t_endpoint& loc, std::string ep)
+{
+	if (loc.lautoindex)
+	{
+		std::string templateFile;
+		if (loc.lroot.empty())
+			templateFile = initAutoIndex(ep, conf_.getRoot(""));
+		else
+			templateFile = initAutoIndex(ep, loc.lroot);
+		std::cout << loc.lroot << std::endl;
+		if (templateFile.empty())
+			return setCode("404");
+		res_.rbody = (char*)templateFile.c_str();
+		res_.eheader.contentLength = to_string(templateFile.size());
+		return setCode("200");
+	}
+	else if (loc.lindex.empty())
+		return setCode("404");
+	std::string uri = loc.lindex.front(); // TODO: Needs changing to work with index vector
+	uri = ep + '/' + uri;
+	prepUriFile(uri, loc);
+	return setResponseBody(uri);
 }
 
 void	ResponseHandler::setCode(std::string code)
@@ -148,23 +203,6 @@ void	ResponseHandler::setCode(std::string code)
 		res_.rline.reasonPhrase = "Not Found";
 	if (code == "405")
 		res_.rline.reasonPhrase = "Not Allowed";
-}
-
-void ResponseHandler::directoryRequest(const t_endpoint& loc)
-{
-	// if (loc.lautoindex)
-	// 	;// Do autoindex
-	// else if (loc.lindex.empty())
-	// 	return setCode("404");
-	// if (loc.lindex.empty())
-	// 	return setCode("404");
-	std::string uri = loc.lindex.front(); // TODO: Needs changing to work with index vector
-	if (loc.lroot.empty())
-		uri.insert(0, conf_.getRoot(""));
-	else
-		uri.insert(0, loc.lroot);
-	std::cout << uri << std::endl;
-	return setResponseBody(uri);
 }
 
 bool Pred(char a, char b)
@@ -180,13 +218,15 @@ std::string removeDuplicateSlashes(const std::string& str)
 	std::string::iterator last = res.begin();
 	last = std::unique(res.begin(), res.end(), &Pred);
 	res.erase(last, res.end());
+	if (res.back() == '/' && res.length() != 1)
+		res.pop_back();
 	return res;
 }
 
 std::string ResponseHandler::getUriEndpoint(const std::string& uri)
 {
 	if (uri == "")
-		return "";
+		return "/";
 	std::string ep = conf_.getEndPoint(uri);
 	if (ep == "")
 		return getUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start to '/' (basically with every function call we step back a directory)
@@ -197,6 +237,8 @@ std::string ResponseHandler::getUriEndpoint(const std::string& uri)
 	removing a forward slash from the end, and adding a '.' to the front */
 void ResponseHandler::prepUriFile(std::string& uri, const t_endpoint& loc)
 {
+	if (uri.front() == '/')
+		uri.erase(uri.begin());
 	if (loc.lroot.empty())
 		uri.insert(0, conf_.getRoot(""));
 	else
@@ -209,15 +251,19 @@ void ResponseHandler::prepUriFile(std::string& uri, const t_endpoint& loc)
 
 void ResponseHandler::get()
 {
+	res_.gheader.date = getCurrentTimeGMT();
 	std::string uri = removeDuplicateSlashes(req_.rline.uri);
+
 	std::string ep = getUriEndpoint(uri);
 	if (ep == "")
 		return setCode("404");
+
 	t_endpoint loc = conf_.getLocation(ep);
 	if (!isMethodAllowed(GET, loc.lmethod))
-		setCode("405");
+		return setCode("405");
+
 	if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
-		return directoryRequest(loc);
+		return uriDirResponse(loc, ep);
 	prepUriFile(uri, loc);
 	return setResponseBody(uri);
 }
