@@ -147,10 +147,10 @@ std::string to_string(const T& value)
 	return ss.str();
 }
 
-// std::string findContentType(std::ifstream file)
-// {
-
-// }
+std::string findContentType(std::ifstream file)
+{
+	// Maybe parse mime.type in a map container and find based on what extension we have
+}
 
 void	ResponseHandler::setResponseBody(std::string fileName)
 {
