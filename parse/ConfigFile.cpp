@@ -15,8 +15,8 @@ void	ConfigFile::setServerName(std::string host) {
 }  
   
 void	ConfigFile::setRoot(std::string endpoint, std::string path) {
-	if (path.back() != '/') {
-		path.push_back('/');
+	if (path[path.length() - 1] != '/') {
+		path += '/';
 	}
 	if (endpoint.size()) {
 		std::map<std::string, t_endpoint>::iterator	it = location_.find(endpoint);
@@ -74,6 +74,8 @@ void	ConfigFile::setLocation(std::string endpoint) {
 	t_endpoint	locPath;
 	if (endpoint.compare("/") == 0)
 		locPath.lindex = indexFile_;
+	else if (endpoint.length() > 0 && endpoint[endpoint.length() - 1] == '/')
+		endpoint.erase(endpoint.length() - 1);
 	location_.insert(std::pair<std::string, t_endpoint>(endpoint, locPath));
 }
 
