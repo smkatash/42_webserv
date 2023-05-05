@@ -55,3 +55,80 @@ void CGIHandler::handle_cgi_script() {
 		std::cout << output;
 	}
 }
+
+
+
+
+void	CGIHandler::setEnvironment() {
+	setenv("REQUEST_METHOD", req_.rline.method.c_str(), 1);
+	setenv("CONTENT_TYPE", req_.eheader.contentType.c_str(), 1);
+	setenv("CONTENT_LENGTH", req_.eheader.contentLength.c_str(), 1);
+	setenv("HTTP_USER_AGENT", req_.rheader.userAgent.c_str(), 1);
+	setenv("SCRIPT_NAME", scriptPath_.c_str(), 1);
+	setenv("QUERY_STRING", queryString_.c_str(), 1);
+	setenv("SERVER_NAME", serverName_.c_str(), 1);
+}
+
+char** transformString(std::string str1, std::string str2) {
+	char **arr = (char**)malloc(sizeof(char*) * 3);
+	char *arr[0] = malloc((sizeof(char) * str1.length()) )
+
+	std::strcpy(char_array[0], str1);
+	std::strcpy(char_array[1], str2);
+
+	for (int i = 0; i < num; i++) {
+		std::cout << char_array[i] << std::endl;
+		delete[] char_array[i];
+	}
+}
+
+
+void	CGIHandler::run() {
+	pid_t pid = fork();
+
+	if (pid == -1) {
+		std::cerr << "Error forking process" << std::endl;
+		exit(1);
+	} else if (pid == 0) {
+		
+	setEnvironment();
+	// Prepare the arguments for execve
+	char *script = std::getenv("SCRIPT_NAME");
+	char **argv = 
+	extern char** environ;
+
+	// Execute the script using execve
+	if (execve(script_name, argv, envp) == -1) {
+		// Error handling if execve fails
+		std::cerr << "Error executing script" << std::endl;
+		exit(1);
+	}
+
+		// Error handling if execl fails
+		std::cerr << "Error executing script" << std::endl;
+		exit(1);
+	} else {
+		// Parent process
+		// Wait for the child process to finish
+		int status;
+		waitpid(pid, &status, 0);
+
+		if (WIFEXITED(status)) {
+			// Child process exited normally
+			int exit_status = WEXITSTATUS(status);
+			std::cout << "CGI script exited with status " << exit_status << std::endl;
+		} else {
+			// Child process exited abnormally
+			std::cerr << "CGI script exited abnormally" << std::endl;
+			exit(1);
+		}
+	}
+}
+
+void	CGIHandler::POST() {
+
+}
+
+void	CGIHandler::GET() {
+
+}

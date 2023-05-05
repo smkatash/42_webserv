@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include <cstring>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -23,13 +24,18 @@ class CGIHandler {
 		Request req_;
 		// dummy, i think it should be vector or map
 		std::string queryString_;
-
 		std::string inputBody_;
-		// how to define it ? get from config?
+		// get from config?
 		std::string scriptPath_;
+		std::string	serverName_;
 
 	public:
 		CGIHandler();
 		~CGIHandler();
-		void handle_cgi_script();
+		void	setEnvironment();
+		void	handle_cgi_script();
+		void	run();
+		void	POST();
+		void	GET();
 };
+
