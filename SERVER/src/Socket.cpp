@@ -1,4 +1,4 @@
-#include "../inc/Socket.hpp"
+#include "Socket.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -7,7 +7,9 @@ class Server
 		int kqFd_;
 		Socket serverSocket_;
 		struct sockaddr_in serverAdd_;
-		std::vector <Socket> clientSockets_;
+		std::vector <Socket> clientsSocket_;
+		
+		void serverInit();
 
 		ConfigFile config_;
 

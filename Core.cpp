@@ -10,6 +10,7 @@ Core::Core (std::vector <ConfigFile> config, int kqFd) : kqFd_(kqFd)
 	for (i = 0; i < config.size(); i++) 
 	{
 		Server server(config[i], kqFd);
+		server.serverInit();
 		servers.push_back(server);
 	}
 	this->servers_ = servers;

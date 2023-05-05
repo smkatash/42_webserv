@@ -2,7 +2,8 @@
 #include <sys/event.h>
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) 
+{
 	std::ifstream	file;
 
 	if (argc < 2)
@@ -36,7 +37,6 @@ int main(int argc, char **argv) {
 	kq = kqueue();
 	Core core(conf.conf_, kq);
 	Socket socket (); 
-	
 }
 /*
 	1) -Create a socket: The first step in creating a server is to create a socket that listens for incoming connections. 

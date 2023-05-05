@@ -1,0 +1,29 @@
+#ifndef WEBSERV_HPP
+#define WEBSERV_HPP
+
+#include <stdbool.h>
+
+// CORE
+#include <string>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <ctime>
+
+// SERVER
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/cdefs.h>
+#include <sys/event.h>
+#include <stdint.h>
+#include <machine/types.h>
+
+#include "Core"
+#include "Server.hpp"
+#include "Socket.hpp"
+
+#endif

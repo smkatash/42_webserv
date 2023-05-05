@@ -1,14 +1,4 @@
-#include "Server.hpp"
-#include "./connectionHandler/Socket.hpp"
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/event.h>
-#include <iostream>
-
+#include "../inc/Server.hpp"
 
 //INIT------------------------------------------------------------------------
 Server::Server (ConfigFile conf, int kqFd) : config_(conf), kqFd_(kqFd)

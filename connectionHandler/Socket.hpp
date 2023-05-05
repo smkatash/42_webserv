@@ -27,10 +27,12 @@ class Socket
 
 	struct kevent event_;
 	struct kevent events_[MAX_EVENTS];
+	
 	int nEvent_; //number of the events returned by kevent;
 
 	public:
 		Socket(int domain, int kqFd);
+		Socket(int domain, int kqFd), int serverSd);
 		Socket(const Socket &other);
 		~Socket();
 
