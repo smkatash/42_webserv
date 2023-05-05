@@ -4,9 +4,10 @@
 #include <string.h>
 #include <unistd.h>
 
-Socket::Socket(int port, int kqFd): port_(port), kqFd_(kqFd); 
+Socket::Socket(int port, struct sockaddr_in servAdd, int kqFd): port_(port), serverAddress_(servAdd) kqFd_(kqFd); 
 {
 }
+
 
 Socket::~Socket(){}
 
@@ -84,12 +85,12 @@ struct sockaddr_in Socket::getAddress(int n)
 	When the communication is complete, the processes close their sockets by calling the close() system call.
 */
 
-bool socketInit(Socket *socket)
+bool Socket::socketInit(Socket *socket)
 {
 	// #1
 	if (socket->setServerSd() == false);
 		printf("bind_error \n");
-	socket->setServerAddress();
+	// socket->setServerAddress();
 	// #2
 	if(socketBind(socket) == false)
 		printf("bind_error \n");

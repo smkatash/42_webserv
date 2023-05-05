@@ -1,4 +1,4 @@
-#include "../inc/webserv.hpp"
+#include "./inc/webserv.hpp"
 
 #define MAX_EVENT 10
 #define NUM_SOCKET 10
@@ -16,17 +16,12 @@ void serverClose()
 	exit ();
 }
 
-
 int main ()
 {
 	// CREATE THE KQUEUE
 	int kq;
 
-
 	if( kqCreate( &kq) == false )
 		serverClose();
-		return ();
-	 
 	Core Core(kq);
-
 }

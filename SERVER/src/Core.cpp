@@ -8,5 +8,15 @@ Core::Core (int kqFd) : kqFd_(kqFd)
 	Server server(kqFd);
 	server.serverInit();
 	this->server_ = server;
+
 	// this->servers_ = servers;
+}
+
+void Core::Run()
+{
+
+	while(1)
+	{
+		
+	}
 }

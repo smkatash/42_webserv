@@ -18,7 +18,7 @@ class Socket
 
 	public:
 		Socket(int domain, int kqFd);
-		Socket(int domain, int kqFd), int serverSd);
+		Socket(int domain, int kqFd, int serverSd);
 		Socket(const Socket &other);
 		~Socket();
 

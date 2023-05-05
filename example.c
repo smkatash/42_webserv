@@ -289,3 +289,102 @@ main(int argc, char** argv)
         }
     }
 }
+
+
+
+// --------------------------------------------------------
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/event.h>
+#include <iostream>
+
+using namespace std;
+
+#define MAX_EVENTS 10
+
+int main()
+{
+    int server_fd, client_fd, kq, nevents;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_addr_size;
+    struct kevent change_list[MAX_EVENTS], event_list[MAX_EVENTS];
+
+    // create socket
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) {
+        cerr << "Error creating socket." << endl;
+        return 1;
+    }
+
+    // set server address
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(8080);
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    // bind socket to server address
+    if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        cerr << "Error binding socket to server address." << endl;
+        close(server_fd);
+        return 1;
+    }
+
+    // set socket to listen
+    if (listen(server_fd, 10) < 0) {
+        cerr << "Error setting socket to listen." << endl;
+        close(server_fd);
+        return 1;
+    }
+
+    // create kqueue
+    kq = kqueue();
+    if (kq < 0) {
+        cerr << "Error creating kqueue." << endl;
+        close(server_fd);
+        return 1;
+    }
+
+    // add server_fd to kqueue
+    EV_SET(&change_list[0], server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+
+    while (true) {
+        // wait for events
+        nevents = kevent(kq, change_list, 1, event_list, MAX_EVENTS, NULL);
+
+        // process events
+        for (int i = 0; i < nevents; i++) {
+            // handle new connection
+            if (event_list[i].ident == server_fd) {
+                client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_size);
+                if (client_fd < 0) {
+                    cerr << "Error accepting new connection." << endl;
+                    continue;
+                }
+
+                // set client_fd to non-blocking
+                fcntl(client_fd, F_SETFL, O_NONBLOCK);
+
+                // add client_fd to kqueue
+                EV_SET(&change_list[i], client_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+            }
+            // handle incoming data
+            else {
+                char buffer[1024];
+                int nbytes = read(event_list[i].ident, buffer, sizeof(buffer));
+                if (nbytes <= 0) {
+                    // remove client_fd from kqueue
+                    EV_SET(&change_list[i], event_list[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+                    close(event_list[i].ident);
+                } else {
+                    // process data
+                    // ...
+                }
+            }
+        }
+    }
+
+    return 0;
+}
