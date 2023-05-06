@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "../requestHandler/Request.hpp"
+#include "../parse/ConfigFile.hpp"
 
 /*
 A query string is typically used to pass data to the server via an HTTP GET request.
@@ -19,9 +20,23 @@ from the request body and use it to generate a response. POST requests are commo
 like submitting forms, uploading files, and making API calls.
 */
 
+struct cgi_handler {
+	const char*	serverName;
+	const char*	method;
+	const char* contenType;
+	const char* contenLength;
+	const char* userAgent;
+	const char* fullpathURI;
+	const char* cgiScriptPath;
+	const char* queryString;
+};
+
+typedef cgi_handler webservCGI;
+
 class CGIHandler {
 	private:
 		Request req_;
+		ConfigFile conf_;
 		// dummy, i think it should be vector or map
 		std::string queryString_;
 		std::string inputBody_;
@@ -29,13 +44,12 @@ class CGIHandler {
 		std::string scriptPath_;
 		std::string	serverName_;
 
+		webservCGI		cgi_;
+		void	initialize();
+
 	public:
-		CGIHandler();
+		CGIHandler(Request req);
 		~CGIHandler();
 		void	setEnvironment();
-		void	handle_cgi_script();
-		void	run();
-		void	POST();
-		void	GET();
 };
 
