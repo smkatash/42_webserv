@@ -2,7 +2,7 @@
 
 //INIT------------------------------------------------------------------------
 Server::
-Server (ConfigFile conf, int kqFd) : config_(conf), kqFd_(kqFd)
+Server (ConfigFile conf) : config_(conf)
 {
 }
 
@@ -22,12 +22,9 @@ initServerAddress(int port)
 int Server:: 
 getPort()
 {
-	return (this->config_.getListenPort());
-}
-int Server::
-getKq()
-{
-	return (this->kqFd_);
+	// with config_file:
+	// return (this->config_.getListenPort());
+	return this->port_
 }
 int Server::
 getServerFd()
@@ -53,7 +50,6 @@ initServerSocket(int port, sockaddr_in serverAdd, int kq)
 	Socket serverSocket(port, serverAdd, kq);
 	if(serverSocket.socketInit() == false);
 		return (NULL);
-	serverSocket.setKEvent;
 	return serverSocket;
 }
 
@@ -69,7 +65,9 @@ void Server::
 serverInit()
 {	
 	this->clientsSocket_ = this->initClientsSocket();
-	this->serverAdd_ = this->initServerAddress(server.config_.getListenPort());
-	this->serverSd_ = this->initServerSocket(server.config_getListenPort(), server->serverAdd);
-	addToEventList(this->getServerFd);
+	// with configuration file:
+		// this->serverAdd_ = this->initServerAddress(server.config_.getListenPort());
+		// this->serverSocket_ = this->initServerSocket(server.config_.getListenPort(), server->serverAdd);
+	this->serverAdd_ = this->initServerAddress(this->getListenPort());
+	this->serverSocket_ = this->initServerSocket(this->getListenPort(), this->serverAdd);	
 }

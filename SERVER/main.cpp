@@ -1,12 +1,9 @@
 #include "./inc/webserv.hpp"
 
-#define MAX_EVENT 10
-#define NUM_SOCKET 10
-
-bool kqCreate(int *kq)
+bool kqCreate()
 {
-	*kq = kqueue;
-	if (*kq < 0 )
+	kqFD = kqueue;
+	if (kqFD < 0 )
 		return (false);
 	return (true);
 }
@@ -19,9 +16,8 @@ void serverClose()
 int main ()
 {
 	// CREATE THE KQUEUE
-	int kq;
-
-	if( kqCreate( &kq) == false )
+	if( kqCreate() == false )
 		serverClose();
-	Core Core(kq);
+	Core Core();
+	Core.run;
 }

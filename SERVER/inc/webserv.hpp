@@ -26,4 +26,12 @@
 #include "Server.hpp"
 #include "Socket.hpp"
 
+#define MAX_EVENT 10
+#define NUM_SOCKET 10
+
+int kqFD;
+
+void serverClose();
+
+
 #endif

@@ -1,13 +1,8 @@
-#include "Socket.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#include "../inc/Socket.hpp"
 
-Socket::Socket(int port, struct sockaddr_in servAdd, int kqFd): port_(port), serverAddress_(servAdd) kqFd_(kqFd); 
+Socket::Socket(int port, struct sockaddr_in servAdd): port_(port), serverAddress_(servAdd) 
 {
 }
-
 
 Socket::~Socket(){}
 
@@ -31,23 +26,18 @@ void Socket::setServerAddress()
     this->serverAddress_.sin_port = htons(this->getPort());
 }
 
-int Socket::getKqueue()
-{
-	return (this->kqFd_);
-}
-
 struct kevent Socket::getEvent()
 {
-	return (this->event_);
+	return (this->events_);
 }
 
-
-bool setKEvent(Socket *socket)
+bool Socket::setKevent()
 {
-	EV_SET(&(this->getEvent()), this->getServerSd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	this->getEvent() = kevent(this->getKqueue(), &(this->getEvent()), 1, NULL, 0, NULL);
-	if (this->nEvent_ == -1)
-		return (false);
+	EV_SET(&(this->getEvent()[0]), kqFd, EVFILT_READ, EV_ADD, 0, 0, socket);
+	EV_SET(&(this->getEvent()[1]), kqFd, EVFILT_WRITE, EV_ADD, 0, 0, socket);
+	if (kevent(kqFd, &(this->getEvent()), 2, NULL, 0, NULL) == 0)
+		return false;
+	return true;
 }
 
 int Socket::getPort()
@@ -60,8 +50,6 @@ int Socket::getServerSd()
 	return (this->serverSd_);
 }
 
-
-
 struct sockaddr_in Socket::getAddress(int n)
 {
 	if (n == 0)
@@ -69,53 +57,40 @@ struct sockaddr_in Socket::getAddress(int n)
 	else 
 		return (this->clientAddress_);
 }
-/*
-	1#	A process creates a socket by calling the socket() system call. 
-		This creates a SOCKET DESCRIPTOR, which is used to identify the socket in subsequent system calls.
 
-	2#	The process then binds the socket to a specific address and port on the local machine by calling the bind() system call.
-		This step is optional, as the operating system can assign an available port automatically if one is not specified.
-
-	3#	The process then listens on the socket for incoming connections by calling the listen() system call.
-
-	4#  When a remote process wants to establish a connection, it first creates its own socket and then connects to the local socket by calling the connect() system call.
-		The local process can also initiate a connection by calling the connect() system call on its own socket.
-
-	Once a connection is established, data can be exchanged between the two processes by calling the send() and recv() system calls.
-	When the communication is complete, the processes close their sockets by calling the close() system call.
-*/
-
-bool Socket::socketInit(Socket *socket)
-{
-	// #1
-	if (socket->setServerSd() == false);
-		printf("bind_error \n");
-	// socket->setServerAddress();
-	// #2
-	if(socketBind(socket) == false)
-		printf("bind_error \n");
-	// #3
-	if(setSocketPassive(socket) == false);
-		printf("listen_error \n");
-	// #5
-	if(socket->setKqueue())
-	return true;
-}
-
-bool socketBind(Socket *socket)
+bool Socket::setSocketBind()
 {
 	int retValue;
 	socklen_t addrLen;
 
-	addrLen = sizeof(socket->getAddress(0));
-	retValue = (socket->getServerSd(), socket->getAddress(), addrLen);
+	addrLen = sizeof(this->getAddress(0));
+	retValue = bind(this->getServerSd(), this->getAddress(), addrLen);
 
 	return( retValue == 0 ? true : false);
 }
 
-bool setSocketPassive(Socket *socket)
+bool Socket::setSocketPassive()
 {
 	int retValue;
-	retValue = listen(socket->getServerSd(), 5);
+	retValue = listen(this->getServerSd(), 5);
 	return(retValue == 0 ? true : false);
+}
+
+bool Socket::socketInit()
+{
+	// init the socket;
+	// #1
+	if (this->setServerSd() == false);
+		printf("bind_error \n");
+	// socket->setServerAddress();
+	// #2
+	if(this->socketBind() == false)
+		printf("bind_error \n");
+	// #3
+	if(this->setSocketPassive(&socket) == false);
+		printf("listen_error \n");
+	// #5
+	// add the socket to the kqueue;
+	if(socket->setKvent() == false)
+	return true;
 }
