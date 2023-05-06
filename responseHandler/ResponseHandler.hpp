@@ -22,15 +22,17 @@ private:
 
 
 	bool		isMethodAllowed(Methods method, std::vector<int> methods);
-	std::string	getUriEndpoint(const std::string& uri);
+	std::string	findUriEndpoint(const std::string& uri);
 
 	void		prepUriFile(std::string& uri, const t_endpoint& loc);
-
-
 	void		setResponseBody(std::string fileName);
-	void		uriDirResponse(const t_endpoint& loc, std::string ep);
 
-	void		setCode(std::string code);
+	void		getReturnResponse(t_endpoint loc);
+	void		getAutoIndexResponse(t_endpoint loc, std::string ep);
+	void		getDirResponse(t_endpoint loc, std::string ep);
+	void 		getNormalResponse(t_endpoint loc, std::string uri);
+
+	void		setCode(int code);
 public:
 	ResponseHandler(Request req, ConfigFile conf);
 	~ResponseHandler();

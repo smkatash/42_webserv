@@ -8,7 +8,7 @@ SRC		=	main.cpp \
 			autoindex.cpp \
 			ConfigFile.cpp parser_utils.cpp Parser.cpp \
 			request_utils.cpp RequestParser.cpp \
-			ResponseHandler.cpp
+			response_utils.cpp ResponseHandler.cpp
 
 OBJ		=	$(addprefix obj/,$(notdir $(SRC:.cpp=.o)))
 INC		=	-I parse -I requestHandler -I responseHandler
