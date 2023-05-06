@@ -1,38 +1,23 @@
 #include <map>
 #include <algorithm>
-#include "ResponseHandler.hpp"
-#include "parser_utils.hpp" // Methods enum
 #include <fstream>
 #include <string>
-
-#include <chrono>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
-
-std::string getCurrentTimeGMT()
-{
-	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-	std::time_t timeNow = std::chrono::system_clock::to_time_t(now);
-
-	std::tm* gmTimeNow = std::gmtime(&timeNow);
-
-	std::stringstream ss("");
-	ss << std::put_time(gmTimeNow, "%a, %d %b %Y %H:%M:%S GMT");
-	return ss.str();
-}
+#include "ResponseHandler.hpp"
+#include "parser_utils.hpp" // Methods enum
+#include "response_utils.hpp"
 
 ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 : req_(req), conf_(conf)
 {
 	res_.rbody = nullptr;
 	res_.rline.version = "HTTP/1.1";
-	res_.rheader.server = "Francesco's Pizzaria/2.0 (MacOS)";
+	res_.rheader.server = "Francesco's Pizzeria/2.0 (MacOS)";
 }
 
 ResponseHandler::~ResponseHandler() {}
 
-std::string ResponseHandler::responseLine() {
+std::string ResponseHandler::responseLine()
+{
 	std::string line;
 	if (!res_.rline.version.empty())
 		line.append(res_.rline.version + ' ');
@@ -43,7 +28,8 @@ std::string ResponseHandler::responseLine() {
 	return line;
 }
 
-std::string ResponseHandler::generalHeader() {
+std::string ResponseHandler::generalHeader()
+{
 	std::string line;
 	if (!res_.gheader.cache.empty())
 		line.append("Cache-Control: " + res_.gheader.cache + "\r\n");
@@ -66,7 +52,8 @@ std::string ResponseHandler::generalHeader() {
 	return line;
 }
 
-std::string ResponseHandler::responseHeader() {
+std::string ResponseHandler::responseHeader()
+{
 	std::string line;
 	if (!res_.rheader.acceptRanges.empty())
 		line.append("Accept-Ranges: " + res_.rheader.acceptRanges + "\r\n");
@@ -89,7 +76,8 @@ std::string ResponseHandler::responseHeader() {
 	return line;
 }
 
-std::string ResponseHandler::entityHeader() {
+std::string ResponseHandler::entityHeader()
+{
 	std::string line;
 	if (!res_.eheader.allow.empty())
 		line.append("Allow: " + res_.eheader.allow + "\r\n");
@@ -114,7 +102,8 @@ std::string ResponseHandler::entityHeader() {
 	return line;
 }
 
-std::string ResponseHandler::getResponse() {
+std::string ResponseHandler::getResponse()
+{
 	std::string	header;
 	header = responseLine() + generalHeader()
 				+ responseHeader() + entityHeader();
@@ -126,6 +115,21 @@ std::string ResponseHandler::getResponse() {
 	return header;
 }
 
+void	ResponseHandler::setCode(int code)
+{
+	res_.rline.statusCode = toString(code);
+	if (code == 200)
+		res_.rline.reasonPhrase = "OK";
+	if (code == 302)
+		res_.rline.reasonPhrase = "Found";
+	if (code == 404)
+		res_.rline.reasonPhrase = "Not Found";
+	if (code == 405)
+		res_.rline.reasonPhrase = "Not Allowed";
+	if (code == 500)
+		res_.rline.reasonPhrase = "Internal Server Error";
+}
+
 bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAllowed)
 {
 	if (methodsAllowed.empty())
@@ -133,103 +137,19 @@ bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAl
 	std::vector<int>::iterator it = std::find(methodsAllowed.begin(), methodsAllowed.end(), method);
 	if (it == methodsAllowed.end())
 	{
-		setCode("405");
+		setCode(405);
 		return false;
 	}
 	return true;
 }
 
-template <typename T>
-std::string to_string(const T& value)
-{
-	std::stringstream ss;
-	ss << value;
-	return ss.str();
-}
-
-std::string findContentType(std::ifstream file)
-{
-	// Maybe parse mime.type in a map container and find based on what extension we have
-}
-
-void	ResponseHandler::setResponseBody(std::string fileName)
-{
-	std::ifstream file;
-	file.open(fileName);
-	if (!file.is_open() || !file.good())
-		return setCode("404");
-	std::string temp;
-	std::string body;
-	while (std::getline(file, temp))
-		body += temp + '\n';
-	res_.rbody = (char*)body.c_str();
-	res_.eheader.contentLength = to_string(body.length());
-	// res_.eheader.contentType = findContentType(file);
-	file.close();
-	return setCode("200");
-}
-
-/* When URI is a directory */
-void ResponseHandler::uriDirResponse(const t_endpoint& loc, std::string ep)
-{
-	if (loc.lautoindex)
-	{
-		std::string templateFile;
-		if (loc.lroot.empty())
-			templateFile = initAutoIndex(ep, conf_.getRoot(""));
-		else
-			templateFile = initAutoIndex(ep, loc.lroot);
-		std::cout << loc.lroot << std::endl;
-		if (templateFile.empty())
-			return setCode("404");
-		res_.rbody = (char*)templateFile.c_str();
-		res_.eheader.contentLength = to_string(templateFile.size());
-		return setCode("200");
-	}
-	else if (loc.lindex.empty())
-		return setCode("404");
-	std::string uri = loc.lindex.front(); // TODO: Needs changing to work with index vector
-	uri = ep + '/' + uri;
-	prepUriFile(uri, loc);
-	return setResponseBody(uri);
-}
-
-void	ResponseHandler::setCode(std::string code)
-{
-	res_.rline.statusCode = code;
-	if (code == "200")
-		res_.rline.reasonPhrase = "OK";
-	if (code == "404")
-		res_.rline.reasonPhrase = "Not Found";
-	if (code == "405")
-		res_.rline.reasonPhrase = "Not Allowed";
-}
-
-bool Pred(char a, char b)
-{
-	if (a == b && a == '/')
-		return 1;
-	return 0;
-}
-
-std::string removeDuplicateSlashes(const std::string& str)
-{
-	std::string res = str;
-	std::string::iterator last = res.begin();
-	last = std::unique(res.begin(), res.end(), &Pred);
-	res.erase(last, res.end());
-	if (res.back() == '/' && res.length() != 1)
-		res.pop_back();
-	return res;
-}
-
-std::string ResponseHandler::getUriEndpoint(const std::string& uri)
+std::string ResponseHandler::findUriEndpoint(const std::string& uri)
 {
 	if (uri == "")
 		return "/";
 	std::string ep = conf_.getEndPoint(uri);
 	if (ep == "")
-		return getUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start to '/' (basically with every function call we step back a directory)
+		return findUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start until '/' (basically with every function call we step back a directory)
 	return ep;
 }
 
@@ -249,21 +169,97 @@ void ResponseHandler::prepUriFile(std::string& uri, const t_endpoint& loc)
 		uri.insert(0, ".");
 }
 
+void	ResponseHandler::setResponseBody(std::string fileName)
+{
+	std::ifstream file;
+	file.open(fileName);
+	if (!file.is_open() || !file.good())
+		return setCode(404);
+	std::string temp;
+	std::string body;
+	while (std::getline(file, temp))
+		body += temp + '\n';
+	res_.rbody = (char*)body.c_str();
+	res_.eheader.contentLength = toString(body.length());
+	file.close();
+	return setCode(200);
+}
+
+void ResponseHandler::getReturnResponse(t_endpoint loc)
+{
+	if (isNumber(loc.lredirect.substr(0, 3)))
+	{
+		res_.rbody = (char*)loc.lredirect.substr(4).c_str(); // TODO: Test this. What would happen.
+		res_.eheader.contentLength = (char*)loc.lredirect.substr(4).length();
+		return setCode(strtoi(loc.lredirect.substr(0, 3)));
+	}
+	else if (loc.lredirect.substr(0, 4) == "http")
+	{
+		res_.rheader.location = loc.lredirect;
+		return setCode(302);
+	}
+	return setCode(500);
+}
+
+void ResponseHandler::getAutoIndexResponse(t_endpoint loc, std::string ep)
+{
+	std::string templateFile;
+	if (loc.lroot.empty())
+		templateFile = initAutoIndex(ep, conf_.getRoot(""));
+	else
+		templateFile = initAutoIndex(ep, loc.lroot);
+	if (templateFile.empty())
+		return setCode(404);
+	res_.rbody = (char*)templateFile.c_str();
+	res_.eheader.contentType = findContentType(".html");
+	res_.eheader.contentLength = toString(templateFile.size());
+	return setCode(200);
+}
+
+void ResponseHandler::getDirResponse(t_endpoint loc, std::string ep)
+{
+	if (loc.lautoindex)
+		return getAutoIndexResponse(loc, ep);
+	else if (loc.lindex.empty())
+		return setCode(404);
+	std::string uri = findUsableFile(loc.lindex, ep + "/");
+	if (uri.empty())
+		return setCode(404);
+	uri = ep + '/' + uri;
+	return getNormalResponse(loc, uri);
+}
+
+void ResponseHandler::getNormalResponse(t_endpoint loc, std::string uri)
+{
+	prepUriFile(uri, loc);
+	std::string uriPath = uri.substr(0, uri.find('?'));
+	res_.eheader.contentType = findContentType(uriPath.substr(uri.find_last_of('.')));
+	return setResponseBody(uriPath);
+}
+
 void ResponseHandler::get()
 {
-	res_.gheader.date = getCurrentTimeGMT();
-	std::string uri = removeDuplicateSlashes(req_.rline.uri);
+	try
+	{
+		res_.gheader.date = findCurrentTimeGMT();
+		std::string uri = removeDuplicateSlashes(req_.rline.uri);
+		std::string ep = findUriEndpoint(uri);
+		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
 
-	std::string ep = getUriEndpoint(uri);
-	if (ep == "")
-		return setCode("404");
+		if (!isMethodAllowed(GET, loc.lmethod))
+			return setCode(405);
+		
+		/* TODO: Check if you have to send to cgi handler by checking if
+		there's a query and seeing if there's a cgi specified in location */
 
-	t_endpoint loc = conf_.getLocation(ep);
-	if (!isMethodAllowed(GET, loc.lmethod))
-		return setCode("405");
-
-	if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
-		return uriDirResponse(loc, ep);
-	prepUriFile(uri, loc);
-	return setResponseBody(uri);
+		if (!loc.lredirect.empty())
+			return getReturnResponse(loc);
+		if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
+			return getDirResponse(loc, ep);
+		return getNormalResponse(loc, uri);
+	}
+	catch(const std::exception& e)
+	{
+		return setCode(404);
+	}
 }
