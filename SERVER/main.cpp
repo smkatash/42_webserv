@@ -19,5 +19,5 @@ int main ()
 	if( kqCreate() == false )
 		serverClose();
 	Core Core();
-	Core.run;
+	Core.run();
 }

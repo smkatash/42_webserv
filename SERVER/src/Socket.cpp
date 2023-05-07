@@ -6,14 +6,23 @@ Socket::Socket(int port, struct sockaddr_in servAdd): port_(port), serverAddress
 
 Socket::~Socket(){}
 
-bool Socket::setServerSd()
+bool Socket::setSocketDescriptor()
 {
 	int fd;
 	
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd == -1)
 		return false;
-	this->serverSd_ = fd;
+	this->sD_ = fd;
+	return (true);
+}
+
+bool Socket::setSocketOption()
+{
+	// set the SOCKET as TCP_NODELAY, for fast response whenever possible.
+	int val = 1;
+	if( setsockopt(this->Sd_, 0, TCP_NODELAY, (char *)&val, sizeof(int)) == 0)
+		return (false);
 	return (true);
 }
 
@@ -45,9 +54,9 @@ int Socket::getPort()
 	return (this->port_);
 }
 
-int Socket::getServerSd()
+int Socket::getSocketDescriptor()
 {
-	return (this->serverSd_);
+	return (this->Sd_);
 }
 
 struct sockaddr_in Socket::getAddress(int n)
@@ -64,7 +73,7 @@ bool Socket::setSocketBind()
 	socklen_t addrLen;
 
 	addrLen = sizeof(this->getAddress(0));
-	retValue = bind(this->getServerSd(), this->getAddress(), addrLen);
+	retValue = bind(this->getSocketDescriptor(), this->getAddress(), addrLen);
 
 	return( retValue == 0 ? true : false);
 }
@@ -72,7 +81,7 @@ bool Socket::setSocketBind()
 bool Socket::setSocketPassive()
 {
 	int retValue;
-	retValue = listen(this->getServerSd(), 5);
+	retValue = listen(this->getSocketDescriptor(), 5);
 	return(retValue == 0 ? true : false);
 }
 
@@ -80,8 +89,10 @@ bool Socket::socketInit()
 {
 	// init the socket;
 	// #1
-	if (this->setServerSd() == false);
-		printf("bind_error \n");
+	if (this->setSocketDescriptor() == false);
+		printf("socket() error \n");
+	if (this->setSocketOption() == false);
+		printf("setsockopt() error \n");
 	// socket->setServerAddress();
 	// #2
 	if(this->socketBind() == false)

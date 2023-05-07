@@ -11,7 +11,7 @@ class Socket
 {
 	private:
 	int port_;
-	int serverSd_;
+	int sD_;
 	int clientSd_;
 	struct sockaddr_in serverAddress_;
 	struct sockaddr_in clientAddress_;
@@ -31,9 +31,9 @@ class Socket
 		Socket &operator=(const Socket &other);
 
 	public: //method
-		bool setServerSd();
+		bool setSocketDescriptor();
+		bool setSocketOption()
 		void setServerAddress();
-		bool setSocketFd(int fd);
 		bool setSocketBind();
 		bool setSocketPassive()
 		bool setKevent()
