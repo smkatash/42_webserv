@@ -10,12 +10,12 @@
 class Socket 
 {
 	private:
+
 	int port_;
 	int sD_;
 	int clientSd_;
-	struct sockaddr_in serverAddress_;
-	struct sockaddr_in clientAddress_;
-
+	struct sockaddr_in serverAddress_; //it stay the same of the Server.
+	struct sockaddr_in clientAddress_; //it's always different.
 	struct kevent event_;
 	// struct kevent events_[MAX_EVENTS];
 	struct kevent events_[2];
@@ -40,7 +40,7 @@ class Socket
 		int getPort();
 		void getEvent();
 		int getServerSd();
-		struct sockaddr_in Socket::getAddress(int n);
+		struct sockaddr_in Socket::getSocketAddress();
 	
 		bool socketInit();
 

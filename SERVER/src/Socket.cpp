@@ -20,8 +20,12 @@ bool Socket::setSocketDescriptor()
 bool Socket::setSocketOption()
 {
 	// set the SOCKET as TCP_NODELAY, for fast response whenever possible.
-	int val = 1;
-	if( setsockopt(this->Sd_, 0, TCP_NODELAY, (char *)&val, sizeof(int)) == 0)
+	int val;
+	int socketDescriptor;
+	
+	socketDescriptor = getSocketDescriptor();
+	val = 1;
+	if( setsockopt(socketDescriptor, 0, TCP_NODELAY, (char *)&val, sizeof(int)) == -1)
 		return (false);
 	return (true);
 }
@@ -35,7 +39,7 @@ bool Socket::setKevent()
 {
 	EV_SET(&(this->getEvent()[0]), kqFd, EVFILT_READ, EV_ADD, 0, 0, socket);
 	EV_SET(&(this->getEvent()[1]), kqFd, EVFILT_WRITE, EV_ADD, 0, 0, socket);
-	if (kevent(kqFd, &(this->getEvent()), 2, NULL, 0, NULL) == 0)
+	if (kevent(kqFd, &(this->getEvent()), 2, NULL, 0, NULL) == -1)
 		return false;
 	return true;
 }
@@ -61,12 +65,9 @@ void Socket::setAddress ()
 	return (); 
 }
 
-struct sockaddr_in Socket::getAddress(int n)
+struct sockaddr_in Socket::getSocketAddress()
 {
-	if (n == 0)
-		return (this->serverAddress_);
-	else 
-		return (this->clientAddress_);
+	return (this->clientAddress_);
 }
 
 bool Socket::setSocketBind()
@@ -74,7 +75,7 @@ bool Socket::setSocketBind()
 	int retValue;
 	socklen_t addrLen;
 
-	addrLen = sizeof(this->getAddress(0));
+	addrLen = sizeof(this->getAddress());
 	retValue = bind(this->getSocketDescriptor(), this->getAddress(), addrLen);
 
 	return( retValue == 0 ? true : false);
@@ -90,10 +91,14 @@ bool Socket::setSocketPassive()
 bool Socket::setSocketConnection()
 {
 	int r;
-	int fD = getSocketDescriptor();
-	struct sockaddr_in * address = &(getAddress(0));
-	r = connect(fD, address, sizeof(struct sockaddr_in));
-
+	int socketDescriptor;
+	struct sockaddr_in socketAddress;
+	
+	socketAddress = getAddress();
+	socketDescriptor = getSocketDescriptor();
+	if(connect(socketDescriptor, socketAddress, sizeof(struct sockaddr_in)) == 0);
+		return (true); 
+	return (false);
 }
 
 bool Socket::socketPassiveInit()
