@@ -16,6 +16,9 @@ class Socket
 	int clientSd_;
 	struct sockaddr_in serverAddress_; //it stay the same of the Server.
 	struct sockaddr_in clientAddress_; //it's always different.
+
+	vector<char> data_;
+
 	struct kevent event_;
 	// struct kevent events_[MAX_EVENTS];
 	struct kevent events_[2];
@@ -37,6 +40,10 @@ class Socket
 		bool setSocketPassive()
 		bool setKevent()
 		void setAddress ()
+
+		std::string setReadHandler();
+		boool setWriteHandler();
+
 		int getPort();
 		void getEvent();
 		int getServerSd();

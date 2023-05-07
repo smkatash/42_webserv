@@ -88,6 +88,29 @@ bool Socket::setSocketPassive()
 	return(retValue == 0 ? true : false);
 }
 
+vector<char> Socket setReadHandler()
+{
+	vector<char> buffer(5000);
+	int socketDescriptor;
+	int bytes;
+
+	socketDescriptor = getSocketDescriptor();
+	bytes = recv(socketDescriptor, buffer.data(), buffer.size());
+	if( bytes > 0 )
+	{
+		// do something... 
+		std::cout<< buffer.data << std::endl;
+		return buffer;
+	} else {
+		
+	}
+}
+
+bool Socket setWriteHandler()
+{
+
+}
+
 bool Socket::setSocketConnection()
 {
 	int r;
