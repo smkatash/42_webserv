@@ -2,10 +2,14 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
+#include <fstream>
+#include <fcntl.h>
 #include <sys/wait.h>
+#include <errno.h>
 #include "../requestHandler/Request.hpp"
 #include "../parse/ConfigFile.hpp"
 
+#define MAX_PATH_LEN 256
 /*
 A query string is typically used to pass data to the server via an HTTP GET request.
 The query string is appended to the end of the URL in the format ?key1=value1&key2=value2..., 
@@ -21,35 +25,41 @@ like submitting forms, uploading files, and making API calls.
 */
 
 struct cgi_handler {
-	const char*	serverName;
-	const char*	method;
-	const char* contenType;
-	const char* contenLength;
-	const char* userAgent;
-	const char* fullpathURI;
-	const char* cgiScriptPath;
-	const char* queryString;
+	std::string	method;
+	std::string contenType;
+	std::string contenLength;
+	std::string userAgent;
+	std::string	serverName;
+	std::string uri;
+	std::string epScriptRoot;
+	std::string cgiPathInfo;
+	std::string queryString;
+	std::string body;
 };
 
-typedef cgi_handler webservCGI;
+typedef cgi_handler WebservCGI;
 
 class CGIHandler {
 	private:
 		Request req_;
 		ConfigFile conf_;
-		// dummy, i think it should be vector or map
-		std::string queryString_;
-		std::string inputBody_;
-		// get from config?
-		std::string scriptPath_;
-		std::string	serverName_;
+		std::string ep_;
+		WebservCGI		cgi_;
 
-		webservCGI		cgi_;
-		void	initialize();
+		void	getRequestInfo();
+		void	getConfigInfo();
 
 	public:
-		CGIHandler(Request req);
+		CGIHandler(Request req, ConfigFile conf, std::string location);
 		~CGIHandler();
 		void	setEnvironment();
+		void	execute();
+		void	runChildProcess(int fd, char** argv);
+		void	runParentProcess(int status, int fd);
 };
 
+
+int			check_access(const char* file);
+std::string	getAbsolutePath(std::string rootPath, std::string scriptPath);
+char**		setArgArray(std::string cgiPath, std::string scripPath);
+void		freeArgArray(char** argv);
