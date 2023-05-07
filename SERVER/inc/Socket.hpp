@@ -33,11 +33,10 @@ class Socket
 	public: //method
 		bool setSocketDescriptor();
 		bool setSocketOption()
-		void setServerAddress();
 		bool setSocketBind();
 		bool setSocketPassive()
 		bool setKevent()
-		
+		void setAddress ()
 		int getPort();
 		void getEvent();
 		int getServerSd();

@@ -26,15 +26,6 @@ bool Socket::setSocketOption()
 	return (true);
 }
 
-void Socket::setServerAddress()
-{
-	//should work with an IP but right now it takes a random one.;
-	memset(&(this->serverAddress_), 0, sizeof(this->serverAddress_));
-	this->serverAddress_.sin_family = AF_INET;
-	this->serverAddress_.sin_addr.s_addr = INADDR_ANY;
-    this->serverAddress_.sin_port = htons(this->getPort());
-}
-
 struct kevent Socket::getEvent()
 {
 	return (this->events_);
@@ -57,6 +48,17 @@ int Socket::getPort()
 int Socket::getSocketDescriptor()
 {
 	return (this->Sd_);
+}
+
+void Socket::setAddress ()
+{
+	struct sockaddr_in address = {};
+    address.sin_family = AF_INET;
+	// address.sin_addr.s_addr = htonl(getIp());
+	address.sin_addr.s_addr = htonl(INADDR_ANY);
+	address.sin_port = htons(getPort());
+	this->address_ = address;
+	return (); 
 }
 
 struct sockaddr_in Socket::getAddress(int n)
@@ -85,22 +87,40 @@ bool Socket::setSocketPassive()
 	return(retValue == 0 ? true : false);
 }
 
+bool Socket::setSocketConnection()
+{
+	int r;
+	int fD = getSocketDescriptor();
+	struct sockaddr_in * address = &(getAddress(0));
+	r = connect(fD, address, sizeof(struct sockaddr_in));
+
+}
+
+bool Socket::socketPassiveInit()
+{
+	// init the socket;
+	if (setSocketDescriptor() == false);
+		printf("socket() error \n");
+	if (setSocketOption() == false);
+		printf("setsockopt() error \n");
+	if(setSocketBind() == false)
+		printf("bind_error \n");
+	if(setSocketPassive(&socket) == false);
+		printf("listen_error \n");
+	// add the socket to the kqueue;
+	if(socket->setKvent() == false)
+	return true;
+}
+
 bool Socket::socketInit()
 {
 	// init the socket;
-	// #1
-	if (this->setSocketDescriptor() == false);
+	if (setSocketDescriptor() == false);
 		printf("socket() error \n");
-	if (this->setSocketOption() == false);
+	if (setSocketOption() == false);
 		printf("setsockopt() error \n");
-	// socket->setServerAddress();
-	// #2
-	if(this->socketBind() == false)
+	if(setSocketConnection() == false)
 		printf("bind_error \n");
-	// #3
-	if(this->setSocketPassive(&socket) == false);
-		printf("listen_error \n");
-	// #5
 	// add the socket to the kqueue;
 	if(socket->setKvent() == false)
 	return true;

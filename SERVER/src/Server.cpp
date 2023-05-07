@@ -11,7 +11,7 @@ Server (ConfigFile conf) : config_(conf)
 struct sockaddr_in Server::
 initServerAddress(int port)
 {
-	struct sockaddr_in serverAdd;
+	struct sockaddr_in serverAdd = {};
 	serverAdd.sin_family = AF_INET;
     serverAdd.sin_port = htons(port);
 	serverAdd.sin_addr.s_addr = htonl(INADDR_ANY);
