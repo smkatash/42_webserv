@@ -82,17 +82,17 @@ bool Socket::setData (vector<char> buffer)
 // GET----------------------------------------------------
 int Socket::getPort()
 {
-	return (this->port_);
+	return (port_);
 }
 
 struct kevent Socket::getEvent()
 {
-	return (this->events_);
+	return (events_);
 }
 
 int Socket::getSocketDescriptor()
 {
-	return (this->Sd_);
+	return (Sd_);
 }
 
 vector<char> Socket::getData()
@@ -102,7 +102,7 @@ vector<char> Socket::getData()
 
 struct sockaddr_in Socket::getSocketAddress()
 {
-	return (this->clientAddress_);
+	return (clientAddress_);
 }
 
 // MAIN--------------------------------------------------
@@ -165,7 +165,6 @@ bool Socket writeHandler()
 	{
 		// error;
 	}
-
 }
 
 bool Socket::setSocketConnection()
@@ -193,7 +192,7 @@ bool Socket::socketPassiveInit()
 	if(setSocketPassive(&socket) == false);
 		printf("listen_error \n");
 	// add the socket to the kqueue;
-	if(socket->setKvent() == false)
+	if(setKvent() == false)
 	return true;
 }
 
@@ -207,6 +206,6 @@ bool Socket::socketInit()
 	if(setSocketConnection() == false)
 		printf("bind_error \n");
 	// add the socket to the kqueue;
-	if(socket->setKvent() == false)
+	if(setKvent() == false)
 	return true;
 }
