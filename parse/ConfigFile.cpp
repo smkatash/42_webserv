@@ -118,7 +118,7 @@ const std::map<int, std::string>	&ConfigFile::getErrorFile(void) const {
 }
 
 const std::string	ConfigFile::getScriptCGI(std::string endpoint, std::string type) const {
-	if (!endpoint.size() && !type.size()) {
+	if (!endpoint.empty() && !type.empty()) {
 		std::map<std::string, t_endpoint>::const_iterator it = location_.find(endpoint);
 		if (it != location_.end()) {
 			std::map<std::string, std::string>::const_iterator itc = it->second.lcgi.find(type);

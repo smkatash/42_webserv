@@ -49,13 +49,13 @@ class CGIHandler {
 		void	getRequestInfo();
 		void	getConfigInfo();
 
+		void	setEnvironment();
+		void	runChildProcess(int fd, char** argv);
+		void	runParentProcess(int status, int fd);
 	public:
 		CGIHandler(Request req, ConfigFile conf, std::string location);
 		~CGIHandler();
-		void	setEnvironment();
 		void	execute();
-		void	runChildProcess(int fd, char** argv);
-		void	runParentProcess(int status, int fd);
 };
 
 
