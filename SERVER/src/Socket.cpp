@@ -54,6 +54,12 @@ int Socket::getSocketDescriptor()
 	return (this->Sd_);
 }
 
+vector<char> Socket::getData()
+{
+	return data_;
+}
+
+// SET---------------------------------------------------------
 void Socket::setAddress ()
 {
 	struct sockaddr_in address = {};
@@ -88,22 +94,68 @@ bool Socket::setSocketPassive()
 	return(retValue == 0 ? true : false);
 }
 
-vector<char> Socket setReadHandler()
+// something to fix here;
+bool Socket::setData (vector<char> buffer) 
+{
+	data_ = buffer;
+		return true;
+	if ( buffer.size() == 0)
+	{
+		return false;
+	}
+}
+
+bool Socket::readHandler()
 {
 	vector<char> buffer(5000);
 	int socketDescriptor;
 	int bytes;
 
 	socketDescriptor = getSocketDescriptor();
-	bytes = recv(socketDescriptor, buffer.data(), buffer.size());
+	bytes = recv(socketDescriptor, buffer.data(), buffer.size(), 0);
 	if( bytes > 0 )
 	{
 		// do something... 
 		std::cout<< buffer.data << std::endl;
+		setData(buffer);
 		return buffer;
-	} else {
-		
+	} 
+	else if ( bytes = 0) 
+	{ 
+		// server has finished sending data;
+		// what else to do?
 	}
+	else if ( bytes < 0 && errno == EAGAIN)
+	{
+		// the socket read buffer is empty;
+		// bytes is < 0 we have to return error;
+	}
+	else
+	{
+		// we have a problem;
+	}
+	return vector<char> buffer;
+}
+
+// we should sett an offset;
+vector<char> Socket writeHandler()
+{
+	vector<char> buffer;
+	int bytes;
+	int socketDescriptor;
+	int offset;
+
+	socketDescriptor = getSocketDescriptor();
+	buffer = getData();
+	bytes = send(socketDescriptor, buffer.data() + offset, sizeof(char) * offset,0);
+	while (bytes > 0)
+	{
+		int n = 1;
+		offset = offset + offset / n;
+		bytes = send(socketDescriptor, buffer.data() + offset, sizeof(char) * offset,0);
+		n++;
+	}
+
 }
 
 bool Socket setWriteHandler()
