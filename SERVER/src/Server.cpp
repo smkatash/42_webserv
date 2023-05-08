@@ -53,7 +53,7 @@ void Socket::initServerAddress()
 Socket Server::initServerSocket(int port, sockaddr_in serverAdd, int kq)
 {
 	Socket serverSocket(port, serverAdd, kq);
-	if(serverSocket.socketInit() == false);
+	if(serverSocket.socketPassiveInit() == false);
 		return (NULL);
 	setSocket(serverSocket);
 	return serverSocket;

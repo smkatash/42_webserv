@@ -33,12 +33,14 @@ class Socket
 
 	public: //method
 		bool setSocketDescriptor();
-		bool setSocketOption()
+		bool setPassiveSocketDescriptor();
+		bool setSocketOption();
 		bool setSocketBind();
 		bool setSocketPassive();
 		bool setKevent();
-		void setAddress ();
+		void setDestinationAddress ();
 		bool setData (vector<char> buffer);
+		bool setSocketconnection();
 
 		int getPort();
 		struct kevent getEvent();
@@ -47,8 +49,6 @@ class Socket
 		struct sockaddr_in Socket::getSocketDestinationAddress();
 		struct sockaddr_in Socket::getSocketSourceAddress()
 
-
-	
 		bool socketInit();
 		bool socketPassiveInit()
 		bool readHandler();

@@ -13,14 +13,19 @@ Socket::~Socket()
 }
 
 // SET---------------------------------------------------------
-bool Socket::setSocketDescriptor()
+bool Socket::setSocketDescriptor(int fd)
+{
+	sD_ = fd;
+}
+
+bool Socket::setPassiveSocketDescriptor()
 {
 	int fd;
 	
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd == -1)
 		return false;
-	this->sD_ = fd;
+	sD_ = fd;
 	return (true);
 }
 
@@ -85,6 +90,24 @@ bool Socket::setData (vector<char> buffer)
 	{
 		return false;
 	}
+}
+
+bool Socket::setSocketConnection()
+{
+	int fd;
+	int socketDescriptor;
+	struct sockaddr_in destAddress;
+	
+	destAddress = memset(&destAddress, 0, sizeof(destAddress));
+	socketDescriptor = getSocketDescriptor();
+	fd = accept(socketDescriptor, &destAddress, sizeof(&struct sockaddr_in));
+	if (fd == 0)
+	{
+		setSocketDescriptor(fd);
+		setDestinationAddress(destAddress);
+		return (true);
+	}
+	return (false);
 }
 
 // GET----------------------------------------------------
@@ -180,28 +203,10 @@ bool Socket writeHandler()
 	}
 }
 
-bool Socket::setSocketConnection()
-{
-	int fd;
-	int socketDescriptor;
-	struct sockaddr_in destAddress;
-	
-	destAddress = memset(&destAddress, 0, sizeof(destAddress));
-	socketDescriptor = getSocketDescriptor();
-	fd = accept(socketDescriptor, &destAddress, sizeof(&struct sockaddr_in));
-	if (fd == 0)
-	{
-		setSocketDescriptor(fd);
-		setDestinationAddress(destAddress);
-		return (true);
-	}
-	return (false);
-}
-
 bool Socket::socketPassiveInit()
 {
 	// init the socket;
-	if (setSocketDescriptor() == false);
+	if (setPassiveSocketDescriptor() == false);
 		printf("socket() error \n");
 	if (setSocketOption() == false);
 		printf("setsockopt() error \n");
