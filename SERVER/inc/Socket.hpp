@@ -37,21 +37,21 @@ class Socket
 		bool setSocketDescriptor();
 		bool setSocketOption()
 		bool setSocketBind();
-		bool setSocketPassive()
-		bool setKevent()
-		void setAddress ()
-
-		std::string setReadHandler();
-		boool setWriteHandler();
+		bool setSocketPassive();
+		bool setKevent();
+		void setAddress ();
+		bool setData (vector<char> buffer);
 
 		int getPort();
-		void getEvent();
-		int getServerSd();
+		struct kevent getEvent();
+		int getSocketDescriptor();
+		vector<char> getData();
 		struct sockaddr_in Socket::getSocketAddress();
+
 	
 		bool socketInit();
-
-
+		bool readHandler();
+		bool writeHandler();
 };
 
 

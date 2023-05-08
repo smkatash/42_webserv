@@ -6,6 +6,7 @@ Socket::Socket(int port, struct sockaddr_in servAdd): port_(port), serverAddress
 
 Socket::~Socket(){}
 
+// SET---------------------------------------------------------
 bool Socket::setSocketDescriptor()
 {
 	int fd;
@@ -30,9 +31,21 @@ bool Socket::setSocketOption()
 	return (true);
 }
 
-struct kevent Socket::getEvent()
+bool Socket::setSocketBind()
 {
-	return (this->events_);
+	int retValue;
+	socklen_t addrLen;
+
+	addrLen = sizeof(this->getAddress());
+	retValue = bind(this->getSocketDescriptor(), this->getAddress(), addrLen);
+
+	return( retValue == 0 ? true : false);
+}
+bool Socket::setSocketPassive()
+{
+	int retValue;
+	retValue = listen(this->getSocketDescriptor(), 5);
+	return(retValue == 0 ? true : false);
 }
 
 bool Socket::setKevent()
@@ -44,22 +57,6 @@ bool Socket::setKevent()
 	return true;
 }
 
-int Socket::getPort()
-{
-	return (this->port_);
-}
-
-int Socket::getSocketDescriptor()
-{
-	return (this->Sd_);
-}
-
-vector<char> Socket::getData()
-{
-	return data_;
-}
-
-// SET---------------------------------------------------------
 void Socket::setAddress ()
 {
 	struct sockaddr_in address = {};
@@ -69,29 +66,6 @@ void Socket::setAddress ()
 	address.sin_port = htons(getPort());
 	this->address_ = address;
 	return (); 
-}
-
-struct sockaddr_in Socket::getSocketAddress()
-{
-	return (this->clientAddress_);
-}
-
-bool Socket::setSocketBind()
-{
-	int retValue;
-	socklen_t addrLen;
-
-	addrLen = sizeof(this->getAddress());
-	retValue = bind(this->getSocketDescriptor(), this->getAddress(), addrLen);
-
-	return( retValue == 0 ? true : false);
-}
-
-bool Socket::setSocketPassive()
-{
-	int retValue;
-	retValue = listen(this->getSocketDescriptor(), 5);
-	return(retValue == 0 ? true : false);
 }
 
 // something to fix here;
@@ -104,6 +78,34 @@ bool Socket::setData (vector<char> buffer)
 		return false;
 	}
 }
+
+// GET----------------------------------------------------
+int Socket::getPort()
+{
+	return (this->port_);
+}
+
+struct kevent Socket::getEvent()
+{
+	return (this->events_);
+}
+
+int Socket::getSocketDescriptor()
+{
+	return (this->Sd_);
+}
+
+vector<char> Socket::getData()
+{
+	return data_;
+}
+
+struct sockaddr_in Socket::getSocketAddress()
+{
+	return (this->clientAddress_);
+}
+
+// MAIN--------------------------------------------------
 
 bool Socket::readHandler()
 {
@@ -138,7 +140,7 @@ bool Socket::readHandler()
 }
 
 // we should sett an offset;
-vector<char> Socket writeHandler()
+bool Socket writeHandler()
 {
 	vector<char> buffer;
 	int bytes;
@@ -155,11 +157,14 @@ vector<char> Socket writeHandler()
 		bytes = send(socketDescriptor, buffer.data() + offset, sizeof(char) * offset,0);
 		n++;
 	}
-
-}
-
-bool Socket setWriteHandler()
-{
+	if ( bytes < 0 && errno == EAGAIN)
+	{
+		// the socket's write buffer is full;
+	}
+	else 
+	{
+		// error;
+	}
 
 }
 
