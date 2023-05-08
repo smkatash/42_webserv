@@ -2,10 +2,8 @@
 # define SOCKET_HPP
 
 #include "webserver.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#include <fcntl.h>
+
 
 class Socket 
 {
@@ -14,8 +12,8 @@ class Socket
 	int port_;
 	int sD_;
 	int clientSd_;
-	struct sockaddr_in serverAddress_; //it stay the same of the Server.
-	struct sockaddr_in clientAddress_; //it's always different.
+	struct sockaddr_in sourceAddress_; //it stay the same of the Server.
+	struct sockaddr_in destinationAddress_; //it's always different.
 
 	vector<char> data_;
 
@@ -27,7 +25,7 @@ class Socket
 
 	public: //init bla bla 
 		Socket(int domain);
-		Socket(int domain, int serverSd);
+		Socket(int domain, struct sockaddr_in servAdd);
 		Socket(const Socket &other);
 		~Socket();
 
@@ -46,10 +44,13 @@ class Socket
 		struct kevent getEvent();
 		int getSocketDescriptor();
 		vector<char> getData();
-		struct sockaddr_in Socket::getSocketAddress();
+		struct sockaddr_in Socket::getSocketDestinationAddress();
+		struct sockaddr_in Socket::getSocketSourceAddress()
+
 
 	
 		bool socketInit();
+		bool socketPassiveInit()
 		bool readHandler();
 		bool writeHandler();
 };

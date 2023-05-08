@@ -1,10 +1,16 @@
 #include "../inc/Socket.hpp"
 
-Socket::Socket(int port, struct sockaddr_in servAdd): port_(port), serverAddress_(servAdd) 
+Socket::Socket(int port, struct sockaddr_in servAdd): port_(port), sourceAddress_(servAdd) 
 {
 }
 
-Socket::~Socket(){}
+Socket::Socket(int port): port_(port) 
+{
+}
+
+Socket::~Socket()
+{
+}
 
 // SET---------------------------------------------------------
 bool Socket::setSocketDescriptor()
@@ -22,10 +28,16 @@ bool Socket::setSocketOption()
 {
 	// set the SOCKET as TCP_NODELAY, for fast response whenever possible.
 	int val;
+	int statusFnctl;
 	int socketDescriptor;
 	
 	socketDescriptor = getSocketDescriptor();
 	val = 1;
+	statusFnctl = fcntl(obj->sk, F_SETFL, fcntl(obj->sk, F_GETFL, 0) | O_NONBLOCK);
+	if (statusFnctl == -1)
+	{
+  		perror("calling fcntl");
+	}
 	if( setsockopt(socketDescriptor, 0, TCP_NODELAY, (char *)&val, sizeof(int)) == -1)
 		return (false);
 	return (true);
@@ -41,6 +53,7 @@ bool Socket::setSocketBind()
 
 	return( retValue == 0 ? true : false);
 }
+
 bool Socket::setSocketPassive()
 {
 	int retValue;
@@ -57,14 +70,9 @@ bool Socket::setKevent()
 	return true;
 }
 
-void Socket::setAddress ()
+void Socket::setDestinationAddress (struct sockaddr_in address)
 {
-	struct sockaddr_in address = {};
-    address.sin_family = AF_INET;
-	// address.sin_addr.s_addr = htonl(getIp());
-	address.sin_addr.s_addr = htonl(INADDR_ANY);
-	address.sin_port = htons(getPort());
-	this->address_ = address;
+	destinationAddress_ = address;
 	return (); 
 }
 
@@ -100,9 +108,14 @@ vector<char> Socket::getData()
 	return data_;
 }
 
-struct sockaddr_in Socket::getSocketAddress()
+struct sockaddr_in Socket::getSocketDestinationAddress()
 {
-	return (clientAddress_);
+	return (destinationAddress_);
+}
+
+struct sockaddr_in Socket::getSocketSourceAddress()
+{
+	return (sourceAddress_);
 }
 
 // MAIN--------------------------------------------------
@@ -169,14 +182,19 @@ bool Socket writeHandler()
 
 bool Socket::setSocketConnection()
 {
-	int r;
+	int fd;
 	int socketDescriptor;
-	struct sockaddr_in socketAddress;
+	struct sockaddr_in destAddress;
 	
-	socketAddress = getAddress();
+	destAddress = memset(&destAddress, 0, sizeof(destAddress));
 	socketDescriptor = getSocketDescriptor();
-	if(connect(socketDescriptor, socketAddress, sizeof(struct sockaddr_in)) == 0);
-		return (true); 
+	fd = accept(socketDescriptor, &destAddress, sizeof(&struct sockaddr_in));
+	if (fd == 0)
+	{
+		setSocketDescriptor(fd);
+		setDestinationAddress(destAddress);
+		return (true);
+	}
 	return (false);
 }
 

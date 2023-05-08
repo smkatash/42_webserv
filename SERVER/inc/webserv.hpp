@@ -14,13 +14,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/event.h>
 #include <stdint.h>
 #include <machine/types.h>
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "Core"
 #include "Server.hpp"

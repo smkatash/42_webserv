@@ -8,6 +8,7 @@ class Server
 	private: 
 		Socket serverSocket_;
 		struct sockaddr_in serverAdd_;
+
 		std::vector <Socket> clientsSocket_;
 		int port_ = 8080;
 
@@ -18,11 +19,13 @@ class Server
 		Server();
 		~Server();
 
+		void setServerAddress(struct sockaddr_in address);
+
 		int getPort();
 		int getServerFd();
+
 		bool serverInit();
 		struct sockaddr_in initServerAddress(int port)
 		Socket initServerSocket(int port, sockaddr_in serverAdd);
-		std::vector <Socket> initClientsSocket();
-
+		std::vector <Socket> addClientInSockets();
 };

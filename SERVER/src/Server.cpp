@@ -4,30 +4,34 @@
 Server::
 Server (ConfigFile conf) : config_(conf)
 {
+	std::vector<Socket> clientsSocket = {};
+	clientsSocket_ = clientsSocket;
 }
 
 //SET-------------------------------------------------------------------------
-
-struct sockaddr_in Server::
-initServerAddress(int port)
+void Server::setServerAddress(struct sockaddr_in address)
 {
-	struct sockaddr_in serverAdd = {};
-	serverAdd.sin_family = AF_INET;
-    serverAdd.sin_port = htons(port);
-	serverAdd.sin_addr.s_addr = htonl(INADDR_ANY);
-	return serverAdd;
+	serverAddress_ = address;
 }
 
+void Server::setServerSocket(std::vector<Socket> socket)
+{
+	serverSocket_ = socket;
+}
+
+void Server::setClientSocket(std::vector<Socket> socket)
+{
+	clientSocket_ = socket;
+}
 //GET-------------------------------------------------------------------------
-int Server:: 
-getPort()
+int Server:: getPort()
 {
 	// with config_file:
 	// return (this->config_.getListenPort());
 	return this->port_
 }
-int Server::
-getServerFd()
+
+int Server::getServerFd()
 {
 	int serverFd;
 	serverFd = this->serverSocket.getServerSd();
@@ -35,39 +39,45 @@ getServerFd()
 }
 
 // INIT-----------------------------------------------------------------------
-void Socket::
-initServerAddress()
+void Socket::initServerAddress()
 {
-	memset(&(this->serverAddress_), 0, sizeof(this->serverAddress_));
-	this->serverAddress_.sin_family = AF_INET;
-	this->serverAddress_.sin_addr.s_addr = INADDR_ANY;
-	this->serverAddress_.sin_port = htons(this->getPort());
+	struct sockaddr_in serverAdd = {};
+
+	memset(&(serverAdd), 0, sizeof(serverAdd));
+	serverAdd.sin_family = AF_INET;
+	serverAdd.sin_addr.s_addr = htonl(INADDR_ANY);
+	serverAdd.sin_port = htons(getPort());
+	setServerAddress(serverAdd);
 }
 
-Socket Server::
-initServerSocket(int port, sockaddr_in serverAdd, int kq)
+Socket Server::initServerSocket(int port, sockaddr_in serverAdd, int kq)
 {
 	Socket serverSocket(port, serverAdd, kq);
 	if(serverSocket.socketInit() == false);
 		return (NULL);
+	setSocket(serverSocket);
 	return serverSocket;
 }
 
-std::vector <Socket> Server::
-initClientsSocket()
+std::vector <Socket> Server::initClientsSocket()
 {
 	std::vector <Socket> clientSockets;
 	return (clientSockets);
 }
 
 //MAIN------------------------------------------------------------------------
+bool Server::addClientInSockets()
+{
+	Socket()
+}
+
+
 void Server::
 serverInit()
 {	
-	this->clientsSocket_ = this->initClientsSocket();
 	// with configuration file:
 		// this->serverAdd_ = this->initServerAddress(server.config_.getListenPort());
 		// this->serverSocket_ = this->initServerSocket(server.config_.getListenPort(), server->serverAdd);
-	this->serverAdd_ = this->initServerAddress(this->getListenPort());
-	this->serverSocket_ = this->initServerSocket(this->getListenPort(), this->serverAdd);	
+	serverAdd_ = initServerAddress(getListenPort());
+	serverSocket_ = initServerSocket(getListenPort(), serverAdd);	
 }
