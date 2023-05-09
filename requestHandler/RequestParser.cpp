@@ -21,6 +21,7 @@ void	RequestParser::initParser_(std::string input) {
 	std::stringstream	ss(input);
 	std::string			line;
 
+	std::cout << "Starting"<< std::endl;
 	while(ss.good() && !ss.eof()) {
 		std::getline(ss, line);
 		if (!line.empty() && isRequestLine(line))
@@ -31,8 +32,12 @@ void	RequestParser::initParser_(std::string input) {
 			parseRequestHeader_(line);
 		else if (!line.empty() && isEntityHeader(line))
 			parseEntityHeader_(line);
-		else
-			parseRequestBody_(line);
+		else if (line.empty() || line == "\n") {
+			while (ss.good() && !ss.eof()) {
+				std::getline(ss, line);
+				parseRequestBody_(line);
+			}
+		}
 	}
 }
 
@@ -157,6 +162,7 @@ void	RequestParser::debug() {
 	std::cout << req_.rheader << std::endl;
 	std::cout << req_.eheader << std::endl;
 	
+	std::cout << "Here comes the body" << std::endl;
 	std::vector<std::string>::iterator it = req_.rbody.begin();
 	for (;it != req_.rbody.end(); it++) {
 		std::cout << *it << " ";

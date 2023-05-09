@@ -23,8 +23,14 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	std::string request = "GET / HTTP/1.1\n\
-							Accept: text/html";
+	std::string request = "POST /test HTTP/1.1\n\
+Host: foo.example\n\
+Content-Type: application/x-www-form-urlencoded\n\
+Content-Length: 27\n\
+\n\
+field1=value1&field2=value2\n\
+field3=value3&field4=value4";
+
 	try {
 
 

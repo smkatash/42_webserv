@@ -19,6 +19,7 @@ void	CGIHandler::setEnvironment() {
 	setenv("PATH_INFO", cgi_.cgiPathInfo.c_str(), 1);
 	setenv("SERVER_NAME", cgi_.serverName.c_str(), 1);
 	setenv("REDIRECT_STATUS", "200", 1);
+	setenv("QUERY_STRING", cgi_.queryString.c_str(), 1);
 }
 
 void	CGIHandler::getRequestInfo() {
@@ -27,6 +28,7 @@ void	CGIHandler::getRequestInfo() {
 	cgi_.contenType = req_.eheader.contentType;
 	cgi_.contenLength = req_.eheader.contentLength;
 	cgi_.userAgent = req_.rheader.userAgent;
+	cgi_.queryString = "name=Jad";
 }
 
 void	CGIHandler::getConfigInfo() {
@@ -36,7 +38,6 @@ void	CGIHandler::getConfigInfo() {
 	cgi_.epScriptRoot = getAbsolutePath(conf_.getRoot(ep_), conf_.getScriptCGI(ep_, type));
 	cgi_.serverName = conf_.getServerName();
 }
-
 
 void	CGIHandler::execute() {
 	pid_t	pid;
