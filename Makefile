@@ -1,17 +1,19 @@
-VPATH	=	parse requestHandler responseHandler responseHandler/autoindex
+VPATH	=	cgiHandler parse requestHandler response response/autoindex response/src
 CC		=	c++
 CFLAGS	=	-std=c++98 -Wall -Wextra -Werror -MD #-fsanitize=address
 
 NAME	=	webserv
 
 SRC		=	main.cpp \
-			autoindex.cpp \
+			cgiHandler.cpp cgi_utils.cpp \
 			ConfigFile.cpp parser_utils.cpp Parser.cpp \
+			autoindex.cpp \
 			request_utils.cpp RequestParser.cpp \
-			response_utils.cpp ResponseHandler.cpp
+			DeleteMethod.cpp GetMethod.cpp PostMethod.cpp \
+			response_utils.cpp ResponseGenerator.cpp ResponseHandler.cpp
 
 OBJ		=	$(addprefix obj/,$(notdir $(SRC:.cpp=.o)))
-INC		=	-I parse -I requestHandler -I responseHandler
+INC		=	-I cgiHandler -I parse -I requestHandler -I response/includes
 
 all : $(NAME)
 

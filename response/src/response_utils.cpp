@@ -92,6 +92,7 @@ bool Pred(char a, char b)
 
 std::string removeDuplicateSlashes(const std::string& str)
 {
+	// TODO: Should remove slashes only until '?'
 	std::string res = str;
 	std::string::iterator last = res.begin();
 	last = std::unique(res.begin(), res.end(), &Pred);

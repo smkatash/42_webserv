@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 		RequestParser req(request);
 		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
 		resp.get();
-		std::cout << resp.getResponse() << std::endl;
+		std::cout << resp.generateResponse() << std::endl;
 
 
 	} catch (std::invalid_argument& e) {
