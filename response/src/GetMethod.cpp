@@ -4,7 +4,7 @@
 #include "GetMethod.hpp"
 #include "parser_utils.hpp" // Methods enum
 #include "response_utils.hpp"
-#include "cgiHandler.hpp"
+#include "CGIHandler.hpp"
 
 GetMethod::GetMethod(Request& req, ConfigFile& conf)
 : ResponseGenerator(req, conf) {}
