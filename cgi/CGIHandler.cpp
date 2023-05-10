@@ -1,4 +1,4 @@
-#include "cgiHandler.hpp"
+#include "CGIHandler.hpp"
 
 CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep):
 	req_(req), conf_(conf), ep_(ep) {

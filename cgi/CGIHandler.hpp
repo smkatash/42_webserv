@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <errno.h>
-#include "../requestHandler/Request.hpp"
+#include "Request.hpp"
 #include "../parse/ConfigFile.hpp"
 
 #define MAX_PATH_LEN 256

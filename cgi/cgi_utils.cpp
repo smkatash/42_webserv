@@ -1,4 +1,4 @@
-#include "cgiHandler.hpp"
+#include "CGIHandler.hpp"
 
 /* CGI helpers */
 

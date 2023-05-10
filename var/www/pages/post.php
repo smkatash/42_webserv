@@ -1,5 +1,5 @@
 <?php
-   if(isset($_POST['submit']) 
+   if(isset($_POST['submit'])) 
    {
       echo("Customer : " . $_POST['name'] . "<br />\\n");
       echo("Placed order: " . $_POST['order'] . "<br />\\n");

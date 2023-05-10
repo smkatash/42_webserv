@@ -2,7 +2,7 @@
 #define RESPONSE_HPP
 
 #include <iostream>
-#include "../requestHandler/Request.hpp"
+#include "Request.hpp"
 
 /* TODO most common status codes, may be add more later*/
 #define	OK				200		// "200 OK" /* Request is okay, entity body contains requested resource. */

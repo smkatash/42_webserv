@@ -38,10 +38,9 @@ field3=value3&field4=value4";
 		confParser.setConfigFile();
 		// confParser.debugConfigVector();
 		RequestParser req(request);
-		req.debug();
-		// ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
-		// resp.get();
-		// std::cout << resp.getResponse() << std::endl;
+		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
+		resp.get();
+		std::cout << resp.generateResponse() << std::endl;
 
 
 	} catch (std::invalid_argument& e) {
