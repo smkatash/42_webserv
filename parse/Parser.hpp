@@ -1,7 +1,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "parser_utils.hpp"
+#include "utils.hpp"
 
 #define NOTFOUND		404
 #define	INTERNALERROR	500

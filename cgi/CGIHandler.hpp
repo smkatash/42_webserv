@@ -1,3 +1,6 @@
+#ifndef CGIHANDLER_HPP
+#define CGIHANDLER_HPP
+
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -6,10 +9,10 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <errno.h>
-#include "Request.hpp"
+#include "../request/Request.hpp"
 #include "../parse/ConfigFile.hpp"
 
-#define MAX_PATH_LEN 256
+#define MAX_PATH_LEN 512
 /*
 A query string is typically used to pass data to the server via an HTTP GET request.
 The query string is appended to the end of the URL in the format ?key1=value1&key2=value2..., 
@@ -39,7 +42,7 @@ struct cgi_handler {
 
 typedef cgi_handler WebservCGI;
 
-class CGIHandler {
+class cgiHandler {
 	private:
 		Request req_;
 		ConfigFile conf_;
@@ -53,8 +56,8 @@ class CGIHandler {
 		void	runChildProcess(int fd, char** argv);
 		void	runParentProcess(int status, int fd);
 	public:
-		CGIHandler(Request req, ConfigFile conf, std::string location);
-		~CGIHandler();
+		cgiHandler(Request req, ConfigFile conf, std::string location);
+		~cgiHandler();
 		void	execute();
 };
 
@@ -63,3 +66,5 @@ int			check_access(const char* file);
 std::string	getAbsolutePath(std::string rootPath, std::string scriptPath);
 char**		setArgArray(std::string cgiPath, std::string scripPath);
 void		freeArgArray(char** argv);
+
+#endif

@@ -1,15 +1,15 @@
-#include "CGIHandler.hpp"
+#include "cgiHandler.hpp"
 
-CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep):
+cgiHandler::cgiHandler(Request req, ConfigFile conf, std::string ep):
 	req_(req), conf_(conf), ep_(ep) {
 	// get data from Request and ConfigFile into CGI struct
 	getRequestInfo();
 	getConfigInfo();
 };
 
-CGIHandler::~CGIHandler() {};
+cgiHandler::~cgiHandler() {};
 
-void	CGIHandler::setEnvironment() {
+void	cgiHandler::setEnvironment() {
 	// set key/value args for cgi to get them from the environment
 	setenv("REQUEST_METHOD", cgi_.method.c_str(), 1);
 	setenv("CONTENT_TYPE", cgi_.contenType.c_str(), 1);
@@ -22,7 +22,7 @@ void	CGIHandler::setEnvironment() {
 	setenv("QUERY_STRING", cgi_.queryString.c_str(), 1);
 }
 
-void	CGIHandler::getRequestInfo() {
+void	cgiHandler::getRequestInfo() {
 	cgi_.method = req_.rline.method;
 	cgi_.uri =  req_.rline.uri;
 	cgi_.contenType = req_.eheader.contentType;
@@ -31,7 +31,7 @@ void	CGIHandler::getRequestInfo() {
 	cgi_.queryString = "name=Jad";
 }
 
-void	CGIHandler::getConfigInfo() {
+void	cgiHandler::getConfigInfo() {
 	// TODO should define path depending on the extension!!! This is only for php
 	std::string	type = ".php";
 	cgi_.cgiPathInfo =  getAbsolutePath(conf_.getRoot(ep_), "/cgi-bin/php-cgi");
@@ -39,7 +39,7 @@ void	CGIHandler::getConfigInfo() {
 	cgi_.serverName = conf_.getServerName();
 }
 
-void	CGIHandler::execute() {
+void	cgiHandler::execute() {
 	pid_t	pid;
 	int		status = 0;
 
@@ -63,7 +63,7 @@ void	CGIHandler::execute() {
 }
 
 
-void	CGIHandler::runChildProcess(int fd, char** argv) {
+void	cgiHandler::runChildProcess(int fd, char** argv) {
 	// update enviroment with predefied arguments
 	setEnvironment();
 	extern char** environ;
@@ -79,7 +79,7 @@ void	CGIHandler::runChildProcess(int fd, char** argv) {
 	}
 }
 
-void	CGIHandler::runParentProcess(int status, int fd) {
+void	cgiHandler::runParentProcess(int status, int fd) {
 	waitpid(1, &status, 0);
 	if (!WIFSIGNALED(status))
 		status = WEXITSTATUS(status);

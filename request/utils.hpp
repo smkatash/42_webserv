@@ -1,5 +1,5 @@
-#ifndef REQUEST_UTILS_HPP
-#define REQUEST_UTILS_HPP
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
 #include <iostream>
 #include <string>
