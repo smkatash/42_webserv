@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include "Request.hpp"
-#include "../parse/ConfigFile.hpp"
+#include "ConfigFile.hpp"
 
 #define MAX_PATH_LEN 256
 /*
@@ -39,27 +39,32 @@ struct cgi_handler {
 
 typedef cgi_handler WebservCGI;
 
-class CGIHandler {
-	private:
-		Request req_;
-		ConfigFile conf_;
-		std::string ep_;
-		WebservCGI		cgi_;
+class CGIHandler
+{
+private:
+	Request				req_;
+	ConfigFile			conf_;
+	std::string			ep_;
+	WebservCGI			cgi_;
+	std::string			cgiResponse_;
 
-		void	getRequestInfo();
-		void	getConfigInfo();
+	void				getRequestInfo();
+	void				getConfigInfo();
 
-		void	setEnvironment();
-		void	runChildProcess(int fd, char** argv);
-		void	runParentProcess(int status, int fd);
-	public:
-		CGIHandler(Request req, ConfigFile conf, std::string location);
-		~CGIHandler();
-		void	execute();
+	void				setEnvironment();
+	void				runChildProcess(int *fd, int filefd, char** argv);
+	void				runParentProcess(int *fd, char* tmpname);
+	void				setCGIResponse(char* tmpname);
+public:
+	CGIHandler(Request req, ConfigFile conf, std::string location);
+	CGIHandler(Request req, ConfigFile conf, std::string location, std::string query);
+	~CGIHandler();
+
+	void				execute();
+	std::string			getCGIResponse();
 };
 
-
-int			check_access(const char* file);
-std::string	getAbsolutePath(std::string rootPath, std::string scriptPath);
-char**		setArgArray(std::string cgiPath, std::string scripPath);
-void		freeArgArray(char** argv);
+int						check_access(const char* file);
+std::string				getAbsolutePath(std::string rootPath, std::string scriptPath);
+char**					setArgArray(std::string cgiPath, std::string scripPath);
+void					freeArgArray(char** argv);

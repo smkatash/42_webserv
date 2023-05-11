@@ -108,7 +108,7 @@ bool	ResponseGenerator::isMethodAllowed(Methods method, std::vector<int> methods
 	std::vector<int>::iterator it = std::find(methodsAllowed.begin(), methodsAllowed.end(), method);
 	if (it == methodsAllowed.end())
 	{
-		setCode(405);
+		setCode(NOTALLOWED);
 		return false;
 	}
 	return true;
@@ -117,20 +117,22 @@ bool	ResponseGenerator::isMethodAllowed(Methods method, std::vector<int> methods
 void	ResponseGenerator::setCode(int code)
 {
 	res_.rline.statusCode = toString(code);
-	if (code == 200)
+	if (code == OK)
 		res_.rline.reasonPhrase = "OK";
-	if (code == 302)
+	if (code == FOUND)
 		res_.rline.reasonPhrase = "Found";
-	if (code == 404)
+	if (code == NOTFOUND)
 		res_.rline.reasonPhrase = "Not Found";
-	if (code == 405)
+	if (code == NOTALLOWED)
 		res_.rline.reasonPhrase = "Not Allowed";
-	if (code == 500)
+	if (code == INTERNALERROR)
 		res_.rline.reasonPhrase = "Internal Server Error";
 }
 
 std::string ResponseGenerator::generateResponse()
 {
+	if (!res_.cgiResponse.empty())
+		return res_.cgiResponse;
 	std::string	header;
 	header = responseLine() + generalHeader()
 				+ responseHeader() + entityHeader();
