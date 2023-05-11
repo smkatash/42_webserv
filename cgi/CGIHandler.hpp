@@ -1,3 +1,6 @@
+#ifndef CGIHANDLER_HPP
+#define CGIHANDLER_HPP
+
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -9,7 +12,7 @@
 #include "Request.hpp"
 #include "ConfigFile.hpp"
 
-#define MAX_PATH_LEN 256
+#define MAX_PATH_LEN 512
 /*
 A query string is typically used to pass data to the server via an HTTP GET request.
 The query string is appended to the end of the URL in the format ?key1=value1&key2=value2..., 
@@ -68,3 +71,10 @@ int						check_access(const char* file);
 std::string				getAbsolutePath(std::string rootPath, std::string scriptPath);
 char**					setArgArray(std::string cgiPath, std::string scripPath);
 void					freeArgArray(char** argv);
+
+int			check_access(const char* file);
+std::string	getAbsolutePath(std::string rootPath, std::string scriptPath);
+char**		setArgArray(std::string cgiPath, std::string scripPath);
+void		freeArgArray(char** argv);
+
+#endif
