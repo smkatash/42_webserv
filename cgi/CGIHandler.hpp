@@ -55,8 +55,10 @@ private:
 	void				getConfigInfo();
 
 	void				setEnvironment();
-	void				runChildProcess(int *fd, int filefd, char** argv);
-	void				runParentProcess(int *fd, char* tmpname);
+	void				runChildProcess(int *fd, char** argv);
+	void				runParentProcess(int *fd);
+	// void				runChildProcess(int stdIn, int stdOut, char** argv);
+	// void				runParentProcess(int stdOut);
 	void				setCGIResponse(char* tmpname);
 public:
 	CGIHandler(Request req, ConfigFile conf, std::string location);

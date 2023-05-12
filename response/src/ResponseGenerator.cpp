@@ -132,10 +132,5 @@ std::string ResponseGenerator::generateResponse()
 {
 	if (!res_.cgiResponse.empty())
 		return res_.cgiResponse;
-	std::string	header;
-	header = responseLine() + generalHeader()
-				+ responseHeader() + entityHeader();
-	if (!res_.rbody.empty())
-		header.append("\r\n" + res_.rbody);
-	return header;
+	return "IT IS EMPTY";
 }

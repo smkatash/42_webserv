@@ -34,7 +34,8 @@ void	CGIHandler::setEnvironment()
 	setenv("PATH_INFO", cgi_.cgiPathInfo.c_str(), 1);
 	setenv("SERVER_NAME", cgi_.serverName.c_str(), 1);
 	setenv("REDIRECT_STATUS", "200", 1);
-	setenv("QUERY_STRING", cgi_.queryString.c_str(), 1);
+	if (!cgi_.queryString.empty())
+		setenv("QUERY_STRING", cgi_.queryString.c_str(), 1);
 }
 
 void	CGIHandler::getRequestInfo()
@@ -44,6 +45,7 @@ void	CGIHandler::getRequestInfo()
 	cgi_.contenType = req_.eheader.contentType;
 	cgi_.contenLength = req_.eheader.contentLength;
 	cgi_.userAgent = req_.rheader.userAgent;
+	cgi_.body = req_.rbody[0];
 }
 
 void	CGIHandler::getConfigInfo()
@@ -57,55 +59,79 @@ void	CGIHandler::getConfigInfo()
 	cgi_.serverName = conf_.getServerName();
 }
 
-void	CGIHandler::execute()
-{
-	/* Creating a temp file with a guaranteed new file */
-	std::string tmpname = "/tmp/tmpfileXXXXXX";
-	int filefd = mkstemp((char*)tmpname.c_str());
-
-	/* To make script read from a different input */
+void	CGIHandler::execute() {
 	int	fd[2];
+	char **argv = setArgArray(cgi_.cgiPathInfo, cgi_.epScriptRoot);
+	
 	if (pipe(fd) == -1)
 		throw std::runtime_error("Failed to pipe");
 
-	/* Transform string into array. Memory is malloced and freed at the end of function */
-	char **argv = setArgArray(cgi_.cgiPathInfo, cgi_.epScriptRoot);
-
 	pid_t pid = fork();
-	if (pid == -1)
+	if (pid == -1) {
+		freeArgArray(argv);
 		throw std::runtime_error("Failed to create a process");
+	}
+
 	if (pid == 0)
-		runChildProcess(fd, filefd, argv);
+		runChildProcess(fd, argv);
 	else
-		runParentProcess(fd, (char*)tmpname.c_str());
-	freeArgArray(argv);
-	close(filefd);
+		runParentProcess(fd);
 }
 
-
-void	CGIHandler::runChildProcess(int *fd, int filefd, char** argv)
+void	CGIHandler::runChildProcess(int *fd, char** argv)
 {
-	/* Update enviroment with predefied arguments */
+	close(fd[1]);
 	setEnvironment();
 	extern char** environ;
 
-	/* Read from pipe */
-	dup2(fd[0], STDIN_FILENO);
-	close(fd[0]);
-	close(fd[1]);
-
-	/* Write into temp file */
-	dup2(filefd, STDOUT_FILENO);
-	close(filefd);
-
-	/* Check if +x exists */
-	if (!check_access(argv[0]) || !check_access(argv[1]))
-		throw std::runtime_error("Unauthorized");
-	if (execve(argv[0], argv, environ) == -1)
-	{
-		std::cerr << "execve failed: " << std::strerror(errno) << std::endl;
+	if (dup2(fd[0], STDIN_FILENO) == -1) {
+		std::cerr << "Failed to redirect stdin" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	// THE JAD DO NOT TOUCH IT! THIS IS FOR DEBUGGING
+	int filefd = open("dummy.html", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR, 0777);
+	if (filefd < 0) {
+		throw std::runtime_error("Failed to open a file");
+	}
+
+	if (dup2(filefd, STDOUT_FILENO) == -1) {
+		std::cerr << "Failed to redirect stdout" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	if (dup2(filefd, STDERR_FILENO) == -1) {
+		std::cerr << "Failed to redirect stdout" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	if (!check_access(argv[0]) || !check_access(argv[1]))
+		throw std::runtime_error("Unauthorized");
+
+	if (execve(argv[0], argv, environ) == -1) {
+		std::cerr << "execve failed: " << std::strerror(errno) << std::endl;
+		close(fd[0]);
+		close(filefd);
+		exit(EXIT_FAILURE);
+	}
+}
+
+void CGIHandler::runParentProcess(int *fd)
+{
+	int status = 0;
+	
+	close(fd[0]);
+	if (!cgi_.body.empty())
+		write(fd[1], cgi_.body.c_str(), cgi_.body.length());
+	close(fd[1]);
+
+	waitpid(-1, &status, 0);
+	if (!WIFSIGNALED(status))
+		status = WEXITSTATUS(status);
+	else if (WIFSIGNALED(status))
+		status = WTERMSIG(status) + 128;
+	if (status != 0)
+		throw std::runtime_error("execution problem");
+
+	//setCGIResponse(tmpname);
 }
 
 void	CGIHandler::setCGIResponse(char* tmpname)
@@ -116,29 +142,8 @@ void	CGIHandler::setCGIResponse(char* tmpname)
 		cgiResponse_ += buffer + '\n';
 }
 
-void	CGIHandler::runParentProcess(int *fd, char* tmpname)
-{
-	/* Write the request body if exists into pipe and close the latter */
-	if (!cgi_.body.empty())
-		write(fd[1], cgi_.body.c_str(), cgi_.body.size());
-	close(fd[1]);
-	close(fd[0]);
-
-	/* Wait for child and catch status */
-	int status = 0;
-	waitpid(-1, &status, 0);
-	if (!WIFSIGNALED(status))
-		status = WEXITSTATUS(status);
-	else if (WIFSIGNALED(status))
-		status = WTERMSIG(status) + 128;
-	if (status != 0)
-		throw std::runtime_error("execution problem");
-
-	/* Now we read what the script spits out */
-	setCGIResponse(tmpname);
-}
-
 std::string	CGIHandler::getCGIResponse()
 {
 	return cgiResponse_;
 }
+
