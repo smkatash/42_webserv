@@ -25,12 +25,7 @@ int main(int argc, char **argv) {
 
 	std::string request =
 
-"GET / HTTP/1.1\n\
-Host: foo.example\n\
-Content-Type: application/x-www-form-urlencoded\n\
-Content-Length: 27\n\
-\n\
-\n";
+"GET /?num1=2&num2=3 HTTP/1.1\n";
 
 	try {
 
