@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
 Host: foo.example\n\
 Content-Type: application/x-www-form-urlencoded\n\
 Content-Length: 27\n\
+\n\
 \n";
 
 	try {
@@ -36,7 +37,6 @@ Content-Length: 27\n\
 
 		Parser	confParser(file);
 		confParser.setConfigFile();
-		// confParser.debugConfigVector();
 		RequestParser req(request);
 		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
 		resp.get();

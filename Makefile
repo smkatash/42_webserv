@@ -1,6 +1,6 @@
 VPATH	=	cgi parse request response response/autoindex response/src
 CC		=	c++
-CFLAGS	=	-std=c++98 -Wall -Wextra -Werror -MD #-fsanitize=address
+CFLAGS	=	-std=c++98 -Wall -Wextra -Werror -MD -fsanitize=address
 
 NAME	=	webserv
 

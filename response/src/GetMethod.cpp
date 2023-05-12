@@ -110,7 +110,7 @@ void GetMethod::get()
 	{
 		res_.gheader.date = findCurrentTimeGMT();
 		std::string uri = removeDuplicateSlashes(req_.rline.uri);
-		std::string ep = findUriEndpoint(uri);
+		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
 		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
 
 		std::cout << loc.lindex.front() << std::endl;
@@ -118,8 +118,6 @@ void GetMethod::get()
 
 		if (!isMethodAllowed(GET, loc.lmethod))
 			return setCode(NOTALLOWED);
-
-
 		/* Check if you have to send to cgi handler by checking if
 		there's a query */
 		if (uri.find('?') != std::string::npos)

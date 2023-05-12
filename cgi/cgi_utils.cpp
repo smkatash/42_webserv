@@ -9,10 +9,6 @@ std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
 		throw std::runtime_error("Failed to get current working directory.");
 	}
 	std::string currentDir(path);
-	std::size_t lastSlashPos = currentDir.find_last_of('/');
-	if (lastSlashPos != std::string::npos) {
-		currentDir = currentDir.substr(0, lastSlashPos);
-	}
 	if (rootPath.length() > 0 && rootPath[rootPath.length()] != '/') {
 		rootPath.insert(0, "/");
 	}
