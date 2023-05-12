@@ -8,7 +8,6 @@
 ResponseGenerator::ResponseGenerator(Request& req, ConfigFile& conf)
 : req_(req), conf_(conf)
 {
-	res_.rbody = nullptr;
 	res_.rline.version = "HTTP/1.1";
 	res_.rheader.server = "Francesco's Pizzeria/2.0 (MacOS)";
 }
@@ -136,10 +135,7 @@ std::string ResponseGenerator::generateResponse()
 	std::string	header;
 	header = responseLine() + generalHeader()
 				+ responseHeader() + entityHeader();
-	if (res_.rbody != nullptr)
-	{
-		header.append("\r\n");
-		header.append(std::string(res_.rbody));
-	}
+	if (!res_.rbody.empty())
+		header.append("\r\n" + res_.rbody);
 	return header;
 }

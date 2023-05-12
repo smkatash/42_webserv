@@ -24,10 +24,12 @@ int main(int argc, char **argv) {
 	}
 
 	std::string request =
-"GET /random?user=Kany&email=test%40email HTTP/1.1\n\
+
+"GET / HTTP/1.1\n\
 Host: foo.example\n\
 Content-Type: application/x-www-form-urlencoded\n\
 Content-Length: 27\n\
+\n\
 \n";
 
 	try {

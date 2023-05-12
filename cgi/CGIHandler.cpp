@@ -60,7 +60,6 @@ void	CGIHandler::getConfigInfo()
 	std::cout << cgi_.cgiPathInfo << std::endl;
 	std::cout << cgi_.epScriptRoot  << std::endl;
 	cgi_.serverName = conf_.getServerName();
-	exit(1);
 }
 
 void	CGIHandler::execute()

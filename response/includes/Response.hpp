@@ -41,7 +41,7 @@ struct s_response {
 	general_header				gheader;
 	response_header				rheader;
 	entity_header				eheader;
-	char*						rbody;
+	std::string					rbody;
 	std::string					cgiResponse;
 };
 

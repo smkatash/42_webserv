@@ -45,11 +45,9 @@ void	GetMethod::setResponseBody(std::string fileName)
 	if (!file.is_open() || !file.good())
 		return setCode(NOTFOUND);
 	std::string temp;
-	std::string body;
 	while (std::getline(file, temp))
-		body += temp + '\n';
-	res_.rbody = (char*)body.c_str();
-	res_.eheader.contentLength = toString(body.length());
+		res_.rbody += temp + '\n';
+	res_.eheader.contentLength = toString(res_.rbody.length());
 	file.close();
 	return setCode(OK);
 }
@@ -58,8 +56,8 @@ void GetMethod::returnResponse(t_endpoint loc)
 {
 	if (isNumber(loc.lredirect.substr(0, 3)))
 	{
-		res_.rbody = (char*)loc.lredirect.substr(4).c_str(); // TODO: Test this. What would happen.
-		res_.eheader.contentLength = (char*)loc.lredirect.substr(4).length();
+		res_.rbody = loc.lredirect.substr(4); // TODO: Test this. What would happen.
+		res_.eheader.contentLength = toString(loc.lredirect.substr(4).length());
 		return setCode(strtoi(loc.lredirect.substr(0, 3)));
 	}
 	else if (loc.lredirect.substr(0, 4) == "http")
@@ -79,7 +77,7 @@ void GetMethod::autoIndexResponse(t_endpoint loc, std::string ep)
 		templateFile = initAutoIndex(ep, loc.lroot);
 	if (templateFile.empty())
 		return setCode(NOTFOUND);
-	res_.rbody = (char*)templateFile.c_str();
+	res_.rbody = templateFile;
 	res_.eheader.contentType = findContentType(".html");
 	res_.eheader.contentLength = toString(templateFile.size());
 	return setCode(OK);
@@ -115,13 +113,20 @@ void GetMethod::get()
 		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
 		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
 
+		std::cout << loc.lindex.front() << std::endl;
+		exit(0);
+
 		if (!isMethodAllowed(GET, loc.lmethod))
 			return setCode(NOTALLOWED);
 		/* Check if you have to send to cgi handler by checking if
 		there's a query */
 		if (uri.find('?') != std::string::npos)
-			res_.cgiResponse = CGIHandler(req_, conf_, ep, uri.substr(uri.find('?'))).getCGIResponse();
-
+		{
+			CGIHandler cgi(req_, conf_, ep, uri.substr(uri.find('?') + 1));
+			cgi.execute();
+			res_.cgiResponse = cgi.getCGIResponse();
+			return ;
+		}
 		if (!loc.lredirect.empty())
 			return returnResponse(loc);
 		if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory

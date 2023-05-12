@@ -46,6 +46,9 @@ std::string findContentType(std::string fileExtension)
 
 std::string findUsableFile(std::vector<std::string> files, std::string directory)
 {
+	if (directory != "/")
+		directory += "/";
+	
 	DIR* dir;
 	struct dirent* ent;
 	if ((dir = opendir(directory.c_str())) == NULL)
