@@ -23,20 +23,18 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	std::string request = "POST /test HTTP/1.1\n\
+	std::string request =
+"GET /random?user=Kany&email=test%40email HTTP/1.1\n\
 Host: foo.example\n\
 Content-Type: application/x-www-form-urlencoded\n\
 Content-Length: 27\n\
-\n\
-field1=value1&field2=value2\n\
-field3=value3&field4=value4";
+\n";
 
 	try {
 
 
 		Parser	confParser(file);
 		confParser.setConfigFile();
-		// confParser.debugConfigVector();
 		RequestParser req(request);
 		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
 		resp.get();

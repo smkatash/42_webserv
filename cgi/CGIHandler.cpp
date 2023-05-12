@@ -50,9 +50,17 @@ void	CGIHandler::getConfigInfo()
 {
 	// TODO should define path depending on the extension!!! This is only for php
 	std::string	type = ".php";
-	cgi_.cgiPathInfo =  getAbsolutePath(conf_.getRoot(ep_), "/cgi-bin/php-cgi");
-	cgi_.epScriptRoot = getAbsolutePath(conf_.getRoot(ep_), conf_.getScriptCGI(ep_, type));
+	std::cout << ep_ << std::endl;
+	std::string root = conf_.getRoot(ep_);
+	std::string script = conf_.getScriptCGI(ep_, type);
+	std::cout << root << std::endl;
+	std::cout << script << std::endl;
+	cgi_.cgiPathInfo =  getAbsolutePath(root, "/cgi-bin/php-cgi");
+	cgi_.epScriptRoot = getAbsolutePath(root, script);
+	std::cout << cgi_.cgiPathInfo << std::endl;
+	std::cout << cgi_.epScriptRoot  << std::endl;
 	cgi_.serverName = conf_.getServerName();
+	exit(1);
 }
 
 void	CGIHandler::execute()
