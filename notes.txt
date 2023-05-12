@@ -100,3 +100,89 @@ Videos:
 - Whole series of simple server from scratch in C++: https://www.youtube.com/watch?v=YwHErWJIh6Y
 
 
+
+Request Line: This specifies the HTTP method, URL, and HTTP version.
+Host: This specifies the domain name of the server the request is being sent to.
+User-Agent: This identifies the client making the request, such as a web browser or application.
+Accept: This specifies the MIME types that the client can handle in the response.
+Accept-Language: This specifies the preferred language for the response, using a comma-separated list of language codes.
+Accept-Encoding: This specifies the compression algorithms that the client can handle in the response.
+Referer: This specifies the URL of the page that linked to the current page.
+Content-Type: This specifies the MIME type of the request body.
+Content-Length: This specifies the length of the request body in bytes.
+Authorization: This specifies credentials that are required to access the requested resource.
+Request Body: This contains the data being sent in the request, such as form data or JSON payloads.
+
+Example:
+POST /api/create_user HTTP/1.1
+Host: example.com
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: http://example.com/signup
+Content-Type: application/json
+Content-Length: 43
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+{"username": "johndoe", "password": "p@ssw0rd"}
+
+
+Request = Request-Line
+*(( general-header | request-header | entity-header ) CRLF) CRLF [ message-body ]
+
+1. Request-Line = Method SP Request-URI SP HTTP-Version CRLF
+
+a. Method = "OPTIONS" 
+                | "GET"  
+                | "HEAD"    
+                | "POST"    
+                | "PUT"     
+                | "DELETE"  
+                | "TRACE"   
+                | "CONNECT" 
+                | extension-method (extension-method = token)
+
+b. Request-URI    = "*" | absoluteURI | abs_path | authority
+
+c. general-header = 	Cache-Control     
+                        | Connection        
+                        | Date              
+                        | Pragma            
+                        | Trailer           
+                        | Transfer-Encoding 
+                        | Upgrade           
+                        | Via               
+                        | Warning           
+
+d. request-header = 	Accept                                         
+                        | Accept-Charset                                 
+		        | Accept-Encoding                                
+			| Accept-Language                                
+			| Authorization                                  
+			| Expect                   
+                        | From                     
+                        | Host                     
+                        | If-Match                 
+                        | If-Modified-Since        
+                        | If-None-Match            
+                        | If-Range                 
+                        | If-Unmodified-Since      
+                        | Max-Forwards             
+                        | Proxy-Authorization      
+                        | Range                    
+                        | Referer                  
+                        | TE                       
+                        | User-Agent               
+
+e. entity-header  = 	Allow            
+                        | Content-Encoding 
+                        | Content-Language 
+                        | Content-Length   
+                        | Content-Location 
+                        | Content-MD5      
+                        | Content-Range    
+                        | Content-Type     
+                        | Expires          
+                        | Last-Modified    
+                        | extension-header
