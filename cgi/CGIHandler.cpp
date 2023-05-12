@@ -53,6 +53,10 @@ void	CGIHandler::getConfigInfo()
 	cgi_.cgiPathInfo =  getAbsolutePath(conf_.getRoot(ep_), "/cgi-bin/php-cgi");
 	cgi_.epScriptRoot = getAbsolutePath(conf_.getRoot(ep_), conf_.getScriptCGI(ep_, type));
 	cgi_.serverName = conf_.getServerName();
+
+	cgi_.cgiPathInfo = "/Users/jmaalouf/Desktop/42_webserv/var/www/pages/cgi-bin/php-cgi";
+	cgi_.epScriptRoot = "/Users/jmaalouf/Desktop/42_webserv/var/www/pages/cgi-bin/add.php";
+
 }
 
 void	CGIHandler::execute()

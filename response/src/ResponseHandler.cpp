@@ -5,6 +5,9 @@
 #include "ResponseHandler.hpp"
 
 ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
-: ResponseGenerator(req, conf), GetMethod(req, conf), PostMethod(req, conf), DeleteMethod(req, conf) {}
+: ResponseGenerator(req, conf)
+, GetMethod(req, conf)
+, PostMethod(req, conf)
+, DeleteMethod(req, conf) {}
 
 ResponseHandler::~ResponseHandler() {}

@@ -21,7 +21,6 @@ void	RequestParser::initParser_(std::string input) {
 	std::stringstream	ss(input);
 	std::string			line;
 
-	std::cout << "Starting"<< std::endl;
 	while(ss.good() && !ss.eof()) {
 		std::getline(ss, line);
 		if (!line.empty() && isRequestLine(line))
