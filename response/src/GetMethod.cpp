@@ -1,6 +1,7 @@
 #include <map>
 #include <fstream>
 #include <string>
+#include "Response.hpp" // Status codes definitions
 #include "GetMethod.hpp"
 #include "parser_utils.hpp" // Methods enum
 #include "response_utils.hpp"
@@ -42,7 +43,7 @@ void	GetMethod::setResponseBody(std::string fileName)
 	std::ifstream file;
 	file.open(fileName);
 	if (!file.is_open() || !file.good())
-		return setCode(404);
+		return setCode(NOTFOUND);
 	std::string temp;
 	std::string body;
 	while (std::getline(file, temp))
@@ -50,7 +51,7 @@ void	GetMethod::setResponseBody(std::string fileName)
 	res_.rbody = (char*)body.c_str();
 	res_.eheader.contentLength = toString(body.length());
 	file.close();
-	return setCode(200);
+	return setCode(OK);
 }
 
 void GetMethod::returnResponse(t_endpoint loc)
@@ -64,9 +65,9 @@ void GetMethod::returnResponse(t_endpoint loc)
 	else if (loc.lredirect.substr(0, 4) == "http")
 	{
 		res_.rheader.location = loc.lredirect;
-		return setCode(302);
+		return setCode(FOUND);
 	}
-	return setCode(500);
+	return setCode(INTERNALERROR);
 }
 
 void GetMethod::autoIndexResponse(t_endpoint loc, std::string ep)
@@ -77,11 +78,11 @@ void GetMethod::autoIndexResponse(t_endpoint loc, std::string ep)
 	else
 		templateFile = initAutoIndex(ep, loc.lroot);
 	if (templateFile.empty())
-		return setCode(404);
+		return setCode(NOTFOUND);
 	res_.rbody = (char*)templateFile.c_str();
 	res_.eheader.contentType = findContentType(".html");
 	res_.eheader.contentLength = toString(templateFile.size());
-	return setCode(200);
+	return setCode(OK);
 }
 
 void GetMethod::dirResponse(t_endpoint loc, std::string ep)
@@ -89,10 +90,10 @@ void GetMethod::dirResponse(t_endpoint loc, std::string ep)
 	if (loc.lautoindex)
 		return autoIndexResponse(loc, ep);
 	else if (loc.lindex.empty())
-		return setCode(404);
+		return setCode(NOTFOUND);
 	std::string uri = findUsableFile(loc.lindex, ep + "/");
 	if (uri.empty())
-		return setCode(404);
+		return setCode(NOTFOUND);
 	uri = ep + '/' + uri;
 	return normalResponse(loc, uri);
 }
@@ -115,12 +116,12 @@ void GetMethod::get()
 		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
 
 		if (!isMethodAllowed(GET, loc.lmethod))
-			return setCode(405);
+			return setCode(NOTALLOWED);
 		
 		/* Check if you have to send to cgi handler by checking if
 		there's a query */
-		// if (uri.find('?') != std::string::npos)
-		// 	CGIHandler(req_, conf_, ep, uri.substr(uri.find('?')));
+		if (uri.find('?') != std::string::npos)
+			res_.cgiResponse = CGIHandler(req_, conf_, ep, uri.substr(uri.find('?'))).getCGIResponse();
 
 		if (!loc.lredirect.empty())
 			return returnResponse(loc);
@@ -130,6 +131,6 @@ void GetMethod::get()
 	}
 	catch(const std::exception& e)
 	{
-		return setCode(404);
+		return setCode(NOTFOUND);
 	}
 }

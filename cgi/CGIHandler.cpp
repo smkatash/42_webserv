@@ -1,15 +1,30 @@
-#include "cgiHandler.hpp"
+#include "CGIHandler.hpp"
 
-cgiHandler::cgiHandler(Request req, ConfigFile conf, std::string ep):
-	req_(req), conf_(conf), ep_(ep) {
+CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep)
+: req_(req)
+, conf_(conf)
+, ep_(ep)
+{
 	// get data from Request and ConfigFile into CGI struct
 	getRequestInfo();
 	getConfigInfo();
-};
+}
 
-cgiHandler::~cgiHandler() {};
+CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep, std::string query)
+: req_(req)
+, conf_(conf)
+, ep_(ep)
+{
+	// get data from Request and ConfigFile into CGI struct
+	getRequestInfo();
+	getConfigInfo();
+	cgi_.queryString = query;
+}
 
-void	cgiHandler::setEnvironment() {
+CGIHandler::~CGIHandler() {};
+
+void	CGIHandler::setEnvironment()
+{
 	// set key/value args for cgi to get them from the environment
 	setenv("REQUEST_METHOD", cgi_.method.c_str(), 1);
 	setenv("CONTENT_TYPE", cgi_.contenType.c_str(), 1);
@@ -22,16 +37,17 @@ void	cgiHandler::setEnvironment() {
 	setenv("QUERY_STRING", cgi_.queryString.c_str(), 1);
 }
 
-void	cgiHandler::getRequestInfo() {
+void	CGIHandler::getRequestInfo()
+{
 	cgi_.method = req_.rline.method;
 	cgi_.uri =  req_.rline.uri;
 	cgi_.contenType = req_.eheader.contentType;
 	cgi_.contenLength = req_.eheader.contentLength;
 	cgi_.userAgent = req_.rheader.userAgent;
-	cgi_.queryString = "name=Jad";
 }
 
-void	cgiHandler::getConfigInfo() {
+void	CGIHandler::getConfigInfo()
+{
 	// TODO should define path depending on the extension!!! This is only for php
 	std::string	type = ".php";
 	cgi_.cgiPathInfo =  getAbsolutePath(conf_.getRoot(ep_), "/cgi-bin/php-cgi");
@@ -39,55 +55,88 @@ void	cgiHandler::getConfigInfo() {
 	cgi_.serverName = conf_.getServerName();
 }
 
-void	cgiHandler::execute() {
-	pid_t	pid;
-	int		status = 0;
+void	CGIHandler::execute()
+{
+	/* Creating a temp file with a guaranteed new file */
+	std::string tmpname = "/tmp/tmpfileXXXXXX";
+	int filefd = mkstemp((char*)tmpname.c_str());
 
-	// set temp file to write into, for debugging, later will be replaced by fd[1]
-	// and fd[0] for reading incomming request body
-	int fd = open("dummy.html", O_RDWR | O_CREAT, 0777);
-	if (fd == -1) {
-		std::cout << "500 Server Error" << std::endl;
-		return;
-	}
-	// transform string into array, memory is malloced, freed at the end of function
+	/* To make script read from a different input */
+	int	fd[2];
+	if (pipe(fd) == -1)
+		throw std::runtime_error("Failed to pipe");
+
+	/* Transform string into array. Memory is malloced and freed at the end of function */
 	char **argv = setArgArray(cgi_.cgiPathInfo, cgi_.epScriptRoot);
-	pid = fork();
+
+	pid_t pid = fork();
 	if (pid == -1)
 		throw std::runtime_error("Failed to create a process");
-	else if (pid == 0)
-		runChildProcess(fd, argv);
+	if (pid == 0)
+		runChildProcess(fd, filefd, argv);
 	else
-		runParentProcess(status, fd);
+		runParentProcess(fd, (char*)tmpname.c_str());
 	freeArgArray(argv);
+	close(filefd);
 }
 
 
-void	cgiHandler::runChildProcess(int fd, char** argv) {
-	// update enviroment with predefied arguments
+void	CGIHandler::runChildProcess(int *fd, int filefd, char** argv)
+{
+	/* Update enviroment with predefied arguments */
 	setEnvironment();
 	extern char** environ;
-	// write into fd aka temp file
-	dup2(fd, STDOUT_FILENO);
-	//check if +x exists
-	if (!check_access(argv[0]) || !check_access(argv[1])) {
-			throw std::runtime_error("Unauthorized");
-	}
-	if (execve(argv[0], argv, environ) == -1) {
+
+	/* Read from pipe */
+	dup2(fd[0], STDIN_FILENO);
+	close(fd[0]);
+	close(fd[1]);
+
+	/* Write into temp file */
+	dup2(filefd, STDOUT_FILENO);
+	close(filefd);
+
+	/* Check if +x exists */
+	if (!check_access(argv[0]) || !check_access(argv[1]))
+		throw std::runtime_error("Unauthorized");
+	if (execve(argv[0], argv, environ) == -1)
+	{
 		std::cerr << "execve failed: " << std::strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 }
 
-void	cgiHandler::runParentProcess(int status, int fd) {
-	waitpid(1, &status, 0);
+void	CGIHandler::setCGIResponse(char* tmpname)
+{
+	std::fstream file(tmpname);
+	std::string buffer;
+	while(std::getline(file, buffer))
+		cgiResponse_ += buffer + '\n';
+}
+
+void	CGIHandler::runParentProcess(int *fd, char* tmpname)
+{
+	/* Write the request body if exists into pipe and close the latter */
+	if (!cgi_.body.empty())
+		write(fd[1], cgi_.body.c_str(), cgi_.body.size());
+	close(fd[1]);
+	close(fd[0]);
+
+	/* Wait for child and catch status */
+	int status = 0;
+	waitpid(-1, &status, 0);
 	if (!WIFSIGNALED(status))
 		status = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
 		status = WTERMSIG(status) + 128;
-	// TODO how do we handle exit status? For now, I just set errno
-	errno = status;
-	std::cout << "Status: "<< status << std::endl;
-	std::cout << "Got child back!" << std::endl;
-	close(fd);
+	if (status != 0)
+		throw std::runtime_error("execution problem");
+
+	/* Now we read what the script spits out */
+	setCGIResponse(tmpname);
+}
+
+std::string	CGIHandler::getCGIResponse()
+{
+	return cgiResponse_;
 }

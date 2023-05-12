@@ -1,5 +1,5 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#ifndef PARSER_UTILS_HPP
+#define PARSER_UTILS_HPP
 
 #include "ConfigFile.hpp"
 #include <iostream>

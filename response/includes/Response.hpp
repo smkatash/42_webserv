@@ -12,6 +12,7 @@
 #define	FOUND			302		// "302 Found" /* used for temporary redirect */
 #define	UNAUTHORIZED	400		// "400 Unauthorized" /* unauthenticated request */
 #define NOTFOUND		404		// "404 Not Found" /* requested page not found */
+#define NOTALLOWED		405		// "404 Not Allowed" /* requested page is incompatible with method */
 #define GONE			410		// "410 Gone" /* like 404, but temporary*/
 #define	INTERNALERROR	500		// "500 Internal Server Error" /* generic server error */
 #define	BADGATEWAY		502		// "502 Bad Gateway" /* invalid response from another server */
@@ -41,6 +42,7 @@ struct s_response {
 	response_header				rheader;
 	entity_header				eheader;
 	char*						rbody;
+	std::string					cgiResponse;
 };
 
 typedef s_response	Response;
