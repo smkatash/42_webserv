@@ -18,7 +18,7 @@ void	ConfigFile::setRoot(std::string endpoint, std::string path) {
 	if (path.length() > 1 && path[path.length() - 1] != '/') {
 		path += '/';
 	}
-	if (endpoint.size()) {
+	if (!endpoint.empty()) {
 		std::map<std::string, t_endpoint>::iterator	it = location_.find(endpoint);
 		if (it != location_.end())
 			it->second.lroot = path;
@@ -28,7 +28,7 @@ void	ConfigFile::setRoot(std::string endpoint, std::string path) {
 }
 
 void	ConfigFile::setIndexFile(std::string endpoint, std::string file) {
-	if (endpoint.size()) {
+	if (!endpoint.empty()) {
 		std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
 		if (it != location_.end()) {
 			it->second.lindex.push_back(file);
@@ -94,7 +94,7 @@ const std::string	ConfigFile::getServerName(void) const {
 }
 
 const std::string	ConfigFile::getRoot(std::string endpoint) const {
-	if (endpoint.size()) {
+	if (!endpoint.empty()) {
 		std::map<std::string, t_endpoint>::const_iterator	it = location_.find(endpoint);
 		if (it != location_.end())
 			return it->second.lroot;
@@ -105,7 +105,7 @@ const std::string	ConfigFile::getRoot(std::string endpoint) const {
 }
 
 const std::vector<std::string>	&ConfigFile::getIndexFile(std::string endpoint) const {
-	if (endpoint.size()) {
+	if (!endpoint.empty()) {
 		std::map<std::string, t_endpoint>::const_iterator	it = location_.find(endpoint);
 		if (it != location_.end())
 			return it->second.lindex;
@@ -137,7 +137,7 @@ const t_endpoint	&ConfigFile::getLocation(std::string endpoint) const {
 }
 
 const std::string	ConfigFile::getEndPoint(std::string name) const {
-	if (!name.size())
+	if (name.empty())
 		return "";
 	std::map<std::string, t_endpoint>::const_iterator it = location_.find(name);
 	if (it != location_.end())
