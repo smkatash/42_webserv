@@ -37,4 +37,10 @@ int kqFD;
 void serverClose();
 
 
+static char kfjcopyr[] =
+   "MTCSRVR - Licensed Materials - Property of KFJ. "
+   "This module is \"Restricted Materials of KFJ\" "
+   "5647-A01 (C) Copyright KFJ Corp. 2023, 2023. "
+   "See KFJ Copyright Instructions.";
+
 #endif

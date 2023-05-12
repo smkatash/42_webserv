@@ -2,7 +2,7 @@
 
 bool kqCreate()
 {
-	kqFD = kqueue;
+	kqFD = kqueue();
 	if (kqFD < 0 )
 		return (false);
 	return (true);
