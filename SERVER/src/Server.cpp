@@ -1,12 +1,22 @@
 #include "../inc/Server.hpp"
 
 //INIT------------------------------------------------------------------------
-Server::
-Server (ConfigFile conf) : config_(conf)
+Server::Server (ConfigFile conf) : config_(conf)
 {
 	std::vector<Socket> clientsSocket = {};
 	clientsSocket_ = clientsSocket;
 }
+Server::Server ()
+{
+	ConfigFile config;
+	config.setListenPort(80);
+	config.setServerName("test");
+	config.setClientMaxBodySize(10);
+
+	std::vector<Socket> clientsSocket = {};
+	clientsSocket_ = clientsSocket;
+}
+
 
 //SET-------------------------------------------------------------------------
 void Server::setServerAddress(struct sockaddr_in address)
@@ -38,6 +48,11 @@ int Server::getServerFd()
 	return (serverFd);
 }
 
+struct sockaddr_in Server::getServerAddress()
+{
+	return (serverAddress_)
+}
+
 // INIT-----------------------------------------------------------------------
 void Socket::initServerAddress()
 {
@@ -66,6 +81,12 @@ std::vector <Socket> Server::initClientsSocket()
 }
 
 //MAIN------------------------------------------------------------------------
+bool appendNewToSocketList(Socket socket)
+{
+	clientsSocket_.push_back(socket);
+	return (true);
+}
+
 bool Server::addClientInSockets()
 {
 	Socket()
@@ -79,5 +100,5 @@ serverInit()
 		// this->serverAdd_ = this->initServerAddress(server.config_.getListenPort());
 		// this->serverSocket_ = this->initServerSocket(server.config_.getListenPort(), server->serverAdd);
 	serverAdd_ = initServerAddress(getListenPort());
-	serverSocket_ = initServerSocket(getListenPort(), serverAdd);	
+	serverSocket_ = initServerSocket(getListenPort(), serverAdd);
 }

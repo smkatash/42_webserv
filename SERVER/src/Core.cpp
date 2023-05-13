@@ -12,10 +12,48 @@ Core::Core ()
 	// this->servers_ = servers;
 }
 
-void Core::Run()
+/*
+		int     kevent( int	kq, const struct kevent	*changelist, int nchanges, 
+ 						struct	kevent *eventlist, int nevents,
+						const struct timespec *timeout);
+*/
+
+Core::setNewConnection()
 {
+		// is a new connection;
+	Socket newSocket();
+	if(newSocket.init(server_.getPort(), server_.getServerAddress()) == false)
+	{
+		printf("error socket init");
+		return (false);
+	}
+	if (server_.appendNewToSocketList(newSocket) == false);
+	{
+		printf("error append new socket");
+		return (false);
+	}
+	return (true);
+}
+
+Core::run()
+{
+	int i;
+	int tmpFileDescriptor;
+
 	while(1)
 	{
-		
+		i = 0;
+		int numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENTS, NULL);
+		while( i <= numOfevent)
+		{
+			currentEvent = eventlist_[i];
+			tmpEventDescriptor = currentEvent.ident;
+			if (tmpEventDescriptor == server_.getServerFd()) //here we should check a vector of serverFd;
+			{
+
+			}
+
+			i++;
+		}
 	}
 }

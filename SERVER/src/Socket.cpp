@@ -225,5 +225,6 @@ bool Socket::socketInit()
 		printf("bind_error \n");
 	// add the socket to the kqueue;
 	if(setKvent() == false)
+		printf("kevent() list error \n")
 	return true;
 }

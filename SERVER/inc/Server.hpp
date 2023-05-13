@@ -23,6 +23,8 @@ class Server
 
 		int getPort();
 		int getServerFd();
+		struct sockaddr_in getServerAddress();
+
 
 		bool serverInit();
 		struct sockaddr_in initServerAddress(int port)

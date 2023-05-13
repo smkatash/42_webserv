@@ -10,6 +10,8 @@ class Core
 	Server server_;
 	// std::vector <Server> servers_;
 	std::map <int, Socket> socketMap_;
+	struct kevent eventlist_;
+
 	// std::vector <Server> initServers(ConfigFile conf);
 
 	public: //

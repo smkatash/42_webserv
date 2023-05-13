@@ -557,3 +557,137 @@ void main()
 	close(obj.sk);
 	close(kq);
 }
+
+// 
+
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
+#define SERVER_PORT 8080
+#define BACKLOG 10
+#define MAX_EVENTS 10
+#define BUFFER_SIZE 1024
+
+int main() {
+  int server_fd, kq, nev, conn_fd;
+  struct sockaddr_in server_addr, client_addr;
+  socklen_t client_addr_len = sizeof(client_addr);
+  char buffer[BUFFER_SIZE];
+  struct kevent event_list[MAX_EVENTS], current_event;
+
+  // Create server socket
+  server_fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (server_fd == -1) {
+    perror("Failed to create server socket");
+    exit(EXIT_FAILURE);
+  }
+
+  // Bind server socket to port
+  memset(&server_addr, 0, sizeof(server_addr));
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  server_addr.sin_port = htons(SERVER_PORT);
+  if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+    perror("Failed to bind server socket");
+    exit(EXIT_FAILURE);
+  }
+
+  // Listen for incoming connections
+  if (listen(server_fd, BACKLOG) == -1) {
+    perror("Failed to listen for incoming connections");
+    exit(EXIT_FAILURE);
+  }
+
+  // Create kqueue
+  kq = kqueue();
+  if (kq == -1) {
+    perror("Failed to create kqueue");
+    exit(EXIT_FAILURE);
+  }
+
+  // Register server socket for read events
+  struct kevent event;
+  EV_SET(&event, server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+  if (kevent(kq, &event, 1, NULL, 0, NULL) == -1) {
+    perror("Failed to register server socket for read events");
+    exit(EXIT_FAILURE);
+  }
+
+  // Event loop
+  while (1) {
+    // Wait for events
+    nev = kevent(kq, NULL, 0, event_list, MAX_EVENTS, NULL);
+    if (nev == -1) {
+      perror("Failed to wait for events");
+      exit(EXIT_FAILURE);
+    }
+
+    // Handle events
+    for (int i = 0; i < nev; i++) {
+      current_event = event_list[i];
+      int fd = current_event.ident;
+      if (fd == server_fd) {
+        // Handle new connection
+        conn_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len);
+        if (conn_fd == -1) {
+          perror("Failed to accept incoming connection");
+          continue;
+        }
+
+        // Register new connection socket for read events
+        EV_SET(&event, conn_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1) {
+          perror("Failed to register new connection socket for read events");
+          exit(EXIT_FAILURE);
+        }
+      } else {
+        // Handle incoming data
+        ssize_t n = recv(fd, buffer, BUFFER_SIZE, 0);
+        if (n == -1) {
+          perror("Failed to receive data");
+          close(fd);
+          continue;
+        } else if (n == 0) {
+          // Connection closed by remote client
+          printf("Connection closed by remote client\n");
+          close(fd);
+          continue;
+        }
+
+        // Handle HTTP request
+        // TODO: Implement HTTP request handling
+
+        // Send response
+        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello, world!\r\n";
+        ssize_t sent = send(fd, response, strlen(response), 0);
+        if (sent == -1) {
+          perror("Failed to send response");
+          close(fd);
+          continue;
+        }
+
+        // Deregister connection socket from kqueue
+        EV_SET(&event, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1) {
+          perror("Failed to deregister connection socket from kqueue");
+          exit(EXIT_FAILURE);
+        }
+
+        // Close connection
+        close(fd);
+      }
+    }
+  }
+
+  // Close server socket
+  close(server_fd);
+
+  return 0;
+}

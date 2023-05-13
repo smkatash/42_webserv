@@ -28,6 +28,7 @@
 #include "Core"
 #include "Server.hpp"
 #include "Socket.hpp"
+#include "../../include/ConfigFile.hpp"
 
 #define MAX_EVENT 10
 #define NUM_SOCKET 10
