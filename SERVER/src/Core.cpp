@@ -18,7 +18,7 @@ Core::Core ()
 						const struct timespec *timeout);
 */
 
-Core::setNewConnection()
+bool Core::setNewConnection()
 {
 		// is a new connection;
 	Socket newSocket();
@@ -50,7 +50,12 @@ Core::run()
 			tmpEventDescriptor = currentEvent.ident;
 			if (tmpEventDescriptor == server_.getServerFd()) //here we should check a vector of serverFd;
 			{
-
+				if(setNewConnection() == false)
+				{
+					printf("error setting new connection");
+					exit();
+				}
+				
 			}
 
 			i++;
