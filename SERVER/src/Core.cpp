@@ -62,12 +62,12 @@ Core::run()
 					exit();
 				}
 			}
-			else
+			else //receive the message;
 			{
 				ssize_t n = recv(tmpEventDescriptor, buffer, BUFFER_SIZE, 0);
 				if (n == -1)
 				{
-					printf("Failed to receive data");
+					printf("Failed recv() call");
 					close(tmpEventDescriptor);
 					continue;
 				} 
@@ -77,9 +77,15 @@ Core::run()
 					close(tmpEventDescriptor);
 					continue;
       			}
-
 			}
-
+			// write a response:
+		std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello, world!\r\n";
+        ssize_t sent = send(tmpEventDescriptor, response, response.size, 0);
+        if (sent == -1) {
+          printf("Failed sent() call");
+          close(tmpEventDescriptor);
+          continue;
+        }
 			i++;
 		}
 	}
