@@ -21,6 +21,7 @@ class Server
 		~Server();
 
 		void setServerAddress(struct sockaddr_in address);
+		void setServerAddress(struct sockaddr_in address);
 
 		int getPort();
 		int getServerFd();

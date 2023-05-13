@@ -1,4 +1,4 @@
-obj/main.o: main.cpp inc/webserv.hpp \
+obj/Server.o: src/Server.cpp src/../inc/Server.hpp inc/webserv.hpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdbool.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config_site \
@@ -759,5 +759,5 @@ obj/main.o: main.cpp inc/webserv.hpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_select.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_uuid_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/gethostuuid.h \
-  inc/./Core.hpp inc/Server.hpp inc/Socket.hpp inc/./Server.hpp \
-  inc/./Socket.hpp inc/../../include/ConfigFile.hpp
+  inc/./Core.hpp inc/Server.hpp inc/./Server.hpp inc/./Socket.hpp \
+  inc/../../include/ConfigFile.hpp inc/Socket.hpp

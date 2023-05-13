@@ -25,9 +25,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "Core.hpp"
-#include "Server.hpp"
-#include "Socket.hpp"
+#include "./Core.hpp"
+#include "./Server.hpp"
+#include "./Socket.hpp"
 #include "../../include/ConfigFile.hpp"
 
 #define MAX_EVENT 10

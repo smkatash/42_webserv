@@ -66,12 +66,12 @@ void Socket::initServerAddress()
 	setServerAddress(serverAdd);
 }
 
-Socket Server::initServerSocket(int port, sockaddr_in serverAdd, int kq)
+Socket Server::initServerSocket(int port, sockaddr_in serverAdd)
 {
-	Socket serverSocket(port, serverAdd, kq);
-	if(serverSocket.socketInit() == false);
-		return (NULL);
-	setSocket(serverSocket);
+	Socket serverSocket(port, serverAdd);
+	if(serverSocket.socketInit() == false)
+		return (0);
+	setServerSocket(serverSocket);
 	return serverSocket;
 }
 
