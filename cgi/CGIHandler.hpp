@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <algorithm>
+#include <vector>
 #include "Request.hpp"
 #include "ConfigFile.hpp"
 
@@ -40,6 +42,7 @@ struct cgi_handler {
 	std::string cgiPathInfo;
 	std::string queryString;
 	std::string body;
+	std::vector<char> binbody;
 };
 
 typedef cgi_handler WebservCGI;
@@ -58,9 +61,8 @@ private:
 
 	void				setEnvironment();
 	void				runChildProcess(int *fd, char** argv);
+	void				fileUpload();
 	void				runParentProcess(int *fd);
-	// void				runChildProcess(int stdIn, int stdOut, char** argv);
-	// void				runParentProcess(int stdOut);
 	void				setCGIResponse(char* tmpname);
 public:
 	CGIHandler(Request req, ConfigFile conf, std::string location);
@@ -71,14 +73,10 @@ public:
 	std::string			getCGIResponse();
 };
 
+std::string				currentDirectory();
 int						check_access(const char* file);
 std::string				getAbsolutePath(std::string rootPath, std::string scriptPath);
 char**					setArgArray(std::string cgiPath, std::string scripPath);
 void					freeArgArray(char** argv);
-
-int			check_access(const char* file);
-std::string	getAbsolutePath(std::string rootPath, std::string scriptPath);
-char**		setArgArray(std::string cgiPath, std::string scripPath);
-void		freeArgArray(char** argv);
 
 #endif

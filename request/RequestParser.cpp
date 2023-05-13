@@ -21,8 +21,7 @@ void	RequestParser::initParser_(std::string input) {
 	std::stringstream	ss(input);
 	std::string			line;
 
-	while(ss.good() && !ss.eof()) {
-		std::getline(ss, line);
+	while(std::getline(ss, line)) {
 		if (!line.empty() && isRequestLine(line))
 			parseRequestLine_(line);
 		else if (!line.empty() && isGeneralHeader(line))
@@ -31,13 +30,21 @@ void	RequestParser::initParser_(std::string input) {
 			parseRequestHeader_(line);
 		else if (!line.empty() && isEntityHeader(line))
 			parseEntityHeader_(line);
-		else if (line.empty() || line == "\n") {
-			while (ss.good() && !ss.eof()) {
-				std::getline(ss, line);
-				parseRequestBody_(line);
+		else if (line.empty() || line == "\n" ) {
+			std::getline(ss, line);
+			if (line.compare(req_.eheader.boundaryName) == 0)
+				continue;
+			req_.rbody += line;
+			while (std::getline(ss, line)) {
+				if (line.compare(req_.eheader.boundaryName) == 0)
+					break;
+				if (!ss.eof())
+					line += '\n';
+				req_.rbody += line;
 			}
 		}
 	}
+	convertBodyToBinary();
 }
 
 void	RequestParser::parseRequestLine_(std::string line) {
@@ -139,16 +146,37 @@ void	RequestParser::parseEntityHeader_(std::string line) {
 	else if (param.compare("Content-Range:") == 0)
 		getParam_(line, req_.eheader.contentRange);
 	else if (param.compare("Content-Type:") == 0)
-		getParam_(line, req_.eheader.contentType);
+		parseMultiParamContent(line); 
+	else if (param.compare("Content-Disposition:") == 0)
+		getParam_(line, req_.eheader.contentDisposition);
 	else if (param.compare("Expires:") == 0)
 		getParam_(line, req_.eheader.expires);
 	else if (param.compare("Last-Modified:") == 0)
 		getParam_(line, req_.eheader.lastModified);
 }
 
-void	RequestParser::parseRequestBody_(std::string line) {
-	if (!line.empty())
-		req_.rbody.push_back(line);
+void	RequestParser::parseMultiParamContent(std::string line) {
+	if (req_.eheader.contentType.empty()) {
+		if (line.find(MULTIPART) != std::string::npos && \
+				line.find(BOUNDARY) != std::string::npos ) {
+			size_t delimiterPos = line.rfind(EQ);
+			if (delimiterPos != std::string::npos) {
+				req_.eheader.boundaryName = line.substr(delimiterPos + 1);
+				req_.eheader.contentType = MULTIPART;
+			}
+		}
+		else
+			getParam_(line, req_.eheader.contentType);
+	}
+	else 
+		getParam_(line, req_.eheader.fileContentType);
+}
+
+void RequestParser::convertBodyToBinary() {
+	if (req_.eheader.contentType.compare(MULTIPART) == 0) {
+		std::vector<char> vec(req_.rbody.begin(), req_.rbody.end());
+		req_.binbody = vec;
+	}
 }
 
 Request	RequestParser::getRequest() {
@@ -162,8 +190,5 @@ void	RequestParser::debug() {
 	std::cout << req_.eheader << std::endl;
 	
 	std::cout << "Here comes the body" << std::endl;
-	std::vector<std::string>::iterator it = req_.rbody.begin();
-	for (;it != req_.rbody.end(); it++) {
-		std::cout << *it << " ";
-	}
+	std::cout << req_.rbody << std::endl;
 }

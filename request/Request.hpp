@@ -100,6 +100,10 @@ struct	entity_header {
 	std::string	contentMd;
 	std::string	contentRange;
 	std::string	contentType;
+	std::string	fileContentType;
+	std::string	uploadFilename;
+	std::string	boundaryName;
+	std::string contentDisposition;
 	std::string	expires;
 	std::string	lastModified;
 
@@ -113,6 +117,9 @@ struct	entity_header {
 		os << "contentMd: " << eh.contentMd << std::endl;
 		os << "contentRange: " << eh.contentRange << std::endl;
 		os << "contentType: " << eh.contentType << std::endl;
+		os << "content type of file to upload: " << eh.fileContentType << std::endl;
+		os << "boundaryname: " << eh.boundaryName << std::endl;
+		os << "contentDisposition: " << eh.contentDisposition << std::endl;
 		os << "expires: " << eh.expires << std::endl;
 		os << "lastModified: " << eh.lastModified << std::endl;
 		return os;
@@ -124,7 +131,8 @@ struct s_request {
 	general_header				gheader;
 	request_header				rheader;
 	entity_header				eheader;
-	std::vector<std::string>	rbody;
+	std::string					rbody;
+	std::vector<char>			binbody;
 };
 
 typedef	s_request		Request;

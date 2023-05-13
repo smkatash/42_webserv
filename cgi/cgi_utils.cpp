@@ -2,13 +2,18 @@
 
 /* CGI helpers */
 
-std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
-	char path[MAX_PATH_LEN];
 
+std::string	currentDirectory() {
+	char path[MAX_PATH_LEN];
 	if (!getcwd(path, MAX_PATH_LEN)) {
 		throw std::runtime_error("Failed to get current working directory.");
 	}
-	std::string currentDir(path);
+	return std::string(path);
+}
+
+std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
+
+	std::string currentDir = currentDirectory();
 	if (rootPath.length() > 0 && rootPath[rootPath.length()] != '/') {
 		rootPath.insert(0, "/");
 	}

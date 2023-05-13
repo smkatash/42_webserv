@@ -45,7 +45,8 @@ void	CGIHandler::getRequestInfo()
 	cgi_.contenType = req_.eheader.contentType;
 	cgi_.contenLength = req_.eheader.contentLength;
 	cgi_.userAgent = req_.rheader.userAgent;
-	cgi_.body = req_.rbody[0];
+	cgi_.body = req_.rbody;
+	cgi_.binbody = req_.binbody;
 }
 
 void	CGIHandler::getConfigInfo()
@@ -58,8 +59,6 @@ void	CGIHandler::getConfigInfo()
 	cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PHP_CGI_PATH);
 	cgi_.epScriptRoot = getAbsolutePath(root, script);
 	cgi_.serverName = conf_.getServerName();
-	std::cout << cgi_.cgiPathInfo << "  |  " << cgi_.epScriptRoot << std::endl;
-	exit(0);
 }
 
 void	CGIHandler::execute() {
@@ -81,15 +80,28 @@ void	CGIHandler::execute() {
 		runParentProcess(fd);
 }
 
+
+void	CGIHandler::fileUpload() {
+	if (std::string(getenv("CONTENT_TYPE")) == "multipart/form-data") {
+		std::ofstream tempFile("uploaded_file.tmp", std::ios::binary);
+		if (tempFile)
+			tempFile.write(&cgi_.binbody[0], cgi_.binbody.size());
+			if (tempFile.fail())
+				throw std::runtime_error("Failed to write file");
+		tempFile.close();
+		setenv("UPLOADED_FILE_PATH", "uploaded_file.tmp", 1);
+	}
+}
+
 void	CGIHandler::runChildProcess(int *fd, char** argv)
 {
 	close(fd[1]);
 	setEnvironment();
 	extern char** environ;
+	fileUpload();
 
 	if (dup2(fd[0], STDIN_FILENO) == -1)
 		std::runtime_error("Failed to redirect stdout");
-
 	// THE JAD DO NOT TOUCH IT! THIS IS FOR DEBUGGING
 	int filefd = open("dummy.html", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR, 0777);
 	if (filefd < 0)
