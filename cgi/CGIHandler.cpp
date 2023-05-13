@@ -54,9 +54,12 @@ void	CGIHandler::getConfigInfo()
 	std::string	type = ".php";
 	std::string root = conf_.getRoot(ep_);
 	std::string script = conf_.getScriptCGI(ep_, type);
-	cgi_.cgiPathInfo =  getAbsolutePath(root, "/cgi-bin/php-cgi");
+
+	cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PHP_CGI_PATH);
 	cgi_.epScriptRoot = getAbsolutePath(root, script);
 	cgi_.serverName = conf_.getServerName();
+	std::cout << cgi_.cgiPathInfo << "  |  " << cgi_.epScriptRoot << std::endl;
+	exit(0);
 }
 
 void	CGIHandler::execute() {
