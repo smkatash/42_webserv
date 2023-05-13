@@ -84,32 +84,25 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 	setEnvironment();
 	extern char** environ;
 
-	if (dup2(fd[0], STDIN_FILENO) == -1) {
-		std::cerr << "Failed to redirect stdin" << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	if (dup2(fd[0], STDIN_FILENO) == -1)
+		std::runtime_error("Failed to redirect stdout");
+
 	// THE JAD DO NOT TOUCH IT! THIS IS FOR DEBUGGING
 	int filefd = open("dummy.html", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR, 0777);
-	if (filefd < 0) {
+	if (filefd < 0)
 		throw std::runtime_error("Failed to open a file");
-	}
+	if (dup2(filefd, STDOUT_FILENO) == -1)
+		std::runtime_error("Failed to redirect stdout");
+	if (dup2(filefd, STDERR_FILENO) == -1)
+		std::runtime_error("Failed to redirect stderr");
 
-	if (dup2(filefd, STDOUT_FILENO) == -1) {
-		std::cerr << "Failed to redirect stdout" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	if (dup2(filefd, STDERR_FILENO) == -1) {
-		std::cerr << "Failed to redirect stdout" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
+	close(fd[0]);
+	close(filefd);
 	if (!check_access(argv[0]) || !check_access(argv[1]))
 		throw std::runtime_error("Unauthorized");
 
 	if (execve(argv[0], argv, environ) == -1) {
 		std::cerr << "execve failed: " << std::strerror(errno) << std::endl;
-		close(fd[0]);
-		close(filefd);
 		exit(EXIT_FAILURE);
 	}
 }
