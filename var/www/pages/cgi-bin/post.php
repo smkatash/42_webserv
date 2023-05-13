@@ -6,11 +6,12 @@ if (empty($requestBody)) {
 }
 echo "Request body is " . $requestBody . "\n";
 
+
 // Generate a unique file name
 $filename = 'kanydb';
 
 // Specify the directory where you want to save the file
-$directory = '/Users/kanykei/Desktop/42_webserv/database/';
+$directory = dirname(__FILE__) . "/";
 
 // Save the request body into the file
 file_put_contents($directory . $filename, $requestBody);
