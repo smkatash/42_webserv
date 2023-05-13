@@ -3,6 +3,7 @@
 //INIT------------------------------------------------------------------------
 Server::Server (ConfigFile conf) : config_(conf)
 {
+	port_ = 8080;
 	std::vector<Socket> clientsSocket = {};
 	clientsSocket_ = clientsSocket;
 }

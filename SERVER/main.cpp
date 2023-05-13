@@ -10,14 +10,15 @@ bool kqCreate()
 
 void serverClose()
 {
-	exit ();
+	return ;
 }
 
 int main ()
 {
 	// CREATE THE KQUEUE
 	if( kqCreate() == false )
-		serverClose();
-	Core Core();
-	Core.run();
+		return (0);
+		// serverClose();
+	Core core;
+	core.run();
 }

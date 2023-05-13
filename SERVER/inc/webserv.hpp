@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "Core"
+#include "Core.hpp"
 #include "Server.hpp"
 #include "Socket.hpp"
 #include "../../include/ConfigFile.hpp"

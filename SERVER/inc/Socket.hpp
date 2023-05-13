@@ -1,7 +1,7 @@
 # ifndef SOCKET_HPP
 # define SOCKET_HPP
 
-#include "webserver.hpp"
+#include "webserv.hpp"
 #include <fcntl.h>
 
 
@@ -15,7 +15,7 @@ class Socket
 	struct sockaddr_in sourceAddress_; //it stay the same of the Server.
 	struct sockaddr_in destinationAddress_; //it's always different.
 
-	vector<char> data_;
+	std::vector<char> data_;
 
 	struct kevent event_;
 	// struct kevent events_[MAX_EVENTS];
@@ -33,24 +33,24 @@ class Socket
 
 	public: //method
 		bool setSocketDescriptor();
-		bool setSocketOption()
+		bool setSocketOption();
 		bool setSocketBind();
 		bool setSocketPassive();
 		bool setKevent();
 		void setAddress ();
-		bool setData (vector<char> buffer);
+		bool setData (std::vector<char> buffer);
 
 		int getPort();
 		struct kevent getEvent();
 		int getSocketDescriptor();
-		vector<char> getData();
-		struct sockaddr_in Socket::getSocketDestinationAddress();
-		struct sockaddr_in Socket::getSocketSourceAddress()
+		std::vector<char> getData();
+		struct sockaddr_in getSocketDestinationAddress();
+		struct sockaddr_in getSocketSourceAddress();
 
 
 	
 		bool socketInit();
-		bool socketPassiveInit()
+		bool socketPassiveInit();
 		bool readHandler();
 		bool writeHandler();
 };

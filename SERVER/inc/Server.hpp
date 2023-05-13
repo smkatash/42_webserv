@@ -1,7 +1,8 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "webserver.hpp"
+#include "webserv.hpp"
+#include "Socket.hpp"
 
 class Server
 {
@@ -10,12 +11,12 @@ class Server
 		struct sockaddr_in serverAdd_;
 
 		std::vector <Socket> clientsSocket_;
-		int port_ = 8080;
+		int port_;
 
 		// ConfigFile config_;
 
 	public:
-		Server(ConfigFile conf);
+		// Server(ConfigFile conf);
 		Server();
 		~Server();
 
@@ -27,7 +28,9 @@ class Server
 
 
 		bool serverInit();
-		struct sockaddr_in initServerAddress(int port)
+		struct sockaddr_in initServerAddress(int port);
 		Socket initServerSocket(int port, sockaddr_in serverAdd);
 		std::vector <Socket> addClientInSockets();
 };
+
+#endif
