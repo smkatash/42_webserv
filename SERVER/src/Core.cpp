@@ -27,11 +27,17 @@ bool Core::setNewConnection()
 		printf("error socket init");
 		return (false);
 	}
+	if(newSocket.setSocketConnection() == false)
+	{
+		printf("error setting connection");
+		return (false);
+	}
 	if (server_.appendNewToSocketList(newSocket) == false);
 	{
 		printf("error append new socket");
 		return (false);
 	}
+
 	return (true);
 }
 
@@ -55,7 +61,23 @@ Core::run()
 					printf("error setting new connection");
 					exit();
 				}
-				
+			}
+			else
+			{
+				ssize_t n = recv(tmpEventDescriptor, buffer, BUFFER_SIZE, 0);
+				if (n == -1)
+				{
+					printf("Failed to receive data");
+					close(tmpEventDescriptor);
+					continue;
+				} 
+				else if (n == 0) 
+				{
+					printf("Connection has been closed by remote client\n");
+					close(tmpEventDescriptor);
+					continue;
+      			}
+
 			}
 
 			i++;

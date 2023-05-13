@@ -183,19 +183,20 @@ bool Socket writeHandler()
 bool Socket::setSocketConnection()
 {
 	int fd;
-	int socketDescriptor;
+	int socketDescriptor; // should it be the listening descriptor?
 	struct sockaddr_in destAddress;
 	
 	destAddress = memset(&destAddress, 0, sizeof(destAddress));
 	socketDescriptor = getSocketDescriptor();
 	fd = accept(socketDescriptor, &destAddress, sizeof(&struct sockaddr_in));
-	if (fd == 0)
+	if (fd == -1)
 	{
-		setSocketDescriptor(fd);
-		setDestinationAddress(destAddress);
-		return (true);
+		printf("Failed incoming connection accept()");
+		return (false);
 	}
-	return (false);
+	setSocketDescriptor(fd);
+	setDestinationAddress(destAddress);
+	return (true);
 }
 
 bool Socket::socketPassiveInit()
