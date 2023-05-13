@@ -2,20 +2,16 @@
 $requestBody= file_get_contents("php://stdin");
 
 if (empty($requestBody)) {
-    $requestBody = "I am empty";
+    $requestBody = "Empty";
 }
 echo "Request body is " . $requestBody . "\n";
 
-
-// Generate a unique file name
-$filename = 'kanydb';
-
-// Specify the directory where you want to save the file
-$directory = dirname(__FILE__) . "/";
-
-// Save the request body into the file
-file_put_contents($directory . $filename, $requestBody);
+$index = time();
+// Prepare the data entry
+$dataEntry = $index . ':' . $requestBody . PHP_EOL;
+$directory = dirname(__FILE__) . "/" . 'kanydb';
+file_put_contents($directory, $dataEntry, FILE_APPEND);
 
 // Display a success message
-echo "Data has been saved to file: " . $directory . $filename;
+echo "Data has been saved to file: " . $directory;
 ?>
