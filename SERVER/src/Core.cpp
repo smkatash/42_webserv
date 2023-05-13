@@ -69,7 +69,7 @@ Core::run()
 				{
 					printf("Failed recv() call");
 					close(tmpEventDescriptor);
-					continue;
+					// continue;
 				} 
 				else if (n == 0) 
 				{
@@ -81,11 +81,19 @@ Core::run()
 			// write a response:
 		std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello, world!\r\n";
         ssize_t sent = send(tmpEventDescriptor, response, response.size, 0);
-        if (sent == -1) {
+        if (sent == -1) 
+		{
           printf("Failed sent() call");
           close(tmpEventDescriptor);
-          continue;
+        //   continue;
         }
+		// should we erase the event from the queue or is done automatically? 
+		// EV_SET(&event, tmpEventDescriptor, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+        // if (kevent(kq, &event, 1, NULL, 0, NULL) == -1) 
+		// {
+        //   perror("Failed to deregister fd from kqueue");
+        //   exit(EXIT_FAILURE);
+        // }
 			i++;
 		}
 	}
