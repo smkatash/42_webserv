@@ -54,25 +54,23 @@ void	PostMethod::setResponseBody(std::string fileName)
 
 void PostMethod::returnResponse(t_endpoint loc)
 {
-	if (isNumber(loc.lredirect.substr(0, 3)))
-	{
-		res_.rbody = loc.lredirect.substr(4); // TODO: Test this. What would happen.
-		res_.eheader.contentLength = toString(loc.lredirect.substr(4).length());
-		return setCode(strtoi(loc.lredirect.substr(0, 3)));
-	}
-	else if (loc.lredirect.substr(0, 4) == "http")
-	{
-		res_.rheader.location = loc.lredirect;
+	res_.rheader.location = loc.lredirect;
+	if (loc.lredirect.substr(0, 4) == "http")
 		return setCode(FOUND);
-	}
-	return setCode(INTERNALERROR);
+	else
+		return setCode(MOVEDPERMAN);
 }
 
 void PostMethod::dirResponse(t_endpoint loc, std::string ep)
 {
 	if (loc.lindex.empty())
 		return setCode(NOTFOUND);
-	std::string uri = findUsableFile(loc.lindex, ep + "/");
+	std::string dir;
+	if (loc.lroot.empty())
+		dir = conf_.getRoot("") + ep.substr(1);
+	else
+		dir = loc.lroot + ep.substr(1);
+	std::string uri = findUsableFile(loc.lindex, dir);
 	if (uri.empty())
 		return setCode(NOTFOUND);
 	uri = ep + '/' + uri;
@@ -95,6 +93,10 @@ void PostMethod::post()
 		std::string uri = removeDuplicateSlashes(req_.rline.uri);
 		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
 		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
+
+		if (conf_.getClientMaxBodySize() != 0
+			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
+			return setCode(NOTALLOWED);
 
 		if (!isMethodAllowed(POST, loc.lmethod))
 			return setCode(NOTALLOWED);

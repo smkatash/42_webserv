@@ -21,7 +21,13 @@ std::string toString(const T& value)
 	return ss.str();
 }
 
-int			strtoi(std::string const& str);
+template<typename T>
+T	strtonum(std::string const& str)
+{
+	T i;
+	std::stringstream(str) >> i;
+	return i;
+}
 
 bool		Pred(char a, char b);
 std::string	removeDuplicateSlashes(const std::string& str);
