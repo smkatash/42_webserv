@@ -114,8 +114,8 @@ int main(int argc, char **argv) {
 Content-Type: multipart/form-data; boundary=--boundary123\n\
 \n\
 --boundary123\n\
-Content-Disposition: form-data; name=\"file\"; filename=\"img2.jpg\"\n\
-Content-Type: application/pdf\n\
+Content-Disposition: form-data; name=\"file\"; filename=\"img.jpg\"\n\
+Content-Type: application/jpg\n\
 \n\
 binary\n\
 --boundary123\n\
@@ -139,7 +139,7 @@ name=hello&order=hello\n\
 		Parser	confParser(file);
 		confParser.setConfigFile();
 		RequestParser req(requestUpload);
-		// req.debug();
+		//req.debug();
 		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
 		resp.post();
 		std::cout << resp.generateResponse() << std::endl;

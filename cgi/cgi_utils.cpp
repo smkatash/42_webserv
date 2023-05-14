@@ -2,48 +2,45 @@
 
 /* CGI helpers */
 
-
-const char          fillchar = '=';
-
-static std::string  cvt = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                          "abcdefghijklmnopqrstuvwxyz"
-                          "0123456789+/";
-
 std::vector<char> base64Decode(const std::string& data)
 {
-  std::string::size_type  i;
-  char c;
-  char c1;
-  std::string::size_type  len = data.length();
-  std::vector<char>  ret;
+	const char	fillchar = '=';
+	static std::string  cvt = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+								"abcdefghijklmnopqrstuvwxyz"
+								"0123456789+/";
+	std::string::size_type  i;
+	char c;
+	char ch;
+	std::string::size_type  len = data.length();
+	std::vector<char>  decoded;
 
-  for (i = 0; i < len; ++i)
-  {
-	c = (char) cvt.find(data[i]);
-	++i;
-	c1 = (char) cvt.find(data[i]);
-	c = (c << 2) | ((c1 >> 4) & 0x3);
-	ret.push_back(c);
-	if (++i < len)
+	for (i = 0; i < len; ++i)
 	{
-	  c = data[i];
-	  if (fillchar == c)
-		break;
-	  c = (char) cvt.find(c);
-	  c1 = ((c1 << 4) & 0xf0) | ((c >> 2) & 0xf);
-	  ret.push_back(c1);
+		c = (char) cvt.find(data[i]);
+		++i;
+		ch = (char) cvt.find(data[i]);
+		c = (c << 2) | ((ch >> 4) & 0x3);
+		decoded.push_back(c);
+		if (++i < len)
+		{
+			c = data[i];
+			if (fillchar == c)
+				break;
+			c = (char) cvt.find(c);
+			ch = ((ch << 4) & 0xf0) | ((c >> 2) & 0xf);
+			decoded.push_back(ch);
+		}
+		if (++i < len)
+		{
+			ch = data[i];
+			if (fillchar == ch)
+				break;
+			ch = (char) cvt.find(ch);
+			c = ((c << 6) & 0xc0) | ch;
+			decoded.push_back(c);
+		}
 	}
-	if (++i < len)
-	{
-	  c1 = data[i];
-	  if (fillchar == c1)
-		break;
-	  c1 = (char) cvt.find(c1);
-	  c = ((c << 6) & 0xc0) | c1;
-	  ret.push_back(c);
-	}
-  }
-  return(ret);
+	return(decoded);
 }
 
 std::string	currentDirectory() {

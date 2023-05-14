@@ -44,7 +44,6 @@ void	RequestParser::initParser_(std::string input) {
 			}
 		}
 	}
-	convertBodyToBinary();
 }
 
 void	RequestParser::parseRequestLine_(std::string line) {
@@ -148,11 +147,23 @@ void	RequestParser::parseEntityHeader_(std::string line) {
 	else if (param.compare("Content-Type:") == 0)
 		parseMultiParamContent(line); 
 	else if (param.compare("Content-Disposition:") == 0)
-		getParam_(line, req_.eheader.contentDisposition);
+		parseContentDisposition(line);
 	else if (param.compare("Expires:") == 0)
 		getParam_(line, req_.eheader.expires);
 	else if (param.compare("Last-Modified:") == 0)
 		getParam_(line, req_.eheader.lastModified);
+}
+
+void	RequestParser::parseContentDisposition(std::string line) {
+	getParam_(line, req_.eheader.contentDisposition);
+	std::size_t filenamePos = line.find("filename=\"");
+    if (filenamePos != std::string::npos) {
+        filenamePos += 10;
+        std::size_t endPos = line.find('"', filenamePos);
+        if (endPos != std::string::npos) {
+            req_.eheader.fileName = line.substr(filenamePos, endPos - filenamePos);
+        }
+    }
 }
 
 void	RequestParser::parseMultiParamContent(std::string line) {
@@ -172,12 +183,6 @@ void	RequestParser::parseMultiParamContent(std::string line) {
 		getParam_(line, req_.eheader.fileContentType);
 }
 
-void RequestParser::convertBodyToBinary() {
-	if (req_.eheader.contentType.compare(MULTIPART) == 0) {
-		std::vector<char> vec(req_.rbody.begin(), req_.rbody.end());
-		req_.binbody = vec;
-	}
-}
 
 Request	RequestParser::getRequest() {
 	return req_;
@@ -189,6 +194,6 @@ void	RequestParser::debug() {
 	std::cout << req_.rheader << std::endl;
 	std::cout << req_.eheader << std::endl;
 	
-	std::cout << "Here comes the body" << std::endl;
-	std::cout << req_.rbody << std::endl;
+	// std::cout << "Here comes the body" << std::endl;
+	// std::cout << req_.rbody << std::endl;
 }

@@ -6,11 +6,6 @@
 #include <sstream>
 #include "Request.hpp"
 
-#define MULTIPART "multipart/form-data"
-#define BOUNDARY "boundary"
-#define EQ "="
-
-
 class	RequestParser {
 	private:
 		Request req_;
@@ -21,8 +16,8 @@ class	RequestParser {
 		void	parseGeneralHeader_(std::string line);
 		void	parseRequestHeader_(std::string line);
 		void	parseEntityHeader_(std::string line);
-		void	convertBodyToBinary();
 		void	parseMultiParamContent(std::string line);
+		void	parseContentDisposition(std::string line);
 
 	public:
 		RequestParser(std::string input);

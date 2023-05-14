@@ -4,6 +4,10 @@
 #include <iostream>
 #include <vector>
 
+#define MULTIPART "multipart/form-data"
+#define BOUNDARY "boundary"
+#define EQ "="
+
 struct request_line {
 	std::string	method;
 	std::string	uri;
@@ -101,7 +105,7 @@ struct	entity_header {
 	std::string	contentRange;
 	std::string	contentType;
 	std::string	fileContentType;
-	std::string	uploadFilename;
+	std::string	fileName;
 	std::string	boundaryName;
 	std::string contentDisposition;
 	std::string	expires;
@@ -118,6 +122,7 @@ struct	entity_header {
 		os << "contentRange: " << eh.contentRange << std::endl;
 		os << "contentType: " << eh.contentType << std::endl;
 		os << "content type of file to upload: " << eh.fileContentType << std::endl;
+		os << "file name " << eh.fileName << std::endl;
 		os << "boundaryname: " << eh.boundaryName << std::endl;
 		os << "contentDisposition: " << eh.contentDisposition << std::endl;
 		os << "expires: " << eh.expires << std::endl;
