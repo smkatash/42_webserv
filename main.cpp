@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 Content-Type: multipart/form-data; boundary=--boundary123\n\
 \n\
 --boundary123\n\
-Content-Disposition: form-data; name=\"file\"; filename=\"example.pdf\"\n\
+Content-Disposition: form-data; name=\"file\"; filename=\"img2.jpg\"\n\
 Content-Type: application/pdf\n\
 \n\
 binary\n\
@@ -127,7 +127,7 @@ Content-Type: html/text\n\
 \n\
 name=hello&order=hello\n\
 ";
-	std::vector<char> bin = readBinaryFile("./notes.txt");
+	std::vector<char> bin = readBinaryFile("./img.jpg");
 	if (!bin.empty()) {
 		std::string base64Encoded = base64Encode(bin);
 		requestUpload = insertBinaryIntoRequest(requestUpload, base64Encoded);

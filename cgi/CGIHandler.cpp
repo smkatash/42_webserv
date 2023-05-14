@@ -81,15 +81,25 @@ void	CGIHandler::execute() {
 }
 
 
-void	CGIHandler::fileUpload() {
+void CGIHandler::fileUpload() {
 	if (std::string(getenv("CONTENT_TYPE")) == "multipart/form-data") {
-		std::ofstream tempFile("uploaded_file.tmp", std::ios::binary);
-		if (tempFile)
-			tempFile.write(&cgi_.binbody[0], cgi_.binbody.size());
-			if (tempFile.fail())
+		// Decode the binary data (assuming base64 encoding)
+		std::vector<char> decodedData = base64Decode(cgi_.body);
+
+		// Create a temporary file to save the decoded data
+		std::string tmpPath = getAbsolutePath(PHP_ROOT, "uploaded_file.tmp");
+		std::ofstream tempFile(tmpPath, std::ios::binary);
+		if (tempFile) {
+			// Write the decoded data to the temporary file
+			tempFile.write(&decodedData[0], decodedData.size());
+			if (tempFile.fail()) {
+				tempFile.close();
 				throw std::runtime_error("Failed to write file");
-		tempFile.close();
-		setenv("UPLOADED_FILE_PATH", "uploaded_file.tmp", 1);
+			}
+			tempFile.close();
+			// Set the environment variable with the path to the temporary file
+			setenv("UPLOADED_FILE_PATH", tmpPath.c_str(), 1);
+		}
 	}
 }
 
