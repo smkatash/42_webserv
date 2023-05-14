@@ -29,7 +29,7 @@ class Socket
 		Socket(const Socket &other);
 		~Socket();
 
-		Socket &operator=(const Socket &other);
+		// Socket &operator=(const Socket &other);
 
 	public: //method
 		bool setSocketDescriptor();

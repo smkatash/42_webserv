@@ -22,16 +22,21 @@ class Server
 
 		void setServerAddress(struct sockaddr_in address);
 		void setServerAddress(struct sockaddr_in address);
+		void setServerSocket(Socket socket);
+		void setClientsSocket(std::vector<Socket> socket);
+
 
 		int getPort();
 		int getServerFd();
 		struct sockaddr_in getServerAddress();
 
-
+		std::vector <Socket> initClientsSocket();
+		bool initServerAddress(struct sockaddr_in* serverAdd);
+		bool initServerSocket(Socket *socket);
+		// main
 		bool serverInit();
-		struct sockaddr_in initServerAddress(int port);
-		Socket initServerSocket(int port, sockaddr_in serverAdd);
-		std::vector <Socket> addClientInSockets();
+		bool appendNewToSocketList(Socket socket);
+
 };
 
 #endif
