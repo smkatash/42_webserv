@@ -18,14 +18,13 @@ Server::Server ()
 	clientsSocket_ = clientsSocket;
 }
 
-
 //SET-------------------------------------------------------------------------
 void Server::setServerAddress(struct sockaddr_in address)
 {
 	serverAddress_ = address;
 }
 
-void Server::setServerSocket(std::vector<Socket> socket)
+void Server::setServerSocket(Socket socket)
 {
 	serverSocket_ = socket;
 }

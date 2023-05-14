@@ -12,6 +12,19 @@ Socket::~Socket()
 {
 }
 
+Socket &Socket::operator= (Socket other)
+{
+	port_= other.port_;
+	sD_ = other.sD_;
+	clientSd_ = other.clientSd_;
+	sourceAddress_ = other.sourceAddress_;
+	destinationAddress_ = other.destinationAddress_;
+	data_ = other.data_;
+	event_ = other.event_;
+	events_= other.events_;
+	nEvent_= other.nEvent_;
+}
+
 // SET---------------------------------------------------------
 bool Socket::setSocketDescriptor()
 {
