@@ -82,7 +82,7 @@ std::vector <Socket> Server::initClientsSocket()
 }
 
 //MAIN------------------------------------------------------------------------
-bool appendNewToSocketList(Socket socket)
+bool Server::appendNewToSocketList(Socket socket)
 {
 	clientsSocket_.push_back(socket);
 	return (true);
