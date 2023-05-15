@@ -24,9 +24,8 @@ int main(int argc, char **argv) {
 	}
 
 	std::string request =
-"POST /randomdf HTTP/1.1\n\
-\n\
-name=John20Doe&age=25&email=johndoe40example.com";
+"GET /?name=Kany HTTP/1.1\n\
+\n";
 
 	try {
 

@@ -95,7 +95,7 @@ std::string removeDuplicateSlashes(const std::string& str)
 	beforeQuery.erase(last, beforeQuery.end());
 	if (beforeQuery.back() == '/' && beforeQuery.length() != 1)
 		beforeQuery.pop_back();
-	if (!str.find('?'))
+	if (str.find('?') != std::string::npos)
 		return beforeQuery + str.substr(str.find('?'));
 	return beforeQuery;
 }
