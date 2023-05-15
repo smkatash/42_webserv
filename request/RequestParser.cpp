@@ -157,13 +157,13 @@ void	RequestParser::parseEntityHeader_(std::string line) {
 void	RequestParser::parseContentDisposition(std::string line) {
 	getParam_(line, req_.eheader.contentDisposition);
 	std::size_t filenamePos = line.find("filename=\"");
-    if (filenamePos != std::string::npos) {
-        filenamePos += 10;
-        std::size_t endPos = line.find('"', filenamePos);
-        if (endPos != std::string::npos) {
-            req_.eheader.fileName = line.substr(filenamePos, endPos - filenamePos);
-        }
-    }
+	if (filenamePos != std::string::npos) {
+		filenamePos += 10;
+		std::size_t endPos = line.find('"', filenamePos);
+		if (endPos != std::string::npos) {
+			req_.eheader.fileName = line.substr(filenamePos, endPos - filenamePos);
+		}
+	}
 }
 
 void	RequestParser::parseMultiParamContent(std::string line) {
