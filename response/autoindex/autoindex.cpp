@@ -7,7 +7,7 @@
 #include <string>
 
 static std::string getTemplateHtml() {
-	std::ifstream templateFile("./responseHandler/autoindex/template.html");
+	std::ifstream templateFile("./response/autoindex/template.html");
 	if (!templateFile.is_open() || !templateFile.good()) {
 		std::cerr << "Autoindex html failed to open!" << std::endl;
 		return "";
