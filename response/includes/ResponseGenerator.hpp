@@ -23,6 +23,8 @@ private:
 	std::string	responseHeader();
 	std::string	entityHeader();
 
+	void		setBodyErrorPage(int code);
+
 public:
 	ResponseGenerator(Request& req, ConfigFile& conf);
 	~ResponseGenerator();

@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 	}
 
 	std::string request =
-"POST /random HTTP/1.1\n\
+"POST /randomdf HTTP/1.1\n\
 \n\
 name=John20Doe&age=25&email=johndoe40example.com";
 
@@ -35,7 +35,7 @@ name=John20Doe&age=25&email=johndoe40example.com";
 		confParser.setConfigFile();
 		RequestParser req(request);
 		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
-		resp.post();
+		resp.get();
 		std::cout << resp.generateResponse() << std::endl;
 
 
