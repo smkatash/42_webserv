@@ -6,7 +6,6 @@
 #include <sstream>
 #include "Request.hpp"
 
-
 class	RequestParser {
 	private:
 		Request req_;
@@ -17,7 +16,8 @@ class	RequestParser {
 		void	parseGeneralHeader_(std::string line);
 		void	parseRequestHeader_(std::string line);
 		void	parseEntityHeader_(std::string line);
-		void	parseRequestBody_(std::string line);
+		void	parseMultiParamContent(std::string line);
+		void	parseContentDisposition(std::string line);
 
 	public:
 		RequestParser(std::string input);
