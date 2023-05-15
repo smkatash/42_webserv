@@ -71,8 +71,3 @@ std::string	initAutoIndex(std::string endpoint, std::string root) {
 	}
 	return templateFile;
 }
-
-// int main() {
-// 	// If empty, should set to not found
-// 	std::cout << std::endl << initAutoIndex("/","../../var/www/pages/");
-// }
