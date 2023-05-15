@@ -113,23 +113,56 @@ bool	ResponseGenerator::isMethodAllowed(Methods method, std::vector<int> methods
 	return true;
 }
 
+void	ResponseGenerator::setBodyErrorPage(int code)
+{
+	std::string fileName;
+	std::map<int, std::string> errfile = conf_.getErrorFile();
+	std::map<int, std::string>::iterator it = errfile.find(code);
+	if (it != errfile.end())
+		fileName = conf_.getRoot("").substr(0, conf_.getRoot("").find_last_of('/')) + it->second;
+	else
+		fileName = "./error_pages/" + toString(code) + ".html";
+
+	std::ifstream file;
+	file.open(fileName);
+	if (!file.is_open() || !file.good())
+		return ;
+	std::string temp;
+	while (std::getline(file, temp))
+	{
+		if (file.eof())
+			res_.rbody += temp;
+		else
+			res_.rbody += temp + '\n';
+	}
+	res_.eheader.contentLength = toString(res_.rbody.length());
+	file.close();
+}
+
 void	ResponseGenerator::setCode(int code)
 {
+	// TODO: Set different error page from config file
 	res_.rline.statusCode = toString(code);
 	if (code == OK)
 		res_.rline.reasonPhrase = "OK";
-	if (code == FOUND)
+	else if (code == FOUND)
 		res_.rline.reasonPhrase = "Found";
-	if (code == NOTFOUND)
+	else if (code == NOTFOUND)
+	{
 		res_.rline.reasonPhrase = "Not Found";
-	if (code == NOTALLOWED)
+		setBodyErrorPage(code);
+	}
+	else if (code == NOTALLOWED)
 		res_.rline.reasonPhrase = "Not Allowed";
-	if (code == INTERNALERROR)
+	else if (code == INTERNALERROR)
 		res_.rline.reasonPhrase = "Internal Server Error";
 }
 
 std::string ResponseGenerator::generateResponse()
 {
+	// if (!res_.cgiResponse.empty())
+	// 	return res_.cgiResponse;
+	// return "IT IS EMPTY";
 	if (!res_.cgiResponse.empty())
 		return res_.cgiResponse;
 	std::string	header;

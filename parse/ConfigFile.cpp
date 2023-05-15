@@ -1,6 +1,6 @@
 #include "ConfigFile.hpp"
 
-ConfigFile::ConfigFile(): listen_(-1), serverName_(""), root_(""), clientMaxBodySize_(0) {}
+ConfigFile::ConfigFile(): listen_(-1), serverName_(""), root_(""), clientMaxBodySize_(1024) {}
 
 ConfigFile::~ConfigFile() {}
 

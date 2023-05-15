@@ -13,6 +13,8 @@
 #include "ConfigFile.hpp"
 
 #define MAX_PATH_LEN 512
+#define PHP_CGI_PATH "/exec/php-cgi"
+#define PHP_ROOT "/cgi"
 /*
 A query string is typically used to pass data to the server via an HTTP GET request.
 The query string is appended to the end of the URL in the format ?key1=value1&key2=value2..., 
@@ -55,8 +57,10 @@ private:
 	void				getConfigInfo();
 
 	void				setEnvironment();
-	void				runChildProcess(int *fd, int filefd, char** argv);
-	void				runParentProcess(int *fd, char* tmpname);
+	void				runChildProcess(int *fd, char** argv);
+	void				runParentProcess(int *fd);
+	// void				runChildProcess(int stdIn, int stdOut, char** argv);
+	// void				runParentProcess(int stdOut);
 	void				setCGIResponse(char* tmpname);
 public:
 	CGIHandler(Request req, ConfigFile conf, std::string location);

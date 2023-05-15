@@ -46,7 +46,12 @@ void	GetMethod::setResponseBody(std::string fileName)
 		return setCode(NOTFOUND);
 	std::string temp;
 	while (std::getline(file, temp))
-		res_.rbody += temp + '\n';
+	{
+		if (file.eof())
+			res_.rbody += temp;
+		else
+			res_.rbody += temp + '\n';
+	}
 	res_.eheader.contentLength = toString(res_.rbody.length());
 	file.close();
 	return setCode(OK);
@@ -54,18 +59,11 @@ void	GetMethod::setResponseBody(std::string fileName)
 
 void GetMethod::returnResponse(t_endpoint loc)
 {
-	if (isNumber(loc.lredirect.substr(0, 3)))
-	{
-		res_.rbody = loc.lredirect.substr(4); // TODO: Test this. What would happen.
-		res_.eheader.contentLength = toString(loc.lredirect.substr(4).length());
-		return setCode(strtoi(loc.lredirect.substr(0, 3)));
-	}
-	else if (loc.lredirect.substr(0, 4) == "http")
-	{
-		res_.rheader.location = loc.lredirect;
+	res_.rheader.location = loc.lredirect;
+	if (loc.lredirect.substr(0, 4) == "http")
 		return setCode(FOUND);
-	}
-	return setCode(INTERNALERROR);
+	else
+		return setCode(MOVEDPERMAN);
 }
 
 void GetMethod::autoIndexResponse(t_endpoint loc, std::string ep)
@@ -87,9 +85,14 @@ void GetMethod::dirResponse(t_endpoint loc, std::string ep)
 {
 	if (loc.lautoindex)
 		return autoIndexResponse(loc, ep);
-	else if (loc.lindex.empty())
+	if (loc.lindex.empty())
 		return setCode(NOTFOUND);
-	std::string uri = findUsableFile(loc.lindex, ep + "/");
+	std::string dir;
+	if (loc.lroot.empty())
+		dir = conf_.getRoot("") + ep.substr(1);
+	else
+		dir = loc.lroot + ep.substr(1);
+	std::string uri = findUsableFile(loc.lindex, dir);
 	if (uri.empty())
 		return setCode(NOTFOUND);
 	uri = ep + '/' + uri;
@@ -112,6 +115,7 @@ void GetMethod::get()
 		std::string uri = removeDuplicateSlashes(req_.rline.uri);
 		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
 		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
+		
 
 		if (!isMethodAllowed(GET, loc.lmethod))
 			return setCode(NOTALLOWED);

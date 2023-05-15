@@ -4,7 +4,7 @@
 #include <iostream>
 #include "Request.hpp"
 
-/* TODO most common status codes, may be add more later*/
+/* Most common status codes, may be add more later*/
 #define	OK				200		// "200 OK" /* Request is okay, entity body contains requested resource. */
 #define	CREATED			201		// "201 Created" /* For requests that create server objects (e.g., PUT). */
 
@@ -14,6 +14,7 @@
 #define NOTFOUND		404		// "404 Not Found" /* requested page not found */
 #define NOTALLOWED		405		// "404 Not Allowed" /* requested page is incompatible with method */
 #define GONE			410		// "410 Gone" /* like 404, but temporary*/
+#define TOOLARGE		413		// "413 Content Too Large" /* like 404, but temporary*/
 #define	INTERNALERROR	500		// "500 Internal Server Error" /* generic server error */
 #define	BADGATEWAY		502		// "502 Bad Gateway" /* invalid response from another server */
 

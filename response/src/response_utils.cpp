@@ -46,9 +46,9 @@ std::string findContentType(std::string fileExtension)
 
 std::string findUsableFile(std::vector<std::string> files, std::string directory)
 {
-	if (directory != "/")
+	if (directory.back() != '/')
 		directory += "/";
-	
+	directory.insert(0, ".");
 	DIR* dir;
 	struct dirent* ent;
 	if ((dir = opendir(directory.c_str())) == NULL)
@@ -59,8 +59,9 @@ std::string findUsableFile(std::vector<std::string> files, std::string directory
 		it = std::find(files.begin(), files.end(), ent->d_name);
 		if (it != files.end())
 		{
+			std::string fileName = ent->d_name;
 			closedir(dir);
-			return std::string(ent->d_name);
+			return fileName;
 		}
 	}
 	closedir(dir);
@@ -79,13 +80,6 @@ bool isNumber(std::string str)
 	return true;
 }
 
-int	strtoi(std::string const& str)
-{
-	int i;
-	std::stringstream(str) >> i;
-	return i;
-}
-
 bool Pred(char a, char b)
 {
 	if (a == b && a == '/')
@@ -95,12 +89,13 @@ bool Pred(char a, char b)
 
 std::string removeDuplicateSlashes(const std::string& str)
 {
-	// TODO: Should remove slashes only until '?'
-	std::string res = str;
-	std::string::iterator last = res.begin();
-	last = std::unique(res.begin(), res.end(), &Pred);
-	res.erase(last, res.end());
-	if (res.back() == '/' && res.length() != 1)
-		res.pop_back();
-	return res;
+	std::string beforeQuery = str.substr(0, str.find('?'));
+	std::string::iterator last = beforeQuery.begin();
+	last = std::unique(beforeQuery.begin(), beforeQuery.end(), &Pred);
+	beforeQuery.erase(last, beforeQuery.end());
+	if (beforeQuery.back() == '/' && beforeQuery.length() != 1)
+		beforeQuery.pop_back();
+	if (!str.find('?'))
+		return beforeQuery + str.substr(str.find('?'));
+	return beforeQuery;
 }
