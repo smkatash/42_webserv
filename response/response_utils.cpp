@@ -12,13 +12,14 @@
 
 std::string findCurrentTimeGMT()
 {
-	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-	std::time_t timeNow = std::chrono::system_clock::to_time_t(now);
+	std::time_t now = std::time(NULL);
+	std::tm* gmTimeNow = std::gmtime(&now);
 
-	std::tm* gmTimeNow = std::gmtime(&timeNow);
+	char buffer[80];
+	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", gmTimeNow);
 
 	std::stringstream ss("");
-	ss << std::put_time(gmTimeNow, "%a, %d %b %Y %H:%M:%S GMT");
+	ss << buffer;
 	return ss.str();
 }
 
@@ -46,13 +47,13 @@ std::string findContentType(std::string fileExtension)
 
 std::string findUsableFile(std::vector<std::string> files, std::string directory)
 {
-	if (directory.back() != '/')
+	if (directory[directory.size() - 1] != '/')
 		directory += "/";
 	directory.insert(0, ".");
 	DIR* dir;
 	struct dirent* ent;
 	if ((dir = opendir(directory.c_str())) == NULL)
-		throw std::runtime_error("bad directory");
+		throw std::runtime_error("server error");
 	std::vector<std::string>::iterator it;
 	while((ent = readdir(dir)) != NULL)
 	{
@@ -93,8 +94,8 @@ std::string removeDuplicateSlashes(const std::string& str)
 	std::string::iterator last = beforeQuery.begin();
 	last = std::unique(beforeQuery.begin(), beforeQuery.end(), &Pred);
 	beforeQuery.erase(last, beforeQuery.end());
-	if (beforeQuery.back() == '/' && beforeQuery.length() != 1)
-		beforeQuery.pop_back();
+	if (beforeQuery.length() != 1 && beforeQuery[beforeQuery.size() - 1] == '/')
+		beforeQuery.erase(beforeQuery.size() - 1);
 	if (str.find('?') != std::string::npos)
 		return beforeQuery + str.substr(str.find('?'));
 	return beforeQuery;

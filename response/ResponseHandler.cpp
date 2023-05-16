@@ -127,7 +127,7 @@ void	ResponseHandler::setBodyErrorPage(int code)
 		fileName = "./error_pages/" + toString(code) + ".html";
 
 	std::ifstream file;
-	file.open(fileName);
+	file.open(fileName.c_str());
 	if (!file.is_open() || !file.good())
 		return ;
 	std::string temp;
@@ -161,21 +161,6 @@ void	ResponseHandler::setCode(int code)
 		res_.rline.reasonPhrase = "Internal Server Error";
 }
 
-std::string ResponseHandler::generateResponse()
-{
-	// if (!res_.cgiResponse.empty())
-	// 	return res_.cgiResponse;
-	// return "IT IS EMPTY";
-	if (!res_.cgiResponse.empty())
-		return res_.cgiResponse;
-	std::string	header;
-	header = responseLine() + generalHeader()
-				+ responseHeader() + entityHeader();
-	if (!res_.rbody.empty())
-		header.append("\r\n" + res_.rbody);
-	return header;
-}
-
 std::string ResponseHandler::findUriEndpoint(const std::string& uri)
 {
 	if (uri == "")
@@ -190,24 +175,26 @@ std::string ResponseHandler::findUriEndpoint(const std::string& uri)
 	removing a forward slash from the end, and adding a '.' to the front */
 void ResponseHandler::prepUriFile(std::string& uri, const t_endpoint& loc)
 {
-	if (uri.front() == '/')
+	if (uri[0] == '/')
 		uri.erase(uri.begin());
 	if (loc.lroot.empty())
 		uri.insert(0, conf_.getRoot(""));
 	else
 		uri.insert(0, loc.lroot);
-	if (uri.back() == '/')
+	if (uri[uri.size() - 1] == '/')
 		uri.erase(uri.end());
-	if (uri.front() == '/')
+	if (uri[0] == '/')
 		uri.insert(0, ".");
 }
 
 void	ResponseHandler::setResponseBody(std::string fileName)
 {
 	std::ifstream file;
-	file.open(fileName);
-	if (!file.is_open() || !file.good())
+	file.open(fileName.c_str());
+	if (!file.is_open())
 		return setCode(NOTFOUND);
+	if (!file.good())
+		return setCode(INTERNALERROR);
 	std::string temp;
 	while (std::getline(file, temp))
 	{
@@ -280,7 +267,6 @@ void ResponseHandler::get()
 		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
 		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
 
-
 		if (!isMethodAllowed(GET, loc.lmethod))
 			return setCode(NOTALLOWED);
 		/* Check if you have to send to cgi handler by checking if
@@ -300,7 +286,9 @@ void ResponseHandler::get()
 	}
 	catch(const std::exception& e)
 	{
-		return setCode(NOTFOUND);
+		if (e.what() == "endpoint not found")
+			return setCode(NOTFOUND);
+		return setCode(INTERNALERROR);
 	}
 }
 
@@ -311,14 +299,31 @@ void ResponseHandler::post()
 		res_.gheader.date = findCurrentTimeGMT();
 		std::string uri = removeDuplicateSlashes(req_.rline.uri);
 		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
-		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
+		t_endpoint loc = conf_.getLocation(ep);
 
+
+
+
+
+		/* TODO: Handle cases where content length isn't known */
 		if (conf_.getClientMaxBodySize() != 0
 			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(NOTALLOWED);
 
+
+
+
+
 		if (!isMethodAllowed(POST, loc.lmethod))
 			return setCode(NOTALLOWED);
+
+
+
+
+		/* TODO: check if chunked and dechunk accordingly */
+
+
+
 		/* Check if you have to send to cgi handler by checking if
 		there's a query */
 		if (!req_.rbody.empty())
@@ -329,15 +334,12 @@ void ResponseHandler::post()
 			std::cout << "CGI Response " << res_.cgiResponse << std::endl;
 			return ;
 		}
-		if (!loc.lredirect.empty())
-			return returnResponse(loc);
-		if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
-			return dirResponse(loc, ep);
-		return normalResponse(loc, uri);
 	}
 	catch(const std::exception& e)
 	{
-		return setCode(NOTFOUND);
+		if (e.what() == "endpoint not found")
+			return setCode(NOTFOUND);
+		return setCode(INTERNALERROR);
 	}
 }
 
@@ -394,4 +396,19 @@ void ResponseHandler::del()
 	{
 		std::cerr << e.what() << '\n';
 	}
+}
+
+std::string ResponseHandler::generateResponse()
+{
+	// if (!res_.cgiResponse.empty())
+	// 	return res_.cgiResponse;
+	// return "IT IS EMPTY";
+	if (!res_.cgiResponse.empty())
+		return res_.cgiResponse;
+	std::string	header;
+	header = responseLine() + generalHeader()
+				+ responseHeader() + entityHeader();
+	if (!res_.rbody.empty())
+		header.append("\r\n" + res_.rbody);
+	return header;
 }
