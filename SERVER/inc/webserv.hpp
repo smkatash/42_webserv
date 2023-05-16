@@ -25,9 +25,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "Core"
-#include "Server.hpp"
-#include "Socket.hpp"
+#include "./Core.hpp"
+#include "./Server.hpp"
+#include "./Socket.hpp"
+#include "../../include/ConfigFile.hpp"
 
 #define MAX_EVENT 10
 #define NUM_SOCKET 10
@@ -36,5 +37,11 @@ int kqFD;
 
 void serverClose();
 
+
+static char kfjcopyr[] =
+   "MTCSRVR - Licensed Materials - Property of KFJ. "
+   "This module is \"Restricted Materials of KFJ\" "
+   "5647-A01 (C) Copyright KFJ Corp. 2023, 2023. "
+   "See KFJ Copyright Instructions.";
 
 #endif

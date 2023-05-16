@@ -2,6 +2,8 @@
 #define CORE_HPP
 
 #include "webserv.hpp"
+#include "Server.hpp"
+
 
 class Core
 {
@@ -9,15 +11,17 @@ class Core
 
 	Server server_;
 	// std::vector <Server> servers_;
-	std::map <int, Socket> socketMap_;
-	// std::vector <Server> initServers(ConfigFile conf);
+	std::map <int, class Socket> socketMap_;
+	struct kevent eventlist_;
 
+	// std::vector <Server> initServers(ConfigFile conf);
+	
 	public: //
 	// Core(std::vector <ConfigFile> servers, int kqFd);
 	Core();
 	~Core();
-
 	void run();
+
 };
 
 #endif

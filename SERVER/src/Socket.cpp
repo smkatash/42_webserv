@@ -12,6 +12,19 @@ Socket::~Socket()
 {
 }
 
+Socket &Socket::operator= (Socket other)
+{
+	port_= other.port_;
+	sD_ = other.sD_;
+	clientSd_ = other.clientSd_;
+	sourceAddress_ = other.sourceAddress_;
+	destinationAddress_ = other.destinationAddress_;
+	data_ = other.data_;
+	event_ = other.event_;
+	events_= other.events_;
+	nEvent_= other.nEvent_;
+}
+
 // SET---------------------------------------------------------
 bool Socket::setSocketDescriptor(int fd)
 {
@@ -203,6 +216,25 @@ bool Socket writeHandler()
 	}
 }
 
+bool Socket::setSocketConnection()
+{
+	int fd;
+	int socketDescriptor; // should it be the listening descriptor?
+	struct sockaddr_in destAddress;
+	
+	destAddress = memset(&destAddress, 0, sizeof(destAddress));
+	socketDescriptor = getSocketDescriptor();
+	fd = accept(socketDescriptor, &destAddress, sizeof(&struct sockaddr_in));
+	if (fd == -1)
+	{
+		printf("Failed incoming connection accept()");
+		return (false);
+	}
+	setSocketDescriptor(fd);
+	setDestinationAddress(destAddress);
+	return (true);
+}
+
 bool Socket::socketPassiveInit()
 {
 	// init the socket;
@@ -230,5 +262,6 @@ bool Socket::socketInit()
 		printf("bind_error \n");
 	// add the socket to the kqueue;
 	if(setKvent() == false)
+		printf("kevent() list error \n")
 	return true;
 }
