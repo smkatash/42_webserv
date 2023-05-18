@@ -24,10 +24,12 @@ class	RequestParser {
 		~RequestParser();
 		Request	getRequest();
 		void	debug();
-
-
-	
 };
 
+
+bool	isRequestLine(std::string line);
+bool	isGeneralHeader(std::string line);
+bool	isRequestHeader(std::string line);
+bool	isEntityHeader(std::string line);
 
 #endif

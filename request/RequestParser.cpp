@@ -1,5 +1,4 @@
 #include "RequestParser.hpp"
-#include "request_utils.hpp"
 
 RequestParser::RequestParser(std::string input) {
 	initParser_(input);

@@ -137,7 +137,6 @@ struct s_request {
 	request_header				rheader;
 	entity_header				eheader;
 	std::string					rbody;
-	std::vector<char>			binbody;
 };
 
 typedef	s_request		Request;

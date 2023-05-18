@@ -4,7 +4,7 @@
 #include "Response.hpp"
 #include "Request.hpp"
 #include "ConfigFile.hpp"
-#include "parser_utils.hpp" // Methods enum
+#include "Parser.hpp" // Methods enum
 
 class ResponseHandler
 {
