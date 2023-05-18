@@ -1,7 +1,16 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "parser_utils.hpp"
+#include "ConfigFile.hpp"
+#include <iostream>
+#include <utility>
+#include <fstream>
+#include <string>
+#include <iterator>
+#include <vector>
+#include <algorithm>
+#include <cctype>
+#include <map>
 
 #define NOTFOUND		404
 #define	INTERNALERROR	500
@@ -21,6 +30,12 @@ enum Token {
 	REDIRECT,
 	MAX_CLIENT,
 	NA
+};
+
+enum Methods {
+	GET = 1,
+	POST,
+	DELETE
 };
 
 class Parser {
@@ -59,5 +74,9 @@ class Parser {
 		void			debugInput();
 };
 
+bool	isdigitString(std::string str);
+bool	stripBrackets(std::string *str);
+int		isValidMethod(std::string m);
+void	isValidLanguage(std::string lang);
 
 #endif

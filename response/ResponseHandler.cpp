@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include "Response.hpp" // Status codes definitions
-#include "parser_utils.hpp" // Methods enum
+#include "Parser.hpp" // Methods enum
 #include "response_utils.hpp"
 #include "CGIHandler.hpp"
 #include "ResponseHandler.hpp"
@@ -286,7 +286,7 @@ void ResponseHandler::get()
 	}
 	catch(const std::exception& e)
 	{
-		if (e.what() == "endpoint not found")
+		if (strcmp(e.what(),"endpoint not found") == 0 )
 			return setCode(NOTFOUND);
 		return setCode(INTERNALERROR);
 	}
@@ -302,22 +302,13 @@ void ResponseHandler::post()
 		t_endpoint loc = conf_.getLocation(ep);
 
 
-
-
-
 		/* TODO: Handle cases where content length isn't known */
 		if (conf_.getClientMaxBodySize() != 0
 			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(NOTALLOWED);
 
-
-
-
-
 		if (!isMethodAllowed(POST, loc.lmethod))
 			return setCode(NOTALLOWED);
-
-
 
 
 		/* TODO: check if chunked and dechunk accordingly */
@@ -337,7 +328,7 @@ void ResponseHandler::post()
 	}
 	catch(const std::exception& e)
 	{
-		if (e.what() == "endpoint not found")
+		if (strcmp(e.what(), "endpoint not found") == 0)
 			return setCode(NOTFOUND);
 		return setCode(INTERNALERROR);
 	}
