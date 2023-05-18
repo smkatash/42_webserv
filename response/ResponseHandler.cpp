@@ -301,19 +301,18 @@ void ResponseHandler::post()
 		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
 		t_endpoint loc = conf_.getLocation(ep);
 
-
 		/* TODO: Handle cases where content length isn't known */
 		if (conf_.getClientMaxBodySize() != 0
 			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(NOTALLOWED);
-
+			
 		if (!isMethodAllowed(POST, loc.lmethod))
 			return setCode(NOTALLOWED);
 
-
-		/* TODO: check if chunked and dechunk accordingly */
-
-
+		/* check if chunked and dechunk accordingly */
+		if (req_.gheader.transferEncoding.compare("chunked") == 0) {
+			req_.rbody = unchunkData(req_.rbody);
+		}
 
 		/* Check if you have to send to cgi handler by checking if
 		there's a query */

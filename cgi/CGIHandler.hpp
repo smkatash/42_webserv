@@ -16,6 +16,8 @@
 
 #define MAX_PATH_LEN 512
 #define PHP_CGI_PATH "/exec/php-cgi"
+#define PYTHON_CGI_PATH "/exec/python"
+#define PERL_CGI_PATH "/exec/perl"
 #define PHP_ROOT "/cgi"
 #define POST_FILE 0
 #define POST_DATA 1

@@ -50,9 +50,16 @@ void	ConfigFile::setMethod(std::string endpoint, int	method) {
 }
 
 void	ConfigFile::setCGI(std::string endpoint, std::string lang, std::string path) {
+	int type = 0;
+	if (lang.compare(".py") == 0)
+		type = PYTHON;
+	else if (lang.compare(".php") == 0)
+		type = PHP;
+	else if (lang.compare(".perl") == 0)
+		type = PERL;
 	std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
 	if (it != location_.end()) {
-		it->second.lcgi.insert(std::pair<std::string, std::string>(lang, path));
+		it->second.lcgi = std::make_pair<int, std::string>(type, path);
 	}
 }
 
@@ -117,17 +124,25 @@ const std::map<int, std::string>	&ConfigFile::getErrorFile(void) const {
 	return errorFile_;
 }
 
-const std::string	ConfigFile::getScriptCGI(std::string endpoint, std::string type) const {
-	if (!endpoint.empty() && !type.empty()) {
+
+const std::string	ConfigFile::getScriptCGI(std::string endpoint, int type) const {
+	if (!endpoint.empty() && type) {
 		std::map<std::string, t_endpoint>::const_iterator it = location_.find(endpoint);
 		if (it != location_.end()) {
-			std::map<std::string, std::string>::const_iterator itc = it->second.lcgi.find(type);
-			if (itc != it->second.lcgi.end()) {
-				return itc->second;
-			}
+			return it->second.lcgi.second;
 		}
 	}
 	return NULL;
+}
+
+int	ConfigFile::getScriptType(std::string endpoint) {
+	if (!endpoint.empty()) {
+		std::map<std::string, t_endpoint>::const_iterator it = location_.find(endpoint);
+		if (it != location_.end()) {
+			return it->second.lcgi.first;
+		}
+	}
+	return 0;
 }
 
 const t_endpoint	&ConfigFile::getLocation(std::string endpoint) const {
@@ -195,9 +210,8 @@ void	ConfigFile::debugConfigFile(void) {
 		for (std::vector<std::string>::iterator it2 = itm->second.lindex.begin(); it2 != itm->second.lindex.end(); ++it2)
 			std::cout << *it2 << " ";
 		std::cout << std::endl << "cgi files: ";
-		for (std::map<std::string, std::string>::iterator it3 = itm->second.lcgi.begin(); it3 != itm->second.lcgi.end(); ++it3) {
-			std::cout << it3->first << ": " << it3->second << " ";
-		}
+		std::cout << itm->second.lcgi.first << ": " << itm->second.lcgi.second << " ";
+
 		std::cout << std::endl << "redirects: " << itm->second.lredirect;
 		std::cout << std::endl << "autoindex: " << std::boolalpha << itm->second.lautoindex;
 	}

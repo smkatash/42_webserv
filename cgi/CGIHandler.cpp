@@ -54,12 +54,16 @@ void	CGIHandler::setRequestInfo()
 
 void	CGIHandler::setConfigInfo()
 {
-	// TODO should define path depending on the extension!!! This is only for php
-	std::string	type = ".php";
+	int type = conf_.getScriptType(ep_);
 	std::string root = conf_.getRoot(ep_);
 	std::string script = conf_.getScriptCGI(ep_, type);
-
-	cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PHP_CGI_PATH);
+	if (type == PHP) {
+		cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PHP_CGI_PATH);
+	} else if (type == PYTHON) {
+		cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PYTHON_CGI_PATH);
+	} else if (type == PERL) {
+		cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PERL_CGI_PATH);
+	}
 	cgi_.epScriptRoot = getAbsolutePath(root, script);
 	cgi_.serverName = conf_.getServerName();
 }
