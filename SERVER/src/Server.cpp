@@ -4,9 +4,10 @@
 Server::Server (ConfigFile conf) : config_(conf)
 {
 	port_ = 8080;
-	std::vector<Socket> clientsSocket = {};
+	std::vector<Socket> clientsSocket;
 	clientsSocket_ = clientsSocket;
 }
+
 Server::Server ()
 {
 	ConfigFile config;
@@ -14,14 +15,14 @@ Server::Server ()
 	config.setServerName("test");
 	config.setClientMaxBodySize(10);
 
-	std::vector<Socket> clientsSocket = {};
+	std::vector<Socket> clientsSocket;
 	clientsSocket_ = clientsSocket;
 }
 
 //SET-------------------------------------------------------------------------
 void Server::setServerAddress(struct sockaddr_in address)
 {
-	serverAddress_ = address;
+	serverAdd_ = address;
 }
 
 void Server::setServerSocket(Socket socket)

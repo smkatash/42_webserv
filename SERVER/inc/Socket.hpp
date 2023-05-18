@@ -27,7 +27,7 @@ class Socket
 		Socket(int domain);
 		Socket(int domain, struct sockaddr_in servAdd);
 		Socket(const Socket &other);
-		Socket &Socket::operator= (Socket other)
+		Socket &Socket::operator= (Socket other);
 		~Socket();
 
 		// Socket &operator=(const Socket &other);

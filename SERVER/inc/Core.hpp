@@ -4,6 +4,7 @@
 #include "webserv.hpp"
 #include "Server.hpp"
 
+class Server;
 
 class Core
 {

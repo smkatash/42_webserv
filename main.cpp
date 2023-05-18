@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 	}
 	kq = kqueue();
 	Core core(conf.conf_, kq);
-	Socket socket (); 
+	Socket socket; 
 }
 /*
 	1) -Create a socket: The first step in creating a server is to create a socket that listens for incoming connections. 

@@ -21,7 +21,6 @@ class Server
 		~Server();
 
 		void setServerAddress(struct sockaddr_in address);
-		void setServerAddress(struct sockaddr_in address);
 		void setServerSocket(Socket socket);
 		void setClientsSocket(std::vector<Socket> socket);
 
