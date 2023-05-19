@@ -388,7 +388,7 @@ void ResponseHandler::del()
 	}
 }
 
-std::string ResponseHandler::generateResponse()
+std::string ResponseHandler::generate()
 {
 	// if (!res_.cgiResponse.empty())
 	// 	return res_.cgiResponse;
@@ -401,4 +401,14 @@ std::string ResponseHandler::generateResponse()
 	if (!res_.rbody.empty())
 		header.append("\r\n" + res_.rbody);
 	return header;
+}
+
+void	ResponseHandler::handle()
+{
+	if (req_.rline.method == "GET")
+		return get();
+	if (req_.rline.method == "POST")
+		return post();
+	if (req_.rline.method == "DELETE")
+		return del();
 }

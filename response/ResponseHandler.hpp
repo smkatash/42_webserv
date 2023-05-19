@@ -35,16 +35,17 @@ private:
 	void		normalDelResponse(t_endpoint loc, std::string uri);
 	void		dirDelResponse(t_endpoint loc, std::string ep);
 
+	void		get();
+	void		post();
+	void		del();
 
 public:
 	ResponseHandler(Request req, ConfigFile conf);
 	~ResponseHandler();
 
-	void		get();
-	void		post();
-	void		del();
+	void		handle();
 
-	std::string	generateResponse();
+	std::string	generate();
 };
 
 std::string		initAutoIndex(std::string endpoint, std::string root);

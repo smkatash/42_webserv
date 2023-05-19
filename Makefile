@@ -1,4 +1,4 @@
-VPATH	=	cgi config_parser request response response/autoindex
+VPATH	=	cgi config_parser core request response response/autoindex
 CC		=	c++
 CFLAGS	=	-std=c++98 -Wall -Wextra -Werror -MD -fsanitize=address
 
@@ -7,12 +7,13 @@ NAME	=	webserv
 SRC		=	main.cpp \
 			CGIHandler.cpp CGIUtils.cpp \
 			ConfigFile.cpp ParserUtils.cpp Parser.cpp \
+			Core.cpp Server.cpp Socket.cpp \
 			RequestParserUtils.cpp RequestParser.cpp \
 			autoindex.cpp \
 			response_utils.cpp ResponseHandler.cpp
 
 OBJ		=	$(addprefix obj/,$(notdir $(SRC:.cpp=.o)))
-INC		=	-I cgi -I config_parser -I request -I response
+INC		=	-I cgi -I config_parser -I core -I request -I response
 
 all : $(NAME)
 
