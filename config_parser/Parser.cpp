@@ -1,5 +1,7 @@
 #include "Parser.hpp"
 
+Parser::Parser() {}
+
 Parser::Parser(std::ifstream& file) {
 	if (file.is_open() && file.good()) {
 		std::istream_iterator<std::string>	start(file), end;
@@ -10,9 +12,21 @@ Parser::Parser(std::ifstream& file) {
 	}
 	if (input_.empty())
 		throw std::invalid_argument("parser: empty config_file");
-};
+}
 
-Parser::~Parser() {};
+Parser::~Parser() {}
+
+void	Parser::openFile(std::ifstream &file) {
+	if (file.is_open() && file.good()) {
+		std::istream_iterator<std::string>	start(file), end;
+		input_ = std::vector<std::string>(start, end);
+		count_ = 0;
+	} else {
+		throw std::invalid_argument("parser: unable to open file");
+	}
+	if (input_.empty())
+		throw std::invalid_argument("parser: empty config_file");
+}
 
 /********************* tokenizer *************************/
 

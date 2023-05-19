@@ -45,8 +45,11 @@ class Parser {
 		int							count_;
 
 	public:
+		Parser();
 		Parser(std::ifstream &file);
 		~Parser();
+
+		void			openFile(std::ifstream &file);
 
 		/* parse */
 		Token			getToken(const std::string& str);
