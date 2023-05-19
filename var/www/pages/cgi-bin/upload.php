@@ -1,24 +1,44 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $uploadedFilePath = getenv('UPLOADED_FILE_PATH');
+    $destinationDirectory = dirname(__FILE__) . '/';
 
-// Check if the request method is POST
-$uploadedFilePath = getenv('UPLOADED_FILE_PATH');
-$destinationDirectory = '/Users/kanykei/Desktop/42_webserv/cgi/';  // Specify the destination directory
+    if ($uploadedFilePath && file_exists($uploadedFilePath)) {
+        $fileName = getenv('FILE_NAME');
 
-if ($uploadedFilePath && file_exists($uploadedFilePath)) {
-    // Specify the destination file name
-    $fileName = getenv('FILE_NAME');
+        $destinationFilePath = $destinationDirectory . $fileName;
 
-    // Build the destination file path
-    $destinationFilePath = $destinationDirectory . $fileName;
-
-    // Move the uploaded file to the destination directory
-    if (rename($uploadedFilePath, $destinationFilePath)) {
-        // Output a success message
-        echo "File uploaded and saved successfully.";
+        if (rename($uploadedFilePath, $destinationFilePath)) {
+            $responseCode = 200;
+            $responseMessage = "File uploaded and saved successfully.";
+        } else {
+            $responseCode = 500;
+            $responseMessage = "Failed to move the uploaded file.";
+        }
     } else {
-        echo "Failed to move the uploaded file.";
+        $responseCode = 400;
+        $responseMessage = "No file uploaded.";
     }
 } else {
-    echo "No file uploaded.";
+    $responseCode = 405;
+    $responseMessage = "Method Not Allowed";
+}
+
+$fullResponse = "HTTP/1.1 " . $responseCode . " " . http_response_code_message($responseCode) . "\r\n";
+$fullResponse .= "Content-Type: text/plain\r\n";
+$fullResponse .= "Content-Length: " . strlen($responseMessage) . "\r\n";
+$fullResponse .= "\r\n";
+$fullResponse .= $responseMessage;
+
+echo $fullResponse;
+
+function http_response_code_message($code) {
+    $messages = array(
+        200 => 'OK',
+        400 => 'Bad Request',
+        405 => 'Method Not Allowed',
+        500 => 'Internal Server Error',
+    );
+    return isset($messages[$code]) ? $messages[$code] : '';
 }
 ?>

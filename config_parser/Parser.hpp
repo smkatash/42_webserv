@@ -41,7 +41,7 @@ enum Methods {
 class Parser {
 	private:
 		std::vector<std::string>	input_;
-		std::vector<ConfigFile>		conf_;		// Why are you using vector if we have one config for running every time
+		std::vector<ConfigFile>		conf_;
 		int							count_;
 
 	public:

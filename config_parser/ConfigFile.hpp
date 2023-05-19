@@ -5,12 +5,15 @@
 #include <vector>
 #include <map>
 #include <utility>
+#define PYTHON 5
+#define PHP 6
+#define PERL 7
 
 typedef struct s_endpoint {
 	std::vector<int>						lmethod;
 	std::string 							lroot;
 	std::vector<std::string>				lindex;
-	std::map<std::string, std::string>		lcgi;
+	std::pair<int, std::string>				lcgi;
 	std::string 							lredirect;
 	bool			 						lautoindex;
 }											t_endpoint;
@@ -48,11 +51,11 @@ class	ConfigFile {
 		const std::string					getRoot(std::string endpoint) const;
 		const std::vector<std::string>		&getIndexFile(std::string endpoint) const;
 		const std::map<int, std::string>	&getErrorFile(void) const;
-		const std::string					getScriptCGI(std::string endpoint, std::string type) const;
+		const std::string					getScriptCGI(std::string endpoint, int type) const;
 		const t_endpoint					&getLocation(std::string endpoint) const;
 		const std::string					getEndPoint(std::string name) const;
 		unsigned long						getClientMaxBodySize(void) const;
-
+		int									getScriptType(std::string endpoint);
 		void								clear();
 
 		/* print all to debug */

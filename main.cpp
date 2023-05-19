@@ -107,10 +107,26 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	// std::string filePath = "./notes.txt";
-	// std::vector<char> fileData = readBinaryFile(filePath); // Path to the file you want to upload
 	std::string requestUpload =
-"DELETE /deleteme.txt HTTP/1.1\n";
+"POST /random HTTP/1.1\n\
+Content-Type: multipart/form-data; boundary=--boundary123\n\
+Content-Length: 1000\n\
+\n\
+--boundary123\n\
+Content-Disposition: form-data; name=\"file\"; filename=\"img.jpg\"\n\
+Content-Type: application/jpg\n\
+\n\
+binary\n\
+--boundary123\n\
+";
+
+	std::string request =
+"POST /random HTTP/1.1\n\
+Content-Type: html/text\n\
+Content-Length: 50\n\
+\n\
+name=hello&order=hello\n\
+";
 
 	std::vector<char> bin = readBinaryFile("./img.jpg");
 	if (!bin.empty()) {
@@ -119,14 +135,11 @@ int main(int argc, char **argv) {
 	}
 
 	try {
-
-
 		Parser	confParser(file);
 		confParser.setConfigFile();
 		RequestParser req(requestUpload);
-		//req.debug();
 		ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
-		resp.del();
+		resp.post();
 		std::cout << resp.generateResponse() << std::endl;
 
 

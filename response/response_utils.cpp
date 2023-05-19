@@ -100,3 +100,35 @@ std::string removeDuplicateSlashes(const std::string& str)
 		return beforeQuery + str.substr(str.find('?'));
 	return beforeQuery;
 }
+
+std::string unchunkData(const std::string& data) {
+	std::string num;
+	std::string chunk;
+	std::string body;
+	u_long	byt;
+
+	for (size_t i = 0; i < data.length(); i++) {
+		if (data[i] == '0')
+			break;
+		while (isdigit(data[i])) {
+			num.push_back(data[i]);
+			i++;
+		}
+		if (data[i] && data[i] == '\r' && data[++i] == '\n') {
+			byt = std::stoi(num);
+			num.clear();
+		}
+
+		while (data[++i]) {
+			if (data[i] && data[i] == '\r' && data[++i] == '\n') {
+				break;
+			}
+			chunk.push_back(data[i]);
+		}
+		if (chunk.length() != byt)
+			chunk = chunk.substr(0, byt);
+		body += chunk;
+		chunk.clear();
+	}
+	return body;
+}
