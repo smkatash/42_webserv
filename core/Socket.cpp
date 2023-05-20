@@ -50,7 +50,7 @@ bool Socket::setSocketOption()
 	int statusFnctl;
 
 	val = 1;
-	statusFnctl = fcntl(clientSd_, F_SETFL, fcntl(clientSd_, F_GETFL, 0) | O_NONBLOCK);
+	statusFnctl = fcntl(clientSd_, F_SETFL, O_NONBLOCK);
 	if (statusFnctl == -1)
 	{
   		perror("calling fcntl");
