@@ -22,6 +22,7 @@ class Socket
 
 	std::string response_;
 	std::string data_;
+	bool connectionUp_;
 
 	struct kevent event_;
 	// struct kevent events_[MAX_EVENTS];
@@ -65,6 +66,7 @@ class Socket
 		bool socketInit();
 		bool socketPassiveInit();
 		int readHandler();
+		int readHandler(int size);
 		bool writeHandler(std::string response);
 };
 

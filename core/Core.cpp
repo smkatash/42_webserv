@@ -107,6 +107,8 @@ void	Core::run()
 							response.handle();
 							it->second.setResponse(response.generate());
 							std::cout << it->second.getResponse() << std::endl;
+							it->second.writeHandler(it->second.getResponse());
+
 						}
 						else
 							printf("the read is fucked up");
@@ -115,7 +117,7 @@ void	Core::run()
 					{
 						std::cout << "\n\nResponse:\n" << std::endl;
 						std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
-						it->second.writeHandler(it->second.getResponse());
+						// it->second.writeHandler(it->second.getResponse());
 						close(tmpEventDescriptor);
 						sockets_.erase(tmpEventDescriptor);
 						// it->second.unsetKevent(currentEvent.filter); //???

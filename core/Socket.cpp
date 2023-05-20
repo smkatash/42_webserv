@@ -1,4 +1,5 @@
 #include "Socket.hpp"
+#include "stdlib.h"
 
 Socket::Socket()
 {
@@ -74,7 +75,7 @@ bool Socket::setSocketPassive()
 {
 	int retValue;
 
-	retValue = listen(clientSd_, 100);
+	retValue = listen(clientSd_, 5);
 	return(retValue == 0 ? true : false);
 }
 
@@ -133,7 +134,10 @@ bool Socket::setSocketConnection()
 	memset(&destinationAddress_, 0, sizeof(destinationAddress_));
 	clientSd_ = accept(serverSd_, (sockaddr*)&destinationAddress_, (socklen_t*)&destAddrLen);
 	if (clientSd_ >= 0)
+	{
+		connectionUp_ = true;
 		return (true);
+	}
 	return (false);
 }
 
@@ -204,6 +208,28 @@ struct sockaddr_in& Socket::getSocketSourceAddress()
 // 	// return vector<char> buffer;
 // }
 
+int Socket::readHandler(int size)
+{
+	if(size == 0)
+	{
+		printf("Connection has been closed by the remote client\n");
+		connectionUp_ = false;
+		close(clientSd_);
+		return 1;
+	}
+	char *buffer;
+	int bytes;
+
+	buffer = (char*)malloc(size + 1);
+	bytes = recv(clientSd_, buffer, size, 0);
+	if(bytes < 0)
+		return (-1);
+	buffer[bytes] = '\0';
+	data_ += buffer;
+	free (buffer);
+	return (0);
+}
+
 int Socket::readHandler()
 {
 	int bytes;
@@ -222,6 +248,7 @@ int Socket::readHandler()
 		else if (bytes == 0)
 		{
 			printf("Connection has been closed by the remote client\n");
+			connectionUp_ = false;
 			close(clientSd_);
 			return 1;
 		}
@@ -240,15 +267,9 @@ bool Socket::writeHandler(std::string response)
 	int bytes;
 	// int offset = 1;
 	// int i = 0;
-
+	if(connectionUp_ == false)
+		return (false);
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
-	// while (response.c_str()[i])
-	// {
-	// 	// std::cout << response.c_str() [i] << std::endl;
-	// 	// bytes = send(clientSd_, response.c_str() + offset, offset, 0);
-	// 	// offset = offset + (offset / n);
-	// 	i++;
-	// }
 	if ( bytes < 0 && errno == EAGAIN)
 	{
 		return (false);
