@@ -45,6 +45,7 @@ class Socket
 		bool setSocketPassive();
 		bool setSocketConnection();
 		bool setKevent();
+		bool unsetKevent(int filter);
 		void setDestinationAddress (struct sockaddr_in address);
 		void setAddress ();
 		bool setData (std::vector<char> buffer);

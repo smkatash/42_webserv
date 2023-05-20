@@ -74,7 +74,7 @@ bool Socket::setSocketPassive()
 {
 	int retValue;
 
-	retValue = listen(clientSd_, 5);
+	retValue = listen(clientSd_, 100);
 	return(retValue == 0 ? true : false);
 }
 
@@ -91,11 +91,22 @@ std::ostream& operator<<(std::ostream& out, struct kevent event)
 
 bool Socket::setKevent()
 {
-	// EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD | EV_CLEAR, 0, 0, 0);
-	// EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD | EV_CLEAR, 0, 0, 0);
-	EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD, 0, 0, 0);
-	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
+	EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD | EV_CLEAR, 0, 0, 0);
+	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD | EV_CLEAR, 0, 0, 0);
+	// EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD, 0, 0, 0);
+	// EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
 	if (kevent(kqFd, events_, 2, NULL, 0, NULL) == -1)
+		return false;
+	return true;
+}
+
+bool Socket::unsetKevent(int filter)
+{
+	if( filter == EVFILT_READ)
+		EV_SET(&(events_[0]), clientSd_, EVFILT_READ, EV_DELETE, 0, 0, 0);
+	else 
+		EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_DELETE, 0, 0, 0);
+	if (kevent(kqFd, events_, 1, NULL, 0, NULL) == -1)
 		return false;
 	return true;
 }
@@ -256,10 +267,10 @@ bool Socket::socketInit()
 {
 	// init the socket;
 
-	if (setSocketDescriptor() == false)
-		printf("socket() error \n");
-	if (setSocketOption() == false)
-		printf("setsockopt() error \n");
+	// if (setSocketDescriptor() == false)
+	// 	printf("socket() error \n");
+	// if (setSocketOption() == false)
+	// 	printf("setsockopt() error \n");
 	if(setSocketConnection() == false)
 		printf("socketConnection() error \n");
 	// add the socket to the kqueue;

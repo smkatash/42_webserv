@@ -73,11 +73,14 @@ void	Core::run()
 	{
 		i = 0;
 		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, NULL);
-		while( i <= numOfEvent)
+		while( i < numOfEvent)
 		{
 			currentEvent = eventlist_[i];
 			tmpEventDescriptor = currentEvent.ident;
-			// PRINT
+			std::cout << "EVENT NUM : " << numOfEvent << "        INDEX :" << i << std::endl;
+			std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
+			std::cout << "EVENT : " << currentEvent << std::endl;
+			std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
 			if (tmpEventDescriptor == server_.getServerSocketDescriptor()) //here we should check a vector of serverFd;
 			{
 				if(setNewConnection() == false)
@@ -104,8 +107,10 @@ void	Core::run()
 
 						std::cout << "\n\nResponse:\n" << std::endl;
 						std::cout << response.generate() << std::endl;
+						std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
 
 						it->second.writeHandler(response.generate());
+						it->second.unsetKevent(currentEvent.filter); //???
 						close(tmpEventDescriptor);
 						sockets_.erase(tmpEventDescriptor);
 					}
@@ -120,13 +125,6 @@ void	Core::run()
 				// ssize_t  = recv(tmpEventDescriptor, buffer, BUFFER_SIZE, 0);
 
 			}
-		// should we erase the event from the queue or is done automatically? 
-		// EV_SET(&event, tmpEventDescriptor, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-        // if (kevent(kq, &event, 1, NULL, 0, NULL) == -1) 
-		// {
-        //   perror("Failed to deregister fd from kqueue");
-        //   exit(EXIT_FAILURE);
-        // }
 			i++;
 		}
 	}
