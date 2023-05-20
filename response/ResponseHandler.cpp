@@ -268,7 +268,7 @@ void ResponseHandler::get()
 		std::string uri = removeDuplicateSlashes(req_.rline.uri);
 		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
 		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
-
+		std::cout << "Here" << std::endl;
 		if (!isMethodAllowed(GET, loc.lmethod))
 			return setCode(NOTALLOWED);
 		/* Check if you have to send to cgi handler by checking if

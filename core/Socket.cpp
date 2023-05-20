@@ -204,33 +204,51 @@ struct sockaddr_in& Socket::getSocketSourceAddress()
 // 	// return vector<char> buffer;
 // }
 
-int Socket::readHandler()
+// int Socket::readHandler()
+// {
+// 	int bytes;
+// 	char buffer[100];
+// 	char receivedData[100];
+
+// 	bytes = recv(clientSd_, buffer, 99, 0);
+// 	while (bytes >= 0)
+// 	{
+// 		if (bytes > 0)
+// 		{
+// 			memcpy(receivedData, buffer, bytes);
+// 			receivedData[bytes] = '\0';  // Add null-terminator to received data
+// 			data_ += receivedData;
+// 		}
+// 		else if (bytes == 0)
+// 		{
+// 			// printf("Connection has been closed by the remote client\n");
+// 			// close(clientSd_);
+// 			return 1;
+// 		}
+// 		else if (bytes < 0 && errno == EAGAIN)
+// 		{
+// 			return -1;
+// 		}
+// 		bytes = recv(clientSd_, buffer, 99, 0);
+// 	}
+// 	return 0;
+// }
+
+int Socket::readHandler(size_t sizeToRead)
 {
 	int bytes;
-	char buffer[100];
-	char receivedData[100];
+	char *buffer = (char*)malloc(sizeToRead + 1);
 
-	bytes = recv(clientSd_, buffer, 99, 0);
-	while (bytes >= 0)
+	bytes = recv(clientSd_, buffer, sizeToRead, 0);
+	if(bytes == 0)
 	{
-		if (bytes > 0)
-		{
-			memcpy(receivedData, buffer, bytes);
-			receivedData[bytes] = '\0';  // Add null-terminator to received data
-			data_ += receivedData;
-		}
-		else if (bytes == 0)
-		{
-			printf("Connection has been closed by the remote client\n");
-			close(clientSd_);
-			return 1;
-		}
-		else if (bytes < 0 && errno == EAGAIN)
-		{
-			return -1;
-		}
-		bytes = recv(clientSd_, buffer, 99, 0);
+		close(clientSd_);
+		return 1;
 	}
+	else if (bytes < 0 && errno == EAGAIN)
+		return -1;
+	buffer[sizeToRead] = '\0';
+	data_ = buffer;
 	return 0;
 }
 
@@ -238,17 +256,8 @@ int Socket::readHandler()
 bool Socket::writeHandler(std::string response)
 {
 	int bytes;
-	// int offset = 1;
-	// int i = 0;
 
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
-	// while (response.c_str()[i])
-	// {
-	// 	// std::cout << response.c_str() [i] << std::endl;
-	// 	// bytes = send(clientSd_, response.c_str() + offset, offset, 0);
-	// 	// offset = offset + (offset / n);
-	// 	i++;
-	// }
 	if ( bytes < 0 && errno == EAGAIN)
 	{
 		return (false);

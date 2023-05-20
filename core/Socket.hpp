@@ -26,6 +26,7 @@ class Socket
 	struct kevent event_;
 	// struct kevent events_[MAX_EVENTS];
 	struct kevent events_[2];
+
 	
 	int nEvent_; //number of the events returned by kevent;
 
@@ -50,8 +51,6 @@ class Socket
 		bool unsetKevent(int filter);
 		void setDestinationAddress (struct sockaddr_in address);
 		void setAddress ();
-		bool setData (std::vector<char> buffer);
-
 	
 		int 				getPort();
 		std::string 		getResponse();
@@ -64,7 +63,7 @@ class Socket
 
 		bool socketInit();
 		bool socketPassiveInit();
-		int readHandler();
+		int readHandler(size_t sizeToRead);
 		bool writeHandler(std::string response);
 };
 
