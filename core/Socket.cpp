@@ -177,87 +177,21 @@ struct sockaddr_in& Socket::getSocketSourceAddress()
 	return (sourceAddress_);
 }
 
-// MAIN--------------------------------------------------
-
-// int Socket::readHandler(int bufferSize)
-// {
-// 	int bytes;
-// 	char buffer[bufferSize];
-
-// 	bytes = recv(clientSd_, buffer, bufferSize, 0);
-// 	data_ = buffer;
-// 	// while(bytes > 0)
-// 	// {
-// 	// 	if( bytes > 0 )
-// 	// 		data_ += buffer;
-// 	// 	else if (bytes == 0)
-// 	// 	{
-// 	// 		printf("Connection has been closed by remote client\n");
-// 	// 		close(clientSd_); 
-// 	// 		return (1);
-// 	// 	}
-// 	// 	else if ( bytes < 0 && errno == EAGAIN)
-// 	// 	{
-// 	// 		return (-1);
-// 	// 	}
-// 	// 	bytes = recv(clientSd_, buffer, 99, 0);
-// 	// }
-// 	// std::cout<< data_ << std::endl;
-// 	return (0);
-
-// 	// return vector<char> buffer;
-// }
-
-int Socket::readHandler(int size)
+int Socket::readHandler(size_t sizeToRead)
 {
-	if(size == 0)
+	int bytes;
+	char *buffer = (char*)malloc(sizeToRead + 1);
+
+	bytes = recv(clientSd_, buffer, sizeToRead, 0);
+	if(bytes == 0)
 	{
-		printf("Connection has been closed by the remote client\n");
-		connectionUp_ = false;
 		close(clientSd_);
 		return 1;
 	}
-	char *buffer;
-	int bytes;
-
-	buffer = (char*)malloc(size + 1);
-	bytes = recv(clientSd_, buffer, size, 0);
-	if(bytes < 0)
-		return (-1);
-	buffer[bytes] = '\0';
-	data_ += buffer;
-	free (buffer);
-	return (0);
-}
-
-int Socket::readHandler()
-{
-	int bytes;
-	char buffer[100];
-	char receivedData[100];
-
-	bytes = recv(clientSd_, buffer, 99, 0);
-	while (bytes >= 0)
-	{
-		if (bytes > 0)
-		{
-			memcpy(receivedData, buffer, bytes);
-			receivedData[bytes] = '\0';  // Add null-terminator to received data
-			data_ += receivedData;
-		}
-		else if (bytes == 0)
-		{
-			printf("Connection has been closed by the remote client\n");
-			connectionUp_ = false;
-			close(clientSd_);
-			return 1;
-		}
-		else if (bytes < 0 && errno == EAGAIN)
-		{
-			return -1;
-		}
-		bytes = recv(clientSd_, buffer, 99, 0);
-	}
+	else if (bytes < 0 && errno == EAGAIN)
+		return -1;
+	buffer[sizeToRead] = '\0';
+	data_ = buffer;
 	return 0;
 }
 

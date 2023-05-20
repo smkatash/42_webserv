@@ -83,7 +83,7 @@ void	Core::run()
 			std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
 			if (tmpEventDescriptor == server_.getServerSocketDescriptor()) //here we should check a vector of serverFd;
 			{
-				if(setNewConnection() == false)
+				if(setNewConnection() == false) // map populated with socket
 				{
 					printf("setNewConnectionError\n");
 					exit(0);
@@ -95,44 +95,33 @@ void	Core::run()
 				if(it != sockets_.end())
 				{
 					RequestParser request;
-
 					if (currentEvent.filter == EVFILT_READ)
 					{
-						if(it->second.readHandler() >= 0)
+						if(it->second.readHandler(currentEvent.data) >= 0)
 						{
 							request.initParser(it->second.getData());
-							std::cout << "Request:\n" << std::endl;
-							std::cout << it->second.getData() << std::endl;
 							ResponseHandler response(request.getRequest(), configs_.getConfigFile());
 							response.handle();
 							it->second.setResponse(response.generate());
 							std::cout << it->second.getResponse() << std::endl;
 							it->second.writeHandler(it->second.getResponse());
 
+
+							if (!it->second.getResponse().empty())
+							{
+								std::cout << std::boolalpha << // it->second.writeHandler(it->second.getResponse());
+								close(tmpEventDescriptor);
+								sockets_.erase(tmpEventDescriptor);
+							}
 						}
-						else
-							printf("the read is fucked up");
 					}
-					else if (currentEvent.filter == EVFILT_WRITE && !it->second.getResponse().empty())
-					{
-						std::cout << "\n\nResponse:\n" << std::endl;
-						std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
-						// it->second.writeHandler(it->second.getResponse());
-						close(tmpEventDescriptor);
-						sockets_.erase(tmpEventDescriptor);
-						// it->second.unsetKevent(currentEvent.filter); //???
-					}
-					// it->second.unsetKevent(currentEvent.filter); //???
 				}
 				else
 				{
-						printf("Failed:recv\n");
+						std::cout << "We don't find it in the map" << std::endl;
 						// TODO: INTERNAL SERVER ERROR
-						// the socket read buffer is empty;
-						// bytes is < 0 we have to return error;
 				}
 			}
-				// ssize_t  = recv(tmpEventDescriptor, buffer, BUFFER_SIZE, 0);
 			i++;
 		}
 	}
