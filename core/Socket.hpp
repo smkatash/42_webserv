@@ -20,6 +20,7 @@ class Socket
 	struct sockaddr_in sourceAddress_; //it stay the same of the Server.
 	struct sockaddr_in destinationAddress_; //it's always different.
 
+	std::string response_;
 	std::string data_;
 
 	struct kevent event_;
@@ -40,6 +41,7 @@ class Socket
 
 	public: //method
 		bool setSocketDescriptor();
+		void setResponse(std::string response);
 		bool setSocketOption();
 		bool setSocketBind();
 		bool setSocketPassive();
@@ -52,6 +54,7 @@ class Socket
 
 	
 		int 				getPort();
+		std::string 		getResponse();
 		struct kevent 		getEvent();
 		struct kevent*		getEvents();
 		int					getSocketDescriptor();

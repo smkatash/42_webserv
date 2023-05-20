@@ -94,37 +94,43 @@ void	Core::run()
 				std::map<int, Socket>::iterator it = sockets_.find(tmpEventDescriptor);
 				if(it != sockets_.end())
 				{
-					if(it->second.readHandler() >= 0)
+					RequestParser request;
+
+					if (currentEvent.filter == EVFILT_READ)
 					{
-						RequestParser request(it->second.getData());
-
-						std::cout << "Request:\n" << std::endl;
-						std::cout << it->second.getData() << std::endl;
-
-						ResponseHandler response(request.getRequest(), configs_.getConfigFile());
-
-						response.handle();
-
+						if(it->second.readHandler() >= 0)
+						{
+							request.initParser(it->second.getData());
+							std::cout << "Request:\n" << std::endl;
+							std::cout << it->second.getData() << std::endl;
+							ResponseHandler response(request.getRequest(), configs_.getConfigFile());
+							response.handle();
+							it->second.setResponse(response.generate());
+							std::cout << it->second.getResponse() << std::endl;
+						}
+						else
+							printf("the read is fucked up");
+					}
+					else if (currentEvent.filter == EVFILT_WRITE && !it->second.getResponse().empty())
+					{
 						std::cout << "\n\nResponse:\n" << std::endl;
-						std::cout << response.generate() << std::endl;
 						std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
-
-						it->second.writeHandler(response.generate());
-						it->second.unsetKevent(currentEvent.filter); //???
+						it->second.writeHandler(it->second.getResponse());
 						close(tmpEventDescriptor);
 						sockets_.erase(tmpEventDescriptor);
+						// it->second.unsetKevent(currentEvent.filter); //???
 					}
-					else
-					{
+					// it->second.unsetKevent(currentEvent.filter); //???
+				}
+				else
+				{
 						printf("Failed:recv\n");
 						// TODO: INTERNAL SERVER ERROR
 						// the socket read buffer is empty;
 						// bytes is < 0 we have to return error;
-					}
 				}
-				// ssize_t  = recv(tmpEventDescriptor, buffer, BUFFER_SIZE, 0);
-
 			}
+				// ssize_t  = recv(tmpEventDescriptor, buffer, BUFFER_SIZE, 0);
 			i++;
 		}
 	}

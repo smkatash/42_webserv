@@ -12,6 +12,8 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 , conf_(conf)
 {
 	res_.rline.version = "HTTP/1.1";
+	res_.rline.statusCode = "200";
+	res_.rline.reasonPhrase = "OK";
 	res_.rheader.server = "Francesco's Pizzeria/2.0 (MacOS)";
 }
 

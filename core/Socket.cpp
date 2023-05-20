@@ -100,6 +100,16 @@ bool Socket::setKevent()
 	return true;
 }
 
+void Socket::setResponse(std::string response)
+{
+	response_ = response;
+}
+
+std::string Socket::getResponse()
+{
+	return(response_);
+}
+
 bool Socket::unsetKevent(int filter)
 {
 	if( filter == EVFILT_READ)
