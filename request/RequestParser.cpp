@@ -28,7 +28,8 @@ void	RequestParser::initParser(std::string input) {
 			parseRequestHeader_(line);
 		else if (!line.empty() && isEntityHeader(line))
 			parseEntityHeader_(line);
-		else if (line.empty() || line == "\n" ) {
+		else if (line == "\r") {
+			std::cout << line << std::endl;
 			std::getline(ss, line);
 			if (line.compare(req_.eheader.boundaryName) == 0)
 				continue;

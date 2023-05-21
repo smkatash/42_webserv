@@ -102,10 +102,6 @@ void	Core::run()
 		{
 			currentEvent = eventlist_[i];
 			tmpEventDescriptor = currentEvent.ident;
-			// std::cout << "EVENT NUM : " << numOfEvent << "        INDEX :" << i << std::endl;
-			// std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
-			// std::cout << "EVENT : " << currentEvent << std::endl;
-			// std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
 			std::map<int, Server>::iterator serversIterator = listeningSockets_.find(tmpEventDescriptor);
 			if (serversIterator != listeningSockets_.end()) //here we should check a vector of serverFd;
 			{
@@ -125,20 +121,24 @@ void	Core::run()
 					{
 						if(socketIterator->second.readHandler(currentEvent.data) >= 0)
 						{
-							std::cout << "/////////////////////////////////////////////////////\nREAD on " << tmpEventDescriptor << std::endl;
+							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							std::cout << "Le demande:" << std::endl;
+							std::cout << socketIterator->second.getData() << std::endl;
+							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
 							request.initParser(socketIterator->second.getData());
 							ResponseHandler response(request.getRequest(), configs_.getConfigFile());
 							response.handle();
 							socketIterator->second.setResponse(response.generate());
-							std::cout << socketIterator->second.getData() << std::endl;
-							std::cout << "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \nREAD on " << tmpEventDescriptor << std::endl;
+							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							std::cout << "Le reponse:" << std::endl;
+							std::cout << response.generate() << std::endl;
+							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
 
 							// it->second.writeHandler(it->second.getResponse());
 						}
 					}
 					if (currentEvent.filter == EVFILT_WRITE && !socketIterator->second.getResponse().empty() )
 					{
-						std::cout << "WRITE on " << tmpEventDescriptor << std::endl;
 						socketIterator->second.writeHandler(socketIterator->second.getResponse());
 						close(tmpEventDescriptor);
 						sockets_.erase(tmpEventDescriptor);
