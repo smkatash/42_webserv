@@ -1,6 +1,6 @@
-@endpoint = https://google.com
+@endpoint = localhost:8080
 
 
-GET {{endpoint}}
+GET localhost:8080
 
 

@@ -20,11 +20,14 @@ class Socket
 	struct sockaddr_in sourceAddress_; //it stay the same of the Server.
 	struct sockaddr_in destinationAddress_; //it's always different.
 
+	std::string response_;
 	std::string data_;
+	bool connectionUp_;
 
 	struct kevent event_;
 	// struct kevent events_[MAX_EVENTS];
 	struct kevent events_[2];
+
 	
 	int nEvent_; //number of the events returned by kevent;
 
@@ -40,17 +43,19 @@ class Socket
 
 	public: //method
 		bool setSocketDescriptor();
+		void setResponse(std::string response);
 		bool setSocketOption();
 		bool setSocketBind();
 		bool setSocketPassive();
 		bool setSocketConnection();
 		bool setKevent();
+		bool setKeventForWrite();
+		bool unsetKevent(int filter);
 		void setDestinationAddress (struct sockaddr_in address);
 		void setAddress ();
-		bool setData (std::vector<char> buffer);
-
 	
 		int 				getPort();
+		std::string 		getResponse();
 		struct kevent 		getEvent();
 		struct kevent*		getEvents();
 		int					getSocketDescriptor();
@@ -60,7 +65,7 @@ class Socket
 
 		bool socketInit();
 		bool socketPassiveInit();
-		int readHandler();
+		int readHandler(size_t sizeToRead);
 		bool writeHandler(std::string response);
 };
 

@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <machine/types.h>
 #include <vector>
+#include "ConfigFile.hpp"
+
 
 class Server
 {
@@ -21,12 +23,14 @@ class Server
 
 		std::vector <Socket> clientsSocket_;
 		int port_;
-		// ConfigFile config_;
+		ConfigFile config_;
 
 	public:
 		// Server(ConfigFile conf);
 		Server();
 		~Server();
+		Server (ConfigFile config);
+
 		// SET----------------------------------------------------
 		void setServerAddress(struct sockaddr_in address);
 		void setServerSocket(Socket socket);
@@ -35,6 +39,8 @@ class Server
 		int getPort();
 		int getServerSocketDescriptor();
 		struct sockaddr_in getServerAddress();
+		Socket getServerSocket();
+
 		// INIT---------------------------------------------------
 		std::vector <Socket> initClientsSocket();
 		bool initServerAddress(struct sockaddr_in* serverAdd);

@@ -284,3 +284,8 @@ void	Parser::debugInput() {
 	}
 }
 
+std::vector<ConfigFile>		Parser::getArrayConfigFile()
+{
+	return(conf_);
+}
+

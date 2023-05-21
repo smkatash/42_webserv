@@ -1,4 +1,5 @@
 #include "Socket.hpp"
+#include "stdlib.h"
 
 Socket::Socket()
 {
@@ -50,7 +51,7 @@ bool Socket::setSocketOption()
 	int statusFnctl;
 
 	val = 1;
-	statusFnctl = fcntl(clientSd_, F_SETFL, fcntl(clientSd_, F_GETFL, 0) | O_NONBLOCK);
+	statusFnctl = fcntl(clientSd_, F_SETFL, O_NONBLOCK);
 	if (statusFnctl == -1)
 	{
   		perror("calling fcntl");
@@ -88,6 +89,14 @@ std::ostream& operator<<(std::ostream& out, struct kevent event)
 	return out;
 }
 
+bool Socket::setKeventForWrite()
+{
+	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
+	if (kevent(kqFd, events_, 1, NULL, 0, NULL) == -1)
+		return false;
+	return true;
+}
+
 
 bool Socket::setKevent()
 {
@@ -96,6 +105,27 @@ bool Socket::setKevent()
 	EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD, 0, 0, 0);
 	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
 	if (kevent(kqFd, events_, 2, NULL, 0, NULL) == -1)
+		return false;
+	return true;
+}
+
+void Socket::setResponse(std::string response)
+{
+	response_ = response;
+}
+
+std::string Socket::getResponse()
+{
+	return(response_);
+}
+
+bool Socket::unsetKevent(int filter)
+{
+	if( filter == EVFILT_READ)
+		EV_SET(&(events_[0]), clientSd_, EVFILT_READ, EV_DELETE, 0, 0, 0);
+	else 
+		EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_DELETE, 0, 0, 0);
+	if (kevent(kqFd, events_, 1, NULL, 0, NULL) == -1)
 		return false;
 	return true;
 }
@@ -112,7 +142,11 @@ bool Socket::setSocketConnection()
 	memset(&destinationAddress_, 0, sizeof(destinationAddress_));
 	clientSd_ = accept(serverSd_, (sockaddr*)&destinationAddress_, (socklen_t*)&destAddrLen);
 	if (clientSd_ >= 0)
+	{
+		connectionUp_ = true;
 		return (true);
+	}
+	connectionUp_ = false;
 	return (false);
 }
 
@@ -152,64 +186,23 @@ struct sockaddr_in& Socket::getSocketSourceAddress()
 	return (sourceAddress_);
 }
 
-// MAIN--------------------------------------------------
-
-// int Socket::readHandler(int bufferSize)
-// {
-// 	int bytes;
-// 	char buffer[bufferSize];
-
-// 	bytes = recv(clientSd_, buffer, bufferSize, 0);
-// 	data_ = buffer;
-// 	// while(bytes > 0)
-// 	// {
-// 	// 	if( bytes > 0 )
-// 	// 		data_ += buffer;
-// 	// 	else if (bytes == 0)
-// 	// 	{
-// 	// 		printf("Connection has been closed by remote client\n");
-// 	// 		close(clientSd_); 
-// 	// 		return (1);
-// 	// 	}
-// 	// 	else if ( bytes < 0 && errno == EAGAIN)
-// 	// 	{
-// 	// 		return (-1);
-// 	// 	}
-// 	// 	bytes = recv(clientSd_, buffer, 99, 0);
-// 	// }
-// 	// std::cout<< data_ << std::endl;
-// 	return (0);
-
-// 	// return vector<char> buffer;
-// }
-
-int Socket::readHandler()
+int Socket::readHandler(size_t sizeToRead)
 {
 	int bytes;
-	char buffer[100];
-	char receivedData[100];
+	char *buffer = (char*)malloc(sizeToRead + 1);
 
-	bytes = recv(clientSd_, buffer, 99, 0);
-	while (bytes >= 0)
+	bytes = recv(clientSd_, buffer, sizeToRead, 0);
+	if(bytes == 0)
 	{
-		if (bytes > 0)
-		{
-			memcpy(receivedData, buffer, bytes);
-			receivedData[bytes] = '\0';  // Add null-terminator to received data
-			data_ += receivedData;
-		}
-		else if (bytes == 0)
-		{
-			printf("Connection has been closed by the remote client\n");
-			close(clientSd_);
-			return 1;
-		}
-		else if (bytes < 0 && errno == EAGAIN)
-		{
-			return -1;
-		}
-		bytes = recv(clientSd_, buffer, 99, 0);
+		close(clientSd_);
+		connectionUp_ = false;
+		return 1;
 	}
+	else if (bytes < 0 && errno == EAGAIN)
+		return -1;
+	// setKeventForWrite();
+	buffer[sizeToRead] = '\0';
+	data_ = buffer;
 	return 0;
 }
 
@@ -217,17 +210,9 @@ int Socket::readHandler()
 bool Socket::writeHandler(std::string response)
 {
 	int bytes;
-	// int offset = 1;
-	// int i = 0;
-
+	if(connectionUp_ == false)
+		return (false);
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
-	// while (response.c_str()[i])
-	// {
-	// 	// std::cout << response.c_str() [i] << std::endl;
-	// 	// bytes = send(clientSd_, response.c_str() + offset, offset, 0);
-	// 	// offset = offset + (offset / n);
-	// 	i++;
-	// }
 	if ( bytes < 0 && errno == EAGAIN)
 	{
 		return (false);
@@ -237,7 +222,6 @@ bool Socket::writeHandler(std::string response)
 
 bool Socket::socketPassiveInit()
 {
-	// init the socket;
 	if (setSocketDescriptor() == false)
 		printf("socket() error \n");
 	if (setSocketOption() == false)
@@ -246,7 +230,6 @@ bool Socket::socketPassiveInit()
 		printf("bind_error \n");
 	if(setSocketPassive() == false)
 		printf("listen_error \n");
-	// add the socket to the kqueue;
 	if(setKevent() == false)
 		return false;
 	return true;
@@ -254,15 +237,8 @@ bool Socket::socketPassiveInit()
 
 bool Socket::socketInit()
 {
-	// init the socket;
-
-	if (setSocketDescriptor() == false)
-		printf("socket() error \n");
-	if (setSocketOption() == false)
-		printf("setsockopt() error \n");
 	if(setSocketConnection() == false)
 		printf("socketConnection() error \n");
-	// add the socket to the kqueue;
 	if(setKevent() == false)
 		printf("kevent() list error \n");
 	return true;

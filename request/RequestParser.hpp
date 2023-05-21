@@ -10,7 +10,6 @@ class	RequestParser {
 	private:
 		Request req_;
 
-		void	initParser_(std::string input);
 		void	getParam_(std::string& str, std::string& dest);
 		void	parseRequestLine_(std::string line);
 		void	parseGeneralHeader_(std::string line);
@@ -20,8 +19,9 @@ class	RequestParser {
 		void	parseContentDisposition(std::string line);
 
 	public:
-		RequestParser(std::string input);
+		RequestParser();
 		~RequestParser();
+		void	initParser(std::string input);
 		Request	getRequest();
 		void	debug();
 };

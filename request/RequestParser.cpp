@@ -1,7 +1,6 @@
 #include "RequestParser.hpp"
 
-RequestParser::RequestParser(std::string input) {
-	initParser_(input);
+RequestParser::RequestParser() {
 }
 
 RequestParser::~RequestParser() {}
@@ -16,7 +15,7 @@ void	RequestParser::getParam_(std::string& str, std::string& dest) {
 	}
 }
 
-void	RequestParser::initParser_(std::string input) {
+void	RequestParser::initParser(std::string input) {
 	std::stringstream	ss(input);
 	std::string			line;
 
