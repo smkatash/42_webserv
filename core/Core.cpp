@@ -11,26 +11,47 @@ Core::Core(Parser configs)
 : configs_(configs)
 {
 	Server server;
-	// if(server.serverInit())
-	// 	serverClose();
-	server.serverInit();
-	server_ = server;
-
-	// void eventWrite(Server server);
-	// void eventRead(Server server);
-	// this->servers_ = servers;
+	size_t i = 0;
+	servers_ = serversCreate();
+	while (i < servers_.size())
+	{
+		if ( servers_[i].serverInit() == false)
+			std::cout << "server Initializzation error" << std::endl;
+		i++;
+	}
+	populateListeningMap(servers_);
 }
+
+std::vector <Server> Core::serversCreate()
+{
+	size_t i = 0;
+	std::vector<ConfigFile> serversConfig;
+	std::vector <Server> servers;
+
+	serversConfig = configs_.getArrayConfigFile();
+	while( i < serversConfig.size())
+	{
+		Server server(serversConfig[i]);
+		servers.push_back(server);
+		i++;
+	}
+	return servers;
+}
+
 
 Core::~Core()
 {
 }
 
-void Core::populateListeningMap(Socket socket)
+void Core::populateListeningMap(std::vector <Server> servers)
 {
-	int socketDescriptor;
-	
-	socketDescriptor = socket.getSocketDescriptor();
-	listeningSockets_.insert(std::pair<int, Socket>(socketDescriptor, socket));
+	size_t i = 0;
+	while ( i < servers.size())
+	{
+		listeningSockets_.insert(std::pair<int, Server>(
+				servers[i].getServerSocketDescriptor(), servers[i]));
+		i++;
+	}
 }
 
 void Core::populateMap(Socket socket)
@@ -41,16 +62,15 @@ void Core::populateMap(Socket socket)
 	sockets_.insert(std::pair<int, Socket>(sD, socket));
 }
 
-bool Core::setNewConnection()
+bool Core::setNewConnection(Server server)
 {
-		// is a new connection;
-	Socket newSocket(server_.getPort(), server_.getServerAddress(), server_.getServerSocketDescriptor());
+	Socket newSocket(server.getPort(), server.getServerAddress(), server.getServerSocketDescriptor());
 	if(newSocket.socketInit() == false)
 	{
 		printf("error socket init");
 		return (false);
 	}
-	if (server_.appendNewToSocketList(newSocket) == false)
+	if (server.appendNewToSocketList(newSocket) == false)
 	{
 		printf("error append new socket");
 		return (false);
@@ -64,26 +84,32 @@ void	Core::run()
 	int i;
 	int tmpEventDescriptor;
 	int numOfEvent;
+	struct timespec timeout;  // Timeout structure
+	timeout.tv_sec = 1;
+	timeout.tv_nsec = 0; // Timeout duration in nanoseconds
+
 
 	struct kevent currentEvent;
 	for(i = 0; i < 10; i++)
 		memset(&eventlist_[i], 0, sizeof(eventlist_[i]));
 	printf("Server Listening\n");
+
 	while(1)
 	{
 		i = 0;
-		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, NULL);
+		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &timeout);
 		while( i < numOfEvent)
 		{
 			currentEvent = eventlist_[i];
 			tmpEventDescriptor = currentEvent.ident;
-			std::cout << "EVENT NUM : " << numOfEvent << "        INDEX :" << i << std::endl;
-			std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
-			std::cout << "EVENT : " << currentEvent << std::endl;
-			std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
-			if (tmpEventDescriptor == server_.getServerSocketDescriptor()) //here we should check a vector of serverFd;
+			// std::cout << "EVENT NUM : " << numOfEvent << "        INDEX :" << i << std::endl;
+			// std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
+			// std::cout << "EVENT : " << currentEvent << std::endl;
+			// std::cout << ">>-----------------------------------------------------------------------<<" << std::endl;
+			std::map<int, Server>::iterator serversIterator = listeningSockets_.find(tmpEventDescriptor);
+			if (serversIterator != listeningSockets_.end()) //here we should check a vector of serverFd;
 			{
-				if(setNewConnection() == false) // map populated with socket
+				if(setNewConnection(serversIterator->second) == false) // map populated with socket
 				{
 					printf("setNewConnectionError\n");
 					exit(0);
@@ -91,35 +117,37 @@ void	Core::run()
 			}
 			else
 			{
-				std::map<int, Socket>::iterator it = sockets_.find(tmpEventDescriptor);
-				if(it != sockets_.end())
+				std::map<int, Socket>::iterator socketIterator = sockets_.find(tmpEventDescriptor);
+				if(socketIterator != sockets_.end())
 				{
 					RequestParser request;
 					if (currentEvent.filter == EVFILT_READ)
 					{
-						if(it->second.readHandler(currentEvent.data) >= 0)
+						if(socketIterator->second.readHandler(currentEvent.data) >= 0)
 						{
-							request.initParser(it->second.getData());
+							std::cout << "/////////////////////////////////////////////////////\nREAD on " << tmpEventDescriptor << std::endl;
+							request.initParser(socketIterator->second.getData());
 							ResponseHandler response(request.getRequest(), configs_.getConfigFile());
 							response.handle();
-							it->second.setResponse(response.generate());
-							std::cout << it->second.getResponse() << std::endl;
-							it->second.writeHandler(it->second.getResponse());
+							socketIterator->second.setResponse(response.generate());
+							std::cout << socketIterator->second.getData() << std::endl;
+							std::cout << "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \nREAD on " << tmpEventDescriptor << std::endl;
 
-
-							if (!it->second.getResponse().empty())
-							{
-								std::cout << std::boolalpha << // it->second.writeHandler(it->second.getResponse());
-								close(tmpEventDescriptor);
-								sockets_.erase(tmpEventDescriptor);
-							}
+							// it->second.writeHandler(it->second.getResponse());
 						}
+					}
+					if (currentEvent.filter == EVFILT_WRITE && !socketIterator->second.getResponse().empty() )
+					{
+						std::cout << "WRITE on " << tmpEventDescriptor << std::endl;
+						socketIterator->second.writeHandler(socketIterator->second.getResponse());
+						close(tmpEventDescriptor);
+						sockets_.erase(tmpEventDescriptor);
 					}
 				}
 				else
 				{
-						std::cout << "We don't find it in the map" << std::endl;
-						// TODO: INTERNAL SERVER ERROR
+					std::cout << "We don't find it in the map" << std::endl;
+					// TODO: INTERNAL SERVER ERROR
 				}
 			}
 			i++;

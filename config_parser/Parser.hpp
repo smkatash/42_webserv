@@ -67,6 +67,7 @@ class Parser {
 		void			checkLocation(std::string endpoint);
 		void			setConfigFile();
 		ConfigFile		getConfigFile();
+		std::vector<ConfigFile>		getArrayConfigFile();
 		bool			checkAutoIndex(std::string indx);
 		bool			endDirectiveLocation(std::string next, std::string *locationDir);
 		std::string		checkRedirect(std::string redir);

@@ -5,17 +5,17 @@
 #include "Parser.hpp"
 #include <map>
 
-#define MAX_EVENT 10
+#define MAX_EVENT 10000
 
 class Core
 {
 	private:
 	Parser	configs_;
 	Server	server_;
-	// std::vector <Server> servers_;
+	std::vector <Server> servers_;
 	// std::map <int, class Socket> socketMap_;
 	struct kevent eventlist_[MAX_EVENT];
-	std::map<int, Socket> listeningSockets_;
+	std::map<int, Server> listeningSockets_; //this are the servers
 	std::map<int, Socket> sockets_;
 
 	// std::vector <Server> initServers(ConfigFile conf);
@@ -25,10 +25,11 @@ class Core
 	Core(Parser configs);
 	~Core();
 	void run();
-	void populateListeningMap(Socket socket);
+	void populateListeningMap(std::vector <Server> );
 	void populateMap(Socket socket);
+	std::vector <Server> serversCreate();
 
-	bool setNewConnection();
+	bool setNewConnection(Server server);
 };
 
 #endif

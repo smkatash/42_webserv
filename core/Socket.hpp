@@ -49,6 +49,7 @@ class Socket
 		bool setSocketPassive();
 		bool setSocketConnection();
 		bool setKevent();
+		bool setKeventForWrite();
 		bool unsetKevent(int filter);
 		void setDestinationAddress (struct sockaddr_in address);
 		void setAddress ();

@@ -89,13 +89,21 @@ std::ostream& operator<<(std::ostream& out, struct kevent event)
 	return out;
 }
 
+bool Socket::setKeventForWrite()
+{
+	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
+	if (kevent(kqFd, events_, 1, NULL, 0, NULL) == -1)
+		return false;
+	return true;
+}
+
 
 bool Socket::setKevent()
 {
-	EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD | EV_CLEAR, 0, 0, 0);
-	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD | EV_CLEAR, 0, 0, 0);
-	// EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD, 0, 0, 0);
-	// EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
+	// EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD | EV_CLEAR, 0, 0, 0);
+	// EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD | EV_CLEAR, 0, 0, 0);
+	EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD, 0, 0, 0);
+	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
 	if (kevent(kqFd, events_, 2, NULL, 0, NULL) == -1)
 		return false;
 	return true;
@@ -138,6 +146,7 @@ bool Socket::setSocketConnection()
 		connectionUp_ = true;
 		return (true);
 	}
+	connectionUp_ = false;
 	return (false);
 }
 
@@ -186,10 +195,12 @@ int Socket::readHandler(size_t sizeToRead)
 	if(bytes == 0)
 	{
 		close(clientSd_);
+		connectionUp_ = false;
 		return 1;
 	}
 	else if (bytes < 0 && errno == EAGAIN)
 		return -1;
+	// setKeventForWrite();
 	buffer[sizeToRead] = '\0';
 	data_ = buffer;
 	return 0;
@@ -199,8 +210,6 @@ int Socket::readHandler(size_t sizeToRead)
 bool Socket::writeHandler(std::string response)
 {
 	int bytes;
-	// int offset = 1;
-	// int i = 0;
 	if(connectionUp_ == false)
 		return (false);
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
@@ -213,7 +222,6 @@ bool Socket::writeHandler(std::string response)
 
 bool Socket::socketPassiveInit()
 {
-	// init the socket;
 	if (setSocketDescriptor() == false)
 		printf("socket() error \n");
 	if (setSocketOption() == false)
@@ -222,7 +230,6 @@ bool Socket::socketPassiveInit()
 		printf("bind_error \n");
 	if(setSocketPassive() == false)
 		printf("listen_error \n");
-	// add the socket to the kqueue;
 	if(setKevent() == false)
 		return false;
 	return true;
@@ -230,15 +237,8 @@ bool Socket::socketPassiveInit()
 
 bool Socket::socketInit()
 {
-	// init the socket;
-
-	// if (setSocketDescriptor() == false)
-	// 	printf("socket() error \n");
-	// if (setSocketOption() == false)
-	// 	printf("setsockopt() error \n");
 	if(setSocketConnection() == false)
 		printf("socketConnection() error \n");
-	// add the socket to the kqueue;
 	if(setKevent() == false)
 		printf("kevent() list error \n");
 	return true;

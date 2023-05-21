@@ -5,6 +5,12 @@ Server::Server ()
 {
 }
 
+Server::Server (ConfigFile config)
+: config_(config)
+{
+	port_ = config_.getListenPort();
+}
+
 Server::~Server ()
 {
 }
@@ -42,6 +48,12 @@ struct sockaddr_in Server::getServerAddress()
 {
 	return (serverAdd_);
 }
+
+Socket Server::getServerSocket()
+{
+	return (serverSocket_);
+}
+
 
 // INIT-----------------------------------------------------------------------
 bool Server::initServerAddress(struct sockaddr_in* serverAdd)
