@@ -268,7 +268,6 @@ void ResponseHandler::get()
 		std::string uri = removeDuplicateSlashes(req_.rline.uri);
 		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
 		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
-		std::cout << "Here" << std::endl;
 		if (!isMethodAllowed(GET, loc.lmethod))
 			return setCode(NOTALLOWED);
 		/* Check if you have to send to cgi handler by checking if
@@ -304,15 +303,12 @@ void ResponseHandler::post()
 		t_endpoint loc = conf_.getLocation(ep);
 
 		/* TODO: Handle cases where content length isn't known */
-		std::cout << "URI: "<< uri << std::endl;
 		if (conf_.getClientMaxBodySize() != 0
 			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(NOTALLOWED);
+		
 		if (!isMethodAllowed(POST, loc.lmethod))
-		{
-			std::cout << "DIO CANE" << std::endl;
 			return setCode(NOTALLOWED);
-		}
 
 		/* check if chunked and dechunk accordingly */
 		if (req_.gheader.transferEncoding.compare("chunked") == 0) {
