@@ -54,6 +54,10 @@ class Socket
 		void setDestinationAddress (struct sockaddr_in address);
 		void setAddress ();
 	
+
+		bool completeTransfer_;
+
+
 		int 				getPort();
 		std::string 		getResponse();
 		struct kevent 		getEvent();

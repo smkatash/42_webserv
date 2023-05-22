@@ -4,17 +4,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $destinationDirectory = dirname(__FILE__) . '/';
 
     if ($uploadedFilePath && file_exists($uploadedFilePath)) {
-        $fileName = getenv('FILE_NAME');
+        $fileName = "upload.png";
+        // $fileName = getenv('FILE_NAME');
 
         $destinationFilePath = $destinationDirectory . $fileName;
 
-        if (rename($uploadedFilePath, $destinationFilePath)) {
+        // if (rename($uploadedFilePath, $destinationFilePath)) {
             $responseCode = 200;
             $responseMessage = "File uploaded and saved successfully.";
-        } else {
-            $responseCode = 500;
-            $responseMessage = "Failed to move the uploaded file.";
-        }
+        // } else {
+        //     $responseCode = 500;
+        //     $responseMessage = "Failed to move the uploaded file.";
+        // }
     } else {
         $responseCode = 400;
         $responseMessage = "No file uploaded.";

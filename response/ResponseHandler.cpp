@@ -307,6 +307,8 @@ void ResponseHandler::post()
 			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(NOTALLOWED);
 		
+		std::cout << "hier/ici/qui/aqui/here/ هنا" << std::endl;
+
 		if (!isMethodAllowed(POST, loc.lmethod))
 			return setCode(NOTALLOWED);
 

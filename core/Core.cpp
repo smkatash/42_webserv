@@ -122,7 +122,7 @@ void	Core::run()
 						if(socketIterator->second.readHandler(currentEvent.data) >= 0)
 						{
 							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-							std::cout << "Le demande:" << std::endl;
+							std::cout << "La demande:" << std::endl;
 							std::cout << socketIterator->second.getData() << std::endl;
 							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
 							request.initParser(socketIterator->second.getData());
@@ -130,18 +130,20 @@ void	Core::run()
 							response.handle();
 							socketIterator->second.setResponse(response.generate());
 							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-							std::cout << "Le reponse:" << std::endl;
+							std::cout << "La réponse:" << std::endl;
 							std::cout << response.generate() << std::endl;
 							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-
 							// it->second.writeHandler(it->second.getResponse());
 						}
 					}
 					if (currentEvent.filter == EVFILT_WRITE && !socketIterator->second.getResponse().empty() )
 					{
-						socketIterator->second.writeHandler(socketIterator->second.getResponse());
-						close(tmpEventDescriptor);
-						sockets_.erase(tmpEventDescriptor);
+						if (socketIterator->second.completeTransfer_ == true)
+						{
+							socketIterator->second.writeHandler(socketIterator->second.getResponse());
+							close(tmpEventDescriptor);
+							sockets_.erase(tmpEventDescriptor);
+						}
 					}
 				}
 				else

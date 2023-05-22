@@ -2,6 +2,7 @@
 #include "stdlib.h"
 
 Socket::Socket()
+: completeTransfer_(false)
 {
 }
 
@@ -189,9 +190,9 @@ struct sockaddr_in& Socket::getSocketSourceAddress()
 int Socket::readHandler(size_t sizeToRead)
 {
 	int bytes;
-	char *buffer = (char*)malloc(sizeToRead + 1);
+	char buffer[100];
 
-	bytes = recv(clientSd_, buffer, sizeToRead, 0);
+	bytes = recv(clientSd_, buffer, 99, 0);
 	if(bytes == 0)
 	{
 		close(clientSd_);
@@ -200,10 +201,16 @@ int Socket::readHandler(size_t sizeToRead)
 	}
 	else if (bytes < 0 && errno == EAGAIN)
 		return -1;
-	// setKeventForWrite();
-	buffer[sizeToRead] = '\0';
-	data_ = buffer;
-	return 0;
+	buffer[bytes] = '\0';
+	data_ += buffer;
+	std::cout << "Size to read: " << sizeToRead << std::endl;
+	std::cout << "Data Size: " << data_.size() << std::endl;
+	if (data_.size() >= sizeToRead)
+	{
+		completeTransfer_ = true;
+		return 0;
+	}
+	return -1;
 }
 
 // we should sett an offset;

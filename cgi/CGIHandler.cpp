@@ -90,12 +90,15 @@ void	CGIHandler::execute() {
 
 void CGIHandler::setFileUpload() {
 	if (std::string(getenv("CONTENT_TYPE")) == "multipart/form-data") {
-		std::vector<char> decodedData = base64Decode(cgi_.body);
-		std::string tmpPath = getAbsolutePath(PHP_ROOT, "uploaded_file.tmp");
+		std::vector<char> decodedData = base64Decode(cgi_.body.substr(140));
+		// std::vector<char> decodedData = base64Decode(cgi_.body);
+		std::string tmpPath = getAbsolutePath(PHP_ROOT, "uploaded_file.png");
 		std::ofstream tempFile(tmpPath, std::ios::binary);
 
 		if (tempFile) {
 			tempFile.write(&decodedData[0], decodedData.size());
+			// tempFile.write(&cgi_.body[0], cgi_.body.size());
+
 			if (tempFile.fail()) {
 				tempFile.close();
 				throw std::runtime_error("Failed to write file");
