@@ -7,14 +7,17 @@ Socket::Socket()
 }
 
 Socket::Socket(int port, struct sockaddr_in servAdd)
-: port_(port) ,sourceAddress_(servAdd)
+: port_(port)
+, sourceAddress_(servAdd)
 {
 	requestIsComplete_= false;
 	requestLenght_ = 0;
 }
 
 Socket::Socket(int port, struct sockaddr_in servAdd, int fd)
-: port_(port) ,  serverSd_(fd) ,sourceAddress_(servAdd)
+: port_(port)
+, serverSd_(fd)
+, sourceAddress_(servAdd)
 {
 	requestIsComplete_= false;
 	requestLenght_ = 0;
@@ -196,7 +199,7 @@ bool Socket::getResponseStatus()
 	return(requestIsComplete_);
 }
 
-void Socket::setResponseStatus(bool status)
+void Socket::setRequestStatus(bool status)
 {
 	requestIsComplete_ = status;
 }
@@ -258,43 +261,9 @@ int Socket::readHandler(size_t sizeToRead)
 		requestLenght_ = getContentLenght();
 	if(data_.size() >= requestLenght_)
 		requestIsComplete_ = true;
-	std::cout << "BYTES = " << bytes \
-			  << "\nSIZE_TO_READ " << sizeToRead \
-			  << "\nDATA.size() = " << data_.size() \
-			  << "\nREQUESTLENGHT = " << requestLenght_
-			  << std::endl;
-	// free(buffer);
+	free(buffer);
 	return (0);
 }
-// int Socket::readHandler(size_t sizeToRead)
-// {
-// 	int bytes;
-// 	char buffer[100];
-
-// 	bytes = recv(clientSd_, buffer, 99, 0);
-// 	if(bytes == 0)
-// 	{
-// 		close(clientSd_);
-// 		connectionUp_ = false;
-// 		return 1;
-// 	}
-// 	else if (bytes < 0 && errno == EAGAIN)
-// 		return -1;
-// 	buffer[bytes] = '\0';
-// 	data_ += buffer;
-// 	// --------------------------DEBUG--------------------------------
-// 	std::cout << "BYTES = " << bytes \
-// 			  << "\nSIZE_TO_READ " << sizeToRead \
-// 			  << "\nDATA.size() = " << data_.size() 
-// 			  << std::endl;
-// 	// ---------------------------------------------------------------
-// 	if (data_.size() >= sizeToRead)
-// 	{
-// 		completeTransfer_ = true;
-// 		return 0;
-// 	}
-// 	return -1;
-// }
 
 // we should sett an offset;
 bool Socket::writeHandler(std::string response)
@@ -302,11 +271,11 @@ bool Socket::writeHandler(std::string response)
 	int bytes;
 	if(connectionUp_ == false)
 		return (false);
+
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
 	if ( bytes < 0 && errno == EAGAIN)
-	{
 		return (false);
-	}
+	
 	return (true);
 }
 

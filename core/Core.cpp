@@ -123,10 +123,10 @@ void	Core::run()
 					{
 						if(socketIterator->second.readHandler(currentEvent.data) >= 0 && socketIterator->second.getResponseStatus() == true)
 						{
-							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-							std::cout << "La demande:" << std::endl;
-							std::cout << socketIterator->second.getData() << std::endl;
-							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							// std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							// std::cout << "La demande:" << std::endl;
+							// std::cout << socketIterator->second.getData() << std::endl;
+							// std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
 							request.initParser(socketIterator->second.getData());
 							ResponseHandler response(request.getRequest(), configs_.getConfigFile());
 							response.handle();
@@ -137,10 +137,16 @@ void	Core::run()
 					{
 						if (socketIterator->second.getResponseStatus() == true && socketIterator->second.getConnectionStatus() == true)
 						{
-							socketIterator->second.writeHandler(socketIterator->second.getResponse());
-							socketIterator->second.setResponseStatus(false);
-							close(tmpEventDescriptor);
-							sockets_.erase(tmpEventDescriptor);
+						// 	std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+						// 	std::cout << "La reponse:" << std::endl;
+						// 	std::cout << socketIterator->second.getResponse() << std::endl;
+						// 	std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							if (socketIterator->second.writeHandler(socketIterator->second.getResponse()) == true)
+							{
+								close(tmpEventDescriptor);
+								sockets_.erase(tmpEventDescriptor);
+							}
+							// socketIterator->second.setRequestStatus(false);
 						}
 					}
 				}

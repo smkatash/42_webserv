@@ -320,7 +320,7 @@ void ResponseHandler::post()
 			CGIHandler cgi(req_, conf_, ep);
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
-			std::cout << "CGI Response " << res_.cgiResponse << std::endl;
+			// std::cout << "CGI Response " << res_.cgiResponse << std::endl;
 			return ;
 		}
 	}

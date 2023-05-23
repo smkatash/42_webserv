@@ -55,7 +55,7 @@ class Socket
 		bool unsetKevent(int filter);
 		void setDestinationAddress (struct sockaddr_in address);
 		void setAddress ();
-		void setResponseStatus(bool status);
+		void setRequestStatus(bool status);
 
 		int 				getPort();
 		std::string 		getResponse();
