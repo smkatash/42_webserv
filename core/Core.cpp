@@ -119,7 +119,7 @@ void	Core::run()
 					RequestParser request;
 					if (currentEvent.filter == EVFILT_READ)
 					{
-						if(socketIterator->second.readHandler(currentEvent.data) >= 0)
+						if(socketIterator->second.readHandler(currentEvent.data) >= 0 && socketIterator->second.getResponseStatus() == true)
 						{
 							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
 							std::cout << "La demande:" << std::endl;
@@ -129,18 +129,14 @@ void	Core::run()
 							ResponseHandler response(request.getRequest(), configs_.getConfigFile());
 							response.handle();
 							socketIterator->second.setResponse(response.generate());
-							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-							std::cout << "La réponse:" << std::endl;
-							std::cout << response.generate() << std::endl;
-							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-							// it->second.writeHandler(it->second.getResponse());
 						}
 					}
-					if (currentEvent.filter == EVFILT_WRITE && !socketIterator->second.getResponse().empty() )
+					if (currentEvent.filter == EVFILT_WRITE && !socketIterator->second.getResponse().empty())
 					{
-						if (socketIterator->second.completeTransfer_ == true)
+						if (socketIterator->second.getResponseStatus() == true && socketIterator->second.getConnectionStatus() == true)
 						{
 							socketIterator->second.writeHandler(socketIterator->second.getResponse());
+							socketIterator->second.setResponseStatus(false);
 							close(tmpEventDescriptor);
 							sockets_.erase(tmpEventDescriptor);
 						}
@@ -148,7 +144,7 @@ void	Core::run()
 				}
 				else
 				{
-					std::cout << "We don't find it in the map" << std::endl;
+					std::cout << "We don't find a socket in the map" << std::endl;
 					// TODO: INTERNAL SERVER ERROR
 				}
 			}

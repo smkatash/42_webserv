@@ -20,9 +20,11 @@ class Socket
 	struct sockaddr_in sourceAddress_; //it stay the same of the Server.
 	struct sockaddr_in destinationAddress_; //it's always different.
 
-	std::string response_;
 	std::string data_;
+	std::string response_;
+	size_t requestLenght_;
 	bool connectionUp_;
+	bool requestIsComplete_;
 
 	struct kevent event_;
 	// struct kevent events_[MAX_EVENTS];
@@ -53,9 +55,7 @@ class Socket
 		bool unsetKevent(int filter);
 		void setDestinationAddress (struct sockaddr_in address);
 		void setAddress ();
-	
-
-		bool completeTransfer_;
+		void setResponseStatus(bool status);
 
 
 		int 				getPort();
@@ -66,15 +66,18 @@ class Socket
 		std::string 		getData();
 		struct sockaddr_in&	getSocketDestinationAddress();
 		struct sockaddr_in&	getSocketSourceAddress();
+		bool				getConnectionStatus();
+		bool				getResponseStatus();
 
 		bool socketInit();
 		bool socketPassiveInit();
+		int closeConnection();
 		int readHandler(size_t sizeToRead);
 		bool writeHandler(std::string response);
+		size_t getContentLenght();
+
 };
 
 std::ostream& operator<<(std::ostream& out, struct kevent event);
-
-
 
 #endif
