@@ -98,6 +98,8 @@ void	Core::run()
 	{
 		i = 0;
 		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &timeout);
+		// numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, NULL);
+
 		while( i < numOfEvent)
 		{
 			currentEvent = eventlist_[i];

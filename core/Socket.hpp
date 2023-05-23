@@ -57,7 +57,6 @@ class Socket
 		void setAddress ();
 		void setResponseStatus(bool status);
 
-
 		int 				getPort();
 		std::string 		getResponse();
 		struct kevent 		getEvent();
@@ -68,6 +67,7 @@ class Socket
 		struct sockaddr_in&	getSocketSourceAddress();
 		bool				getConnectionStatus();
 		bool				getResponseStatus();
+		void 				setRequestLenght();
 
 		bool socketInit();
 		bool socketPassiveInit();

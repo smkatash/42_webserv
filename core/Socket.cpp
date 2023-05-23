@@ -220,9 +220,20 @@ size_t Socket::getContentLenght()
 	std::string substring( "Content-Length:");
 	index = data_.find(substring);
 	if(index == -1)
-		return (data_.size());
+		return (0);
 	contentLenght = atoi((&data_[index + substring.size()]));
 	return (contentLenght);
+}
+
+void Socket::setRequestLenght()
+{
+	size_t contentLenght = getContentLenght();
+	// if the request don't have Content-Lenght the request is exactly data_.size();
+	if( contentLenght == 0)
+		requestLenght_ = data_.size();
+	// else we set the contentLenght as requestLenght_;
+	else
+		requestLenght_ = contentLenght;
 }
 
 int Socket::readHandler(size_t sizeToRead)
@@ -232,7 +243,7 @@ int Socket::readHandler(size_t sizeToRead)
 
 	buffer = (char *)malloc(sizeToRead + 1);
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
-	if(bytes == 0 && requestIsComplete_ == true)
+	if(bytes == 0) //close Connection
 	{
 		return(closeConnection());
 	}
@@ -241,15 +252,12 @@ int Socket::readHandler(size_t sizeToRead)
 		std::cerr << "ERROR: SOCKET PROBABLY BLOCKING" << std::endl;
 		return (-1);
 	}
-	else
-	{
-		buffer[bytes] = '\0';
-		data_ = data_ + buffer;
-		if(requestLenght_ == 0)
-			requestLenght_ = getContentLenght();
-		if(data_.size() >= requestLenght_)
-			requestIsComplete_ = true;
-	}
+	buffer[bytes] = '\0';
+	data_.append(buffer, bytes);
+	if(requestLenght_ == 0)
+		requestLenght_ = getContentLenght();
+	if(data_.size() >= requestLenght_)
+		requestIsComplete_ = true;
 	std::cout << "BYTES = " << bytes \
 			  << "\nSIZE_TO_READ " << sizeToRead \
 			  << "\nDATA.size() = " << data_.size() \
