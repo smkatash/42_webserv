@@ -6,21 +6,21 @@ Socket::Socket()
 {
 }
 
-Socket::Socket(int port, struct sockaddr_in servAdd)
+Socket::Socket(int port, struct sockaddr_in servAddr)
 : port_(port)
-, sourceAddress_(servAdd)
+, sourceAddress_(servAddr)
 {
 	requestIsComplete_= false;
-	requestLenght_ = 0;
+	requestLength_ = 0;
 }
 
-Socket::Socket(int port, struct sockaddr_in servAdd, int fd)
+Socket::Socket(int port, struct sockaddr_in servAddr, int fd)
 : port_(port)
 , serverSd_(fd)
-, sourceAddress_(servAdd)
+, sourceAddress_(servAddr)
 {
 	requestIsComplete_= false;
-	requestLenght_ = 0;
+	requestLength_ = 0;
 }
 
 Socket::~Socket()
@@ -105,7 +105,6 @@ bool Socket::setKeventForWrite()
 	return true;
 }
 
-
 bool Socket::setKevent()
 {
 	// EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD | EV_CLEAR, 0, 0, 0);
@@ -148,7 +147,7 @@ bool Socket::setSocketConnection()
 	socklen_t destAddrLen = sizeof(destinationAddress_);
 	
 	memset(&destinationAddress_, 0, sizeof(destinationAddress_));
-	clientSd_ = accept(serverSd_, (sockaddr*)&destinationAddress_, (socklen_t*)&destAddrLen);
+	clientSd_ = accept(serverSd_, reinterpret_cast<sockaddr*>(&destinationAddress_), &destAddrLen);
 	if (clientSd_ >= 0)
 	{
 		connectionUp_ = true;
@@ -203,6 +202,7 @@ void Socket::setRequestStatus(bool status)
 {
 	requestIsComplete_ = status;
 }
+
 bool Socket::getConnectionStatus()
 {
 	return(connectionUp_);
@@ -233,10 +233,10 @@ void Socket::setRequestLenght()
 	size_t contentLenght = getContentLenght();
 	// if the request don't have Content-Lenght the request is exactly data_.size();
 	if( contentLenght == 0)
-		requestLenght_ = data_.size();
-	// else we set the contentLenght as requestLenght_;
+		requestLength_ = data_.size();
+	// else we set the contentLenght as requestLength_;
 	else
-		requestLenght_ = contentLenght;
+		requestLength_ = contentLenght;
 }
 
 int Socket::readHandler(size_t sizeToRead)
@@ -257,9 +257,9 @@ int Socket::readHandler(size_t sizeToRead)
 	}
 	buffer[bytes] = '\0';
 	data_.append(buffer, bytes);
-	if(requestLenght_ == 0)
-		requestLenght_ = getContentLenght();
-	if(data_.size() >= requestLenght_)
+	if(requestLength_ == 0)
+		requestLength_ = getContentLenght();
+	if(data_.size() >= requestLength_)
 		requestIsComplete_ = true;
 	free(buffer);
 	return (0);
@@ -269,14 +269,19 @@ int Socket::readHandler(size_t sizeToRead)
 bool Socket::writeHandler(std::string response)
 {
 	int bytes;
-	if(connectionUp_ == false)
-		return (false);
+	if (connectionUp_ == false)
+		return false;
 
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
-	if ( bytes < 0 && errno == EAGAIN)
-		return (false);
-	
-	return (true);
+	if (bytes < 0)
+		return false;
+	response_ = response_.substr(bytes);
+	if (response_.empty())
+	{
+		data_ = "";
+		setRequestStatus(false);
+	}
+	return true;
 }
 
 bool Socket::socketPassiveInit()

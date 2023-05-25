@@ -206,6 +206,7 @@ void	ResponseHandler::setResponseBody(std::string fileName)
 			res_.rbody += temp + '\n';
 	}
 	res_.eheader.contentLength = toString(res_.rbody.length());
+	res_.gheader.connection = "keep-alive";
 	file.close();
 	return setCode(OK);
 }

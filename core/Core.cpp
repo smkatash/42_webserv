@@ -38,7 +38,6 @@ std::vector <Server> Core::serversCreate()
 	return servers;
 }
 
-
 Core::~Core()
 {
 }
@@ -94,13 +93,13 @@ void	Core::run()
 		memset(&eventlist_[i], 0, sizeof(eventlist_[i]));
 	printf("Server Listening\n");
 
-	while(1)
+	while (1)
 	{
 		i = 0;
 		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &timeout);
 		// numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, NULL);
 
-		while( i < numOfEvent)
+		while (i < numOfEvent)
 		{
 			currentEvent = eventlist_[i];
 			tmpEventDescriptor = currentEvent.ident;
@@ -110,7 +109,7 @@ void	Core::run()
 				if(setNewConnection(serversIterator->second) == false) // map populated with socket
 				{
 					printf("setNewConnectionError\n");
-					exit(0);
+					exit(0); //! We shouldn't exit and risk breaking the server, we should instead continue to the next event
 				}
 			}
 			else
@@ -123,25 +122,25 @@ void	Core::run()
 					{
 						if(socketIterator->second.readHandler(currentEvent.data) >= 0 && socketIterator->second.getResponseStatus() == true)
 						{
-							// std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-							// std::cout << "La demande:" << std::endl;
-							// std::cout << socketIterator->second.getData() << std::endl;
-							// std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							std::cout << "La demande:" << std::endl;
+							std::cout << socketIterator->second.getData() << std::endl;
+							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
 							request.initParser(socketIterator->second.getData());
 							ResponseHandler response(request.getRequest(), configs_.getConfigFile());
 							response.handle();
 							socketIterator->second.setResponse(response.generate());
 						}
 					}
-					if (currentEvent.filter == EVFILT_WRITE && !socketIterator->second.getResponse().empty())
+					if (currentEvent.filter == EVFILT_WRITE)
 					{
 						if (socketIterator->second.getResponseStatus() == true && socketIterator->second.getConnectionStatus() == true)
 						{
-						// 	std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-						// 	std::cout << "La reponse:" << std::endl;
-						// 	std::cout << socketIterator->second.getResponse() << std::endl;
-						// 	std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-							if (socketIterator->second.writeHandler(socketIterator->second.getResponse()) == true)
+							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							std::cout << "La reponse:" << std::endl;
+							std::cout << socketIterator->second.getResponse() << std::endl;
+							std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+							if (socketIterator->second.writeHandler(socketIterator->second.getResponse()) == false)
 							{
 								close(tmpEventDescriptor);
 								sockets_.erase(tmpEventDescriptor);

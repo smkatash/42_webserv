@@ -22,7 +22,7 @@ class Socket
 
 	std::string data_;
 	std::string response_;
-	size_t requestLenght_;
+	size_t requestLength_;
 	bool connectionUp_;
 	bool requestIsComplete_;
 
@@ -35,8 +35,8 @@ class Socket
 
 	public: //init bla bla 
 		Socket();
-		Socket(int port, struct sockaddr_in servAdd);
-		Socket(int port, struct sockaddr_in servAdd, int fd);
+		Socket(int port, struct sockaddr_in servAddr);
+		Socket(int port, struct sockaddr_in servAddr, int fd);
 		// Socket(const Socket &other);
 		Socket &operator= (const Socket& other);
 		~Socket();
