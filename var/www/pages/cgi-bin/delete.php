@@ -13,14 +13,10 @@ if (isset($_GET['name']))
 {
 	foreach ($lines as $key => $line)
 	{
-		// split the line into timestamp and data
-		$parts = explode(":", $line, 2);
-		$data = $parts[1];
-		
 		// split the data into key-value pairs
-		parse_str($data, $values);
+		parse_str($line, $values);
 
-		if (isset($values['name']) && isset($values['age']) && isset($values['email'])
+		if (isset($values['name']) && isset($values['order']) && isset($values['email'])
 		&& $values['name'] == $_GET['name'])
 		{
 			// remove the line from the array
@@ -31,7 +27,7 @@ if (isset($_GET['name']))
 			
 			// write the string back to the file
 			file_put_contents($database, $file_contents);
-			// create the HTML file content with the name, age, and email
+			// create the HTML file content with the name, order, and email
 			$html_content = "<html>\n";
 			$html_content .= "<head><title>Profile for " . $values['name'] . "</title></head>\n";
 			$html_content .= "<body>\n";

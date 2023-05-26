@@ -1,6 +1,6 @@
 #include "ConfigFile.hpp"
 
-ConfigFile::ConfigFile(): listen_(-1), serverName_(""), root_(""), clientMaxBodySize_(1024) {}
+ConfigFile::ConfigFile(): listen_(-1), serverName_(""), root_(""), clientMaxBodySize_(0) {}
 
 ConfigFile::~ConfigFile() {}
 
@@ -132,7 +132,7 @@ const std::string	ConfigFile::getScriptCGI(std::string endpoint, int type) const
 			return it->second.lcgi.second;
 		}
 	}
-	return NULL;
+	throw std::runtime_error("script not found");
 }
 
 int	ConfigFile::getScriptType(std::string endpoint) {

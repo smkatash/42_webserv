@@ -2,17 +2,25 @@
 #include "stdlib.h"
 
 Socket::Socket()
+: requestIsComplete_(false)
 {
 }
 
-Socket::Socket(int port, struct sockaddr_in servAdd)
-: port_(port) ,sourceAddress_(servAdd)
+Socket::Socket(int port, struct sockaddr_in servAddr)
+: port_(port)
+, sourceAddress_(servAddr)
 {
+	requestIsComplete_= false;
+	requestLength_ = 0;
 }
 
-Socket::Socket(int port, struct sockaddr_in servAdd, int fd)
-: port_(port) ,  serverSd_(fd) ,sourceAddress_(servAdd)
+Socket::Socket(int port, struct sockaddr_in servAddr, int fd)
+: port_(port)
+, serverSd_(fd)
+, sourceAddress_(servAddr)
 {
+	requestIsComplete_= false;
+	requestLength_ = 0;
 }
 
 Socket::~Socket()
@@ -97,7 +105,6 @@ bool Socket::setKeventForWrite()
 	return true;
 }
 
-
 bool Socket::setKevent()
 {
 	// EV_SET(&(events_[0]), clientSd_, EVFILT_READ,  EV_ADD | EV_CLEAR, 0, 0, 0);
@@ -140,7 +147,7 @@ bool Socket::setSocketConnection()
 	socklen_t destAddrLen = sizeof(destinationAddress_);
 	
 	memset(&destinationAddress_, 0, sizeof(destinationAddress_));
-	clientSd_ = accept(serverSd_, (sockaddr*)&destinationAddress_, (socklen_t*)&destAddrLen);
+	clientSd_ = accept(serverSd_, reinterpret_cast<sockaddr*>(&destinationAddress_), &destAddrLen);
 	if (clientSd_ >= 0)
 	{
 		connectionUp_ = true;
@@ -186,38 +193,95 @@ struct sockaddr_in& Socket::getSocketSourceAddress()
 	return (sourceAddress_);
 }
 
+bool Socket::getResponseStatus()
+{
+	return(requestIsComplete_);
+}
+
+void Socket::setRequestStatus(bool status)
+{
+	requestIsComplete_ = status;
+}
+
+bool Socket::getConnectionStatus()
+{
+	return(connectionUp_);
+}
+
+int Socket::closeConnection()
+{
+	close(clientSd_);
+	requestIsComplete_ = true;
+	connectionUp_ = false;
+	return 1;
+}
+
+size_t Socket::getContentLenght()
+{
+	size_t contentLenght;
+	int index;
+	std::string substring( "Content-Length:");
+	index = data_.find(substring);
+	if(index == -1)
+		return (0);
+	contentLenght = atoi((&data_[index + substring.size()]));
+	return (contentLenght);
+}
+
+void Socket::setRequestLenght()
+{
+	size_t contentLenght = getContentLenght();
+	// if the request don't have Content-Lenght the request is exactly data_.size();
+	if( contentLenght == 0)
+		requestLength_ = data_.size();
+	// else we set the contentLenght as requestLength_;
+	else
+		requestLength_ = contentLenght;
+}
+
 int Socket::readHandler(size_t sizeToRead)
 {
+	char *buffer;
 	int bytes;
-	char *buffer = (char*)malloc(sizeToRead + 1);
 
+	buffer = (char *)malloc(sizeToRead + 1);
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
-	if(bytes == 0)
+	if(bytes == 0) //close Connection
 	{
-		close(clientSd_);
-		connectionUp_ = false;
-		return 1;
+		return(closeConnection());
 	}
-	else if (bytes < 0 && errno == EAGAIN)
-		return -1;
-	// setKeventForWrite();
-	buffer[sizeToRead] = '\0';
-	data_ = buffer;
-	return 0;
+	else if (bytes < 0)// && errno == EAGAIN)
+	{
+		std::cerr << "ERROR: SOCKET PROBABLY BLOCKING" << std::endl;
+		return (-1);
+	}
+	buffer[bytes] = '\0';
+	data_.append(buffer, bytes);
+	if(requestLength_ == 0)
+		requestLength_ = getContentLenght();
+	if(data_.size() >= requestLength_)
+		requestIsComplete_ = true;
+	free(buffer);
+	return (0);
 }
 
 // we should sett an offset;
 bool Socket::writeHandler(std::string response)
 {
 	int bytes;
-	if(connectionUp_ == false)
-		return (false);
+	if (connectionUp_ == false)
+		return false;
+
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
-	if ( bytes < 0 && errno == EAGAIN)
+	if (bytes < 0)
+		return false;
+	response_ = response_.substr(bytes);
+	if (response_.empty())
 	{
-		return (false);
+		data_ = "";
+		setRequestStatus(false);
 	}
-	return (true);
+	return true;
 }
 
 bool Socket::socketPassiveInit()

@@ -206,6 +206,7 @@ void	ResponseHandler::setResponseBody(std::string fileName)
 			res_.rbody += temp + '\n';
 	}
 	res_.eheader.contentLength = toString(res_.rbody.length());
+	res_.gheader.connection = "keep-alive";
 	file.close();
 	return setCode(OK);
 }
@@ -306,7 +307,6 @@ void ResponseHandler::post()
 		if (conf_.getClientMaxBodySize() != 0
 			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(NOTALLOWED);
-		
 		if (!isMethodAllowed(POST, loc.lmethod))
 			return setCode(NOTALLOWED);
 
@@ -321,7 +321,7 @@ void ResponseHandler::post()
 			CGIHandler cgi(req_, conf_, ep);
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
-			std::cout << "CGI Response " << res_.cgiResponse << std::endl;
+			// std::cout << "CGI Response " << res_.cgiResponse << std::endl;
 			return ;
 		}
 	}
