@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta charset="UTF-8">
+	<title>42_webserv</title>
+	<style>
+	  /* Reset default styles */
+	  * {
+		margin: 1;
+		padding: 5;
+		box-sizing: border-box;
+	  }
+	  
+	  /* Set body background color and font */
+	  body {
+		background-color:rgb(236, 243, 242);
+		color: black;
+		font-family: Arial, sans-serif;
+		font-size: 16px;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		margin: 0;
+	  }
+	  
+	  /* Set main container */
+	  .container {
+		max-width: 960px;
+		margin: 0 auto;
+		display: flex; 
+		flex-direction: column; 
+		height: 100vh;
+	  }
+	  
+	  ul { 
+		list-style-type: none; 
+		width: 200px; height: auto; 
+	} 
+	ul li { 
+		padding: 10px 0; 
+		border-bottom: 1px solid #add8e6; 
+		text-align: left; 
+		transition: padding-left 0.3s linear, font-weight 0.2s linear, color 0.3s linear; 
+		-webkit-transition: padding-left 0.3s linear, font-weight 0.2s linear, color 0.3s linear; 
+		-moz-transition: padding-left 0.3s linear, font-weight 0.2s linear, color 0.3s linear; 
+		-o-transition: padding-left 0.3s linear, font-weight 0.2s linear, color 0.3s linear; 
+		-ms-transition: padding-left 0.3s linear, font-weight 0.2s linear, color 0.3s linear; 
+	} 
+	ul li:first-child { 
+		border-top: 1px solid #909; 
+	} ul li:hover { 
+		padding-left: 20px; 
+		font-weight: 600; 
+		color: #add8e6; 
+	}
+
+	.info-text {
+		flex: 1 0 auto; 
+	}
+
+	  /* Set footer styles */
+	footer {
+		height: 50px;
+		flex-shrink: 0; 
+	}
+
+	</style>
+  </head>
+  <body>
+	<div class="container">
+	  <header>
+	  </header>
+	  	<div class="info-text">
+			<ul class="item5">
+			</ul>
+		</div>
+	<footer>
+	  <p>Copyright © 2023 by WebservTeam</p>
+	</footer>
+  </body>
+</html>
