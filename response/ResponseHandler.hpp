@@ -13,6 +13,10 @@ private:
 	Request		req_;
 	ConfigFile	conf_;
 
+	std::string	uri_;
+	std::string	endpoint_;
+	t_endpoint	location_;
+
 	// Response Generating
 	std::string	responseLine();
 	std::string	generalHeader();
@@ -21,7 +25,7 @@ private:
 	void		setBodyErrorPage(int code);
 
 	// Response Handling
-	bool		isMethodAllowed(Methods method, std::vector<int> methods);
+	bool		isMethodAllowed(Methods method);
 	void		setCode(int code);
 	std::string	findUriEndpoint(const std::string& uri);
 	void		prepUriFile(std::string& uri, const t_endpoint& loc);
@@ -34,6 +38,10 @@ private:
 	// TODO: Not clean needs fixing
 	void		normalDelResponse(t_endpoint loc, std::string uri);
 	void		dirDelResponse(t_endpoint loc, std::string ep);
+
+	// bool		authorized()
+	// bool		authenticated();
+	// void		authenticate();
 
 	void		get();
 	void		post();

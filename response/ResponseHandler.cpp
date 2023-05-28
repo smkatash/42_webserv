@@ -15,6 +15,22 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.statusCode = "200";
 	res_.rline.reasonPhrase = "OK";
 	res_.rheader.server = "Francesco's Pizzeria/2.0 (MacOS)";
+	try
+	{
+		res_.gheader.date = findCurrentTimeGMT();
+		uri_ = removeDuplicateSlashes(req_.rline.uri);
+		endpoint_ = findUriEndpoint(uri_.substr(0, uri_.find('?')));
+		location_ = conf_.getLocation(endpoint_); // try-catch because getLocation may throw an exception
+	}
+	catch(const std::exception& e)
+	{
+		res_.gheader.connection = "close";
+		if (strcmp(e.what(),"endpoint not found") == 0 )
+			setCode(NOTFOUND);
+		else
+			setCode(INTERNALERROR);
+	}
+	
 }
 
 ResponseHandler::~ResponseHandler() {}
@@ -105,12 +121,12 @@ std::string ResponseHandler::entityHeader()
 	return line;
 }
 
-bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAllowed)
+bool	ResponseHandler::isMethodAllowed(Methods method)
 {
-	if (methodsAllowed.empty())
+	if (location_.lmethod.empty())
 		return true;
-	std::vector<int>::iterator it = std::find(methodsAllowed.begin(), methodsAllowed.end(), method);
-	if (it == methodsAllowed.end())
+	std::vector<int>::iterator it = std::find(location_.lmethod.begin(), location_.lmethod.end(), method);
+	if (it == location_.lmethod.end())
 	{
 		setCode(NOTALLOWED);
 		return false;
@@ -268,31 +284,25 @@ void ResponseHandler::get()
 {
 	try
 	{
-		res_.gheader.date = findCurrentTimeGMT();
-		std::string uri = removeDuplicateSlashes(req_.rline.uri);
-		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
-		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
-		if (!isMethodAllowed(GET, loc.lmethod))
+		if (!isMethodAllowed(GET))
 			return setCode(NOTALLOWED);
 		/* Check if you have to send to cgi handler by checking if
 		there's a query */
-		if (uri.find('?') != std::string::npos)
+		if (uri_.find('?') != std::string::npos)
 		{
-			CGIHandler cgi(req_, conf_, ep, uri.substr(uri.find('?') + 1));
+			CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
 			return ;
 		}
-		if (!loc.lredirect.empty())
-			return returnResponse(loc);
-		if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
-			return dirResponse(loc, ep);
-		return normalResponse(loc, uri);
+		if (!location_.lredirect.empty())
+			return returnResponse(location_);
+		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
+			return dirResponse(location_, endpoint_);
+		return normalResponse(location_, uri_);
 	}
 	catch(const std::exception& e)
 	{
-		if (strcmp(e.what(),"endpoint not found") == 0 )
-			return setCode(NOTFOUND);
 		return setCode(INTERNALERROR);
 	}
 }
@@ -301,16 +311,11 @@ void ResponseHandler::post()
 {
 	try
 	{
-		res_.gheader.date = findCurrentTimeGMT();
-		std::string uri = removeDuplicateSlashes(req_.rline.uri);
-		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
-		t_endpoint loc = conf_.getLocation(ep);
-
 		/* TODO: Handle cases where content length isn't known */
 		if (conf_.getClientMaxBodySize() != 0
 			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(NOTALLOWED);
-		if (!isMethodAllowed(POST, loc.lmethod))
+		if (!isMethodAllowed(POST))
 			return setCode(NOTALLOWED);
 
 		/* check if chunked and dechunk accordingly */
@@ -321,7 +326,7 @@ void ResponseHandler::post()
 		there's a query */
 		if (!req_.rbody.empty())
 		{
-			CGIHandler cgi(req_, conf_, ep);
+			CGIHandler cgi(req_, conf_, endpoint_);
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
 			// std::cout << "CGI Response " << res_.cgiResponse << std::endl;
@@ -330,8 +335,6 @@ void ResponseHandler::post()
 	}
 	catch(const std::exception& e)
 	{
-		if (strcmp(e.what(), "endpoint not found") == 0)
-			return setCode(NOTFOUND);
 		return setCode(INTERNALERROR);
 	}
 }
@@ -367,27 +370,22 @@ void ResponseHandler::del()
 {
 	try
 	{
-		res_.gheader.date = findCurrentTimeGMT();
-		std::string uri = removeDuplicateSlashes(req_.rline.uri);
-		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
-		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
-
-		if (!isMethodAllowed(DELETE, loc.lmethod))
+		if (!isMethodAllowed(DELETE))
 			return setCode(NOTALLOWED);
-		if (uri.find('?') != std::string::npos)
+		if (uri_.find('?') != std::string::npos)
 		{
-			CGIHandler cgi(req_, conf_, ep, uri.substr(uri.find('?') + 1));
+			CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
 			return ;
 		}
-		if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
-			return dirDelResponse(loc, ep);
-		return normalDelResponse(loc, uri);
+		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
+			return dirDelResponse(location_, endpoint_);
+		return normalDelResponse(location_, uri_);
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';
+		return setCode(INTERNALERROR);
 	}
 }
 
@@ -406,12 +404,45 @@ std::string ResponseHandler::generate()
 	return header;
 }
 
+// bool	ResponseHandler::authorized(std::string authorization)
+// {
+// 	if (authorization.empty())
+// 		return false;
+// 	std::vector<char> authVec = base64Decode(&authorization[6]);
+// 	std::string auth(authVec.begin(), authVec.end());
+// 	std::istream htpassFile(location)
+// }
+
+// bool	ResponseHandler::authenticated()
+// {
+// 	if (!authorized(req_.rheader.authorization))
+// 		return false;
+// 	if (!validCookie(req_.rheader.cookie))
+// 		return false;
+// 	return true;
+// }
+
+// void	ResponseHandler::authenticate()
+// {
+// 	res_.rheader.wwwAuth = "Basic realm=\"Realm from config file\"";
+// 	return setCode(UNAUTHORIZED);
+// }
+
+// #define COOKIES
+
 void	ResponseHandler::handle()
 {
+	if (res_.rline.statusCode != "200") // Probably endpoint not found, or error in constructor
+		return;
+// #ifdef COOKIES
+// 	if (!authenticated())
+// 		return authenticate();
+// #endif
 	if (req_.rline.method == "GET")
 		return get();
 	if (req_.rline.method == "POST")
 		return post();
 	if (req_.rline.method == "DELETE")
 		return del();
+	// Otherwise send 
 }
