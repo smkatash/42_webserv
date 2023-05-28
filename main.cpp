@@ -67,9 +67,9 @@ int main(int argc, char **argv)
 
 	if( kqCreate() == false )
 		return (0);
-
 	Core core(configs);
 	core.run();
+	exit(0);
 	return (EXIT_SUCCESS);
 }
 

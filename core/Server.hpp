@@ -24,6 +24,7 @@ class Server
 		std::vector <Socket> clientsSocket_;
 		int port_;
 		ConfigFile config_;
+		int timeoutInSecond_;
 
 	public:
 		// Server(ConfigFile conf);
