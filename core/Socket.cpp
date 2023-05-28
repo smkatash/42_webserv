@@ -12,6 +12,7 @@ Socket::Socket(int port, struct sockaddr_in servAddr)
 {
 	requestIsComplete_= false;
 	requestLength_ = 0;
+	setConnectionTimer();
 }
 
 Socket::Socket(int port, struct sockaddr_in servAddr, int fd)
@@ -41,6 +42,16 @@ Socket &Socket::operator= (const Socket& other)
 }
 
 // SET---------------------------------------------------------
+
+void Socket::setConnectionTimer()
+{
+	connectionTimer_ = time(NULL);
+}
+
+time_t Socket::getConnectionTimer()
+{
+	return (connectionTimer_);
+}
 
 bool Socket::setSocketDescriptor()
 {
@@ -193,7 +204,7 @@ struct sockaddr_in& Socket::getSocketSourceAddress()
 	return (sourceAddress_);
 }
 
-bool Socket::getResponseStatus()
+bool Socket::getRequestStatus()
 {
 	return(requestIsComplete_);
 }
@@ -213,10 +224,10 @@ int Socket::closeConnection()
 	close(clientSd_);
 	requestIsComplete_ = true;
 	connectionUp_ = false;
-	return 1;
+	return (1);
 }
 
-size_t Socket::getContentLenght()
+size_t Socket::getContentLength()
 {
 	size_t contentLenght;
 	int index;
@@ -228,15 +239,12 @@ size_t Socket::getContentLenght()
 	return (contentLenght);
 }
 
-void Socket::setRequestLenght()
+void Socket::setRequestLength()
 {
-	size_t contentLenght = getContentLenght();
+	size_t contentLength = getContentLength();
+	headerLength_ = data_.size();
 	// if the request don't have Content-Lenght the request is exactly data_.size();
-	if( contentLenght == 0)
-		requestLength_ = data_.size();
-	// else we set the contentLenght as requestLength_;
-	else
-		requestLength_ = contentLenght;
+	requestLength_ = contentLength + headerLength_;
 }
 
 int Socket::readHandler(size_t sizeToRead)
@@ -247,9 +255,7 @@ int Socket::readHandler(size_t sizeToRead)
 	buffer = (char *)malloc(sizeToRead + 1);
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
 	if(bytes == 0) //close Connection
-	{
 		return(closeConnection());
-	}
 	else if (bytes < 0)// && errno == EAGAIN)
 	{
 		std::cerr << "ERROR: SOCKET PROBABLY BLOCKING" << std::endl;
@@ -258,7 +264,7 @@ int Socket::readHandler(size_t sizeToRead)
 	buffer[bytes] = '\0';
 	data_.append(buffer, bytes);
 	if(requestLength_ == 0)
-		requestLength_ = getContentLenght();
+		setRequestLength();
 	if(data_.size() >= requestLength_)
 		requestIsComplete_ = true;
 	free(buffer);
@@ -279,6 +285,8 @@ bool Socket::writeHandler(std::string response)
 	if (response_.empty())
 	{
 		data_ = "";
+		requestIsComplete_ = false;
+		requestLength_ = 0;
 		setRequestStatus(false);
 	}
 	return true;

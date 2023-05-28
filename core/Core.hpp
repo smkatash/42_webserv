@@ -3,6 +3,7 @@
 
 #include "Server.hpp"
 #include "Parser.hpp"
+#include "RequestParser.hpp"
 #include <map>
 
 #define MAX_EVENT 10000
@@ -28,6 +29,10 @@ class Core
 	void populateListeningMap(std::vector <Server> );
 	void populateMap(Socket socket);
 	std::vector <Server> serversCreate();
+
+	void connectionHandler(struct kevent currentEvent);
+	void receiver(RequestParser *request, Socket *socket);
+	void sender(Socket *socket);
 
 	bool setNewConnection(Server server);
 };
