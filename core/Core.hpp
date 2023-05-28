@@ -31,8 +31,8 @@ class Core
 	std::vector <Server> serversCreate();
 
 	void connectionHandler(struct kevent currentEvent);
-	void receiver(RequestParser *request, Socket& socket);
-	void sender(Socket& socket);
+	void receiver(RequestParser *request, Socket *socket);
+	void sender(Socket *socket);
 
 	bool setNewConnection(Server server);
 };

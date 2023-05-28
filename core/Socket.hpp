@@ -17,12 +17,16 @@ class Socket
 	int port_;
 	int serverSd_;
 	int clientSd_;
+	time_t connectionTimer_;
 	struct sockaddr_in sourceAddress_; //it stay the same of the Server.
 	struct sockaddr_in destinationAddress_; //it's always different.
 
 	std::string data_;
 	std::string response_;
+
 	size_t requestLength_;
+	size_t headerLength_;
+
 	bool connectionUp_;
 	bool requestIsComplete_;
 
@@ -56,6 +60,8 @@ class Socket
 		void setDestinationAddress (struct sockaddr_in address);
 		void setAddress ();
 		void setRequestStatus(bool status);
+		void setRequestLength();
+		void setConnectionTimer();
 
 		int 				getPort();
 		std::string 		getResponse();
@@ -67,14 +73,14 @@ class Socket
 		struct sockaddr_in&	getSocketSourceAddress();
 		bool				getConnectionStatus();
 		bool				getRequestStatus();
-		void 				setRequestLenght();
+		time_t				getConnectionTimer();
 
 		bool socketInit();
 		bool socketPassiveInit();
 		int closeConnection();
 		int readHandler(size_t sizeToRead);
 		bool writeHandler(std::string response);
-		size_t getContentLenght();
+		size_t getContentLength();
 
 };
 

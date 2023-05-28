@@ -121,12 +121,21 @@ std::string ResponseHandler::entityHeader()
 	return line;
 }
 
+<<<<<<< HEAD
 bool	ResponseHandler::isMethodAllowed(Methods method)
 {
 	if (location_.lmethod.empty())
 		return true;
 	std::vector<int>::iterator it = std::find(location_.lmethod.begin(), location_.lmethod.end(), method);
 	if (it == location_.lmethod.end())
+=======
+bool	ResponseHandler::isMethodAllowed(Methods method, std::vector<int> methodsAllowed)
+{
+	if (methodsAllowed.empty())
+		return true;
+	std::vector<int>::iterator it = std::find(methodsAllowed.begin(), methodsAllowed.end(), method);
+	if (it == methodsAllowed.end())
+>>>>>>> main
 	{
 		setCode(NOTALLOWED);
 		return false;
@@ -140,10 +149,14 @@ void	ResponseHandler::setBodyErrorPage(int code)
 	std::map<int, std::string> errfile = conf_.getErrorFile();
 	std::map<int, std::string>::iterator it = errfile.find(code);
 	if (it != errfile.end())
+<<<<<<< HEAD
 	{
 		fileName = conf_.getRoot("").substr(0, conf_.getRoot("").find_last_of('/')) + it->second;
 		fileName.insert(fileName.begin(), '.');
 	}
+=======
+		fileName = conf_.getRoot("").substr(0, conf_.getRoot("").find_last_of('/')) + it->second;
+>>>>>>> main
 	else
 		fileName = "./error_pages/" + toString(code) + ".html";
 
@@ -284,6 +297,7 @@ void ResponseHandler::get()
 {
 	try
 	{
+<<<<<<< HEAD
 		if (!isMethodAllowed(GET))
 			return setCode(NOTALLOWED);
 		/* Check if you have to send to cgi handler by checking if
@@ -291,10 +305,24 @@ void ResponseHandler::get()
 		if (uri_.find('?') != std::string::npos)
 		{
 			CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
+=======
+		res_.gheader.date = findCurrentTimeGMT();
+		std::string uri = removeDuplicateSlashes(req_.rline.uri);
+		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
+		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
+		if (!isMethodAllowed(GET, loc.lmethod))
+			return setCode(NOTALLOWED);
+		/* Check if you have to send to cgi handler by checking if
+		there's a query */
+		if (uri.find('?') != std::string::npos)
+		{
+			CGIHandler cgi(req_, conf_, ep, uri.substr(uri.find('?') + 1));
+>>>>>>> main
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
 			return ;
 		}
+<<<<<<< HEAD
 		if (!location_.lredirect.empty())
 			return returnResponse(location_);
 		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
@@ -303,6 +331,18 @@ void ResponseHandler::get()
 	}
 	catch(const std::exception& e)
 	{
+=======
+		if (!loc.lredirect.empty())
+			return returnResponse(loc);
+		if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
+			return dirResponse(loc, ep);
+		return normalResponse(loc, uri);
+	}
+	catch(const std::exception& e)
+	{
+		if (strcmp(e.what(),"endpoint not found") == 0 )
+			return setCode(NOTFOUND);
+>>>>>>> main
 		return setCode(INTERNALERROR);
 	}
 }
@@ -311,11 +351,23 @@ void ResponseHandler::post()
 {
 	try
 	{
+<<<<<<< HEAD
+=======
+		res_.gheader.date = findCurrentTimeGMT();
+		std::string uri = removeDuplicateSlashes(req_.rline.uri);
+		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
+		t_endpoint loc = conf_.getLocation(ep);
+
+>>>>>>> main
 		/* TODO: Handle cases where content length isn't known */
 		if (conf_.getClientMaxBodySize() != 0
 			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(NOTALLOWED);
+<<<<<<< HEAD
 		if (!isMethodAllowed(POST))
+=======
+		if (!isMethodAllowed(POST, loc.lmethod))
+>>>>>>> main
 			return setCode(NOTALLOWED);
 
 		/* check if chunked and dechunk accordingly */
@@ -326,7 +378,11 @@ void ResponseHandler::post()
 		there's a query */
 		if (!req_.rbody.empty())
 		{
+<<<<<<< HEAD
 			CGIHandler cgi(req_, conf_, endpoint_);
+=======
+			CGIHandler cgi(req_, conf_, ep);
+>>>>>>> main
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
 			// std::cout << "CGI Response " << res_.cgiResponse << std::endl;
@@ -335,6 +391,11 @@ void ResponseHandler::post()
 	}
 	catch(const std::exception& e)
 	{
+<<<<<<< HEAD
+=======
+		if (strcmp(e.what(), "endpoint not found") == 0)
+			return setCode(NOTFOUND);
+>>>>>>> main
 		return setCode(INTERNALERROR);
 	}
 }
@@ -370,15 +431,29 @@ void ResponseHandler::del()
 {
 	try
 	{
+<<<<<<< HEAD
 		if (!isMethodAllowed(DELETE))
 			return setCode(NOTALLOWED);
 		if (uri_.find('?') != std::string::npos)
 		{
 			CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
+=======
+		res_.gheader.date = findCurrentTimeGMT();
+		std::string uri = removeDuplicateSlashes(req_.rline.uri);
+		std::string ep = findUriEndpoint(uri.substr(0, uri.find('?')));
+		t_endpoint loc = conf_.getLocation(ep); // try-catch because getLocation may throw an exception
+
+		if (!isMethodAllowed(DELETE, loc.lmethod))
+			return setCode(NOTALLOWED);
+		if (uri.find('?') != std::string::npos)
+		{
+			CGIHandler cgi(req_, conf_, ep, uri.substr(uri.find('?') + 1));
+>>>>>>> main
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
 			return ;
 		}
+<<<<<<< HEAD
 		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
 			return dirDelResponse(location_, endpoint_);
 		return normalDelResponse(location_, uri_);
@@ -386,6 +461,15 @@ void ResponseHandler::del()
 	catch(const std::exception& e)
 	{
 		return setCode(INTERNALERROR);
+=======
+		if (uri == ep)	// If the URI matches with the endpoint then we know it's a directory
+			return dirDelResponse(loc, ep);
+		return normalDelResponse(loc, uri);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+>>>>>>> main
 	}
 }
 
@@ -404,6 +488,7 @@ std::string ResponseHandler::generate()
 	return header;
 }
 
+<<<<<<< HEAD
 // bool	ResponseHandler::authorized(std::string authorization)
 // {
 // 	if (authorization.empty())
@@ -438,11 +523,18 @@ void	ResponseHandler::handle()
 // 	if (!authenticated())
 // 		return authenticate();
 // #endif
+=======
+void	ResponseHandler::handle()
+{
+>>>>>>> main
 	if (req_.rline.method == "GET")
 		return get();
 	if (req_.rline.method == "POST")
 		return post();
 	if (req_.rline.method == "DELETE")
 		return del();
+<<<<<<< HEAD
 	// Otherwise send 
+=======
+>>>>>>> main
 }

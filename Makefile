@@ -1,6 +1,6 @@
 VPATH	=	cgi config_parser core request response response/autoindex
 CC		=	c++
-CFLAGS	=	-std=c++98 -Wall -Wextra -Werror -MD -fsanitize=address
+CFLAGS	=	-std=c++98 -Wall -Wextra -MD -fsanitize=address -Werror
 
 NAME	=	webserv
 

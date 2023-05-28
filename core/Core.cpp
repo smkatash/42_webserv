@@ -88,36 +88,52 @@ static struct timespec setTimer(int sec, int nsec)
 	return (timeout);
 }
 
-void Core::receiver(RequestParser *request, Socket& socket)
+void Core::receiver(RequestParser *request, Socket *socket)
 {
 	#ifdef DEBUG
-		std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-		std::cout << "La demande:" << std::endl;
-		std::cout << socket.getData() << std::endl;
-		std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+		std::cout << "LA DEMANDE ---------------------------------------------------------------------------------------------------------------->>" << std::endl;
+		std::cout << socket->getData() << std::endl;
+		std::cout << "<<------------------------------------------------------------------------------------------------------------------------END" << std::endl;
 	#endif
 
-	request->initParser(socket.getData());
+	request->initParser(socket->getData());
 	ResponseHandler response(request->getRequest(), configs_.getConfigFile());
 	response.handle();
-	socket.setResponse(response.generate());
+	socket->setResponse(response.generate());
 }
 
-void Core::sender(Socket& socket)
+void Core::sender( Socket *socket)
 {
 	#ifdef DEBUG
-		std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
-		std::cout << "La reponse:" << std::endl;
-		std::cout << socket.getResponse() << std::endl;
-		std::cout << "<<------------------------------------------------------------------------------------------------------------------------>>" << std::endl;
+		std::cout << "LA RESPONSE--------------------------------------------------------------------------------------------------------------->>" << std::endl;
+		std::cout << socket->getResponse() << std::endl;
+		std::cout << "<<-----------------------------------------------------------------------------------------------------------------------END" << std::endl;
 	#endif
-
-	if (socket.writeHandler(socket.getResponse()) == false)
+	std::cout << " GESU BASTARDO" << std::endl;
+	if (socket->writeHandler(socket->getResponse()) == false)
 	{
-		socket.closeConnection();
-		sockets_.erase(socket.getSocketDescriptor());
+		socket->closeConnection();
+		sockets_.erase(socket->getSocketDescriptor());
 	}
 }
+
+// static bool checkTimeout(Socket *socket)
+// {
+// 	time_t check;
+// 	time_t start;
+
+// 	check = time(NULL);
+// 	start = socket->getConnectionTimer();
+// 	if (check - start > 10) //should be the variable in the config file;
+// 	{
+// 		ResponseHandler response(RequestParser request, ConfigFile file);
+// 		socket->closeConnection();
+// 		return (false);
+// 	}
+// 	else
+// 		socket->setConnectionTimer();
+// 	return (true);
+// }
 
 void Core::connectionHandler(struct kevent currentEvent)
 {
@@ -128,13 +144,19 @@ void Core::connectionHandler(struct kevent currentEvent)
 		RequestParser request;
 		if (currentEvent.filter == EVFILT_READ && socketIterator->second.getRequestStatus() == false)
 		{
-			if(socketIterator->second.readHandler(currentEvent.data) >= 0 && socketIterator->second.getRequestStatus() == true)// && socketIterator->second.getRequestStatus() == false)
-				receiver(&request, socketIterator->second);
+			// if(checkTimeout(&(socketIterator->second)) == true)
+			// {
+				if(socketIterator->second.readHandler(currentEvent.data) >= 0 && socketIterator->second.getRequestStatus() == true)// && socketIterator->second.getRequestStatus() == false)
+					receiver(&request, &(socketIterator->second));
+			// }
 		}
 		if (currentEvent.filter == EVFILT_WRITE && socketIterator->second.getRequestStatus() == true)
 		{
-			if (socketIterator->second.getConnectionStatus() == true)
-				sender(socketIterator->second);
+			// if(checkTimeout(&(socketIterator->second)) == true)
+			// {
+				if (socketIterator->second.getConnectionStatus() == true)
+					sender(&(socketIterator->second));
+			// }
 		}
 	}
 }
@@ -156,7 +178,10 @@ void	Core::run()
 		i = 0;
 		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &refresh);
 		// numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, NULL);
-
+		if(numOfEvent == 0)
+		{
+			
+		}
 		while (i < numOfEvent)
 		{
 			currentEvent = eventlist_[i];
