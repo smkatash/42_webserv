@@ -66,7 +66,8 @@ public:
 	std::string			getCGIResponse();
 };
 
-std::vector<char>		base64Decode(const std::string& input);
+// std::vector<char>		base64Decode(const std::string& input);
+std::string				base64Decode(const std::string& input);
 std::string				currentDirectory();
 std::string				getAbsolutePath(std::string rootPath, std::string scriptPath);
 int						check_access(const char* file);

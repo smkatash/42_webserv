@@ -39,9 +39,9 @@ private:
 	void		normalDelResponse(t_endpoint loc, std::string uri);
 	void		dirDelResponse(t_endpoint loc, std::string ep);
 
-	// bool		authorized()
-	// bool		authenticated();
-	// void		authenticate();
+	bool		authorized(std::string authorization);
+	bool		authenticated();
+	void		authenticate();
 
 	void		get();
 	void		post();

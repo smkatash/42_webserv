@@ -171,6 +171,8 @@ void	ResponseHandler::setCode(int code)
 		res_.rline.reasonPhrase = "OK";
 	else if (code == FOUND)
 		res_.rline.reasonPhrase = "Found";
+	else if (code == UNAUTHORIZED)
+		res_.rline.reasonPhrase = "Unauthorized";
 	else if (code == NOTFOUND)
 	{
 		res_.rline.reasonPhrase = "Not Found";
@@ -365,7 +367,6 @@ void ResponseHandler::dirDelResponse(t_endpoint loc, std::string ep)
 	return normalDelResponse(loc, uri);
 }
 
-
 void ResponseHandler::del()
 {
 	try
@@ -404,45 +405,61 @@ std::string ResponseHandler::generate()
 	return header;
 }
 
-// bool	ResponseHandler::authorized(std::string authorization)
-// {
-// 	if (authorization.empty())
-// 		return false;
-// 	std::vector<char> authVec = base64Decode(&authorization[6]);
-// 	std::string auth(authVec.begin(), authVec.end());
-// 	std::istream htpassFile(location)
-// }
+bool	ResponseHandler::authorized(std::string authorization)
+{
+	if (endpoint_ != "/delete") // Instead of this I should check if there's the auth_basic in config file in this location
+		return true;
+	if (authorization.empty())
+		return false;
+	std::string auth = base64Decode(&authorization[6]);
 
-// bool	ResponseHandler::authenticated()
-// {
-// 	if (!authorized(req_.rheader.authorization))
-// 		return false;
-// 	if (!validCookie(req_.rheader.cookie))
-// 		return false;
-// 	return true;
-// }
+	std::cout << location_.lroot + "documents/.htpassword" << std::endl;
+	std::cout << auth << std::endl;
 
-// void	ResponseHandler::authenticate()
-// {
-// 	res_.rheader.wwwAuth = "Basic realm=\"Realm from config file\"";
-// 	return setCode(UNAUTHORIZED);
-// }
+	// std::ifstream htpassFile(location_.lroot + conf_.getAuthFile());
+	std::ifstream htpassFile("." + location_.lroot + "documents/.htpassword");
+	if (htpassFile.bad())
+		exit(EXIT_FAILURE);
+	std::string buffer;
+	while (std::getline(htpassFile, buffer))
+	{
+		std::cout << buffer << std::endl;
+		if (buffer == auth)
+			return true;
+	}
+	return false;
+}
 
-// #define COOKIES
+bool	ResponseHandler::authenticated()
+{
+	if (!authorized(req_.rheader.authorization))
+		return false;
+	// if (!validCookie(req_.rheader.cookie))
+	// 	return false;
+	return true;
+}
+
+void	ResponseHandler::authenticate()
+{
+	res_.rheader.wwwAuth = "Basic realm=\"Realm from config file\"";
+	return setCode(UNAUTHORIZED);
+}
+
+#define COOKIES
 
 void	ResponseHandler::handle()
 {
 	if (res_.rline.statusCode != "200") // Probably endpoint not found, or error in constructor
 		return;
-// #ifdef COOKIES
-// 	if (!authenticated())
-// 		return authenticate();
-// #endif
+#ifdef COOKIES
+	if (!authenticated())
+		return authenticate();
+#endif
 	if (req_.rline.method == "GET")
 		return get();
 	if (req_.rline.method == "POST")
 		return post();
 	if (req_.rline.method == "DELETE")
 		return del();
-	// Otherwise send 
+	// otherwise send unhandled method
 }

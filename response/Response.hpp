@@ -10,7 +10,7 @@
 
 #define	MOVEDPERMAN		301		// "301 Moved Permanently" /* page moved to a different url*/
 #define	FOUND			302		// "302 Found" /* used for temporary redirect */
-#define	UNAUTHORIZED	400		// "400 Unauthorized" /* unauthenticated request */
+#define	UNAUTHORIZED	401		// "401 Unauthorized" /* unauthenticated request */
 #define NOTFOUND		404		// "404 Not Found" /* requested page not found */
 #define NOTALLOWED		405		// "404 Not Allowed" /* requested page is incompatible with method */
 #define GONE			410		// "410 Gone" /* like 404, but temporary*/
