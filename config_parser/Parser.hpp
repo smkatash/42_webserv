@@ -29,6 +29,8 @@ enum Token {
 	BR,
 	REDIRECT,
 	MAX_CLIENT,
+	AUTH,
+	AUTH_FILE,
 	NA
 };
 
@@ -72,6 +74,8 @@ class Parser {
 		bool			endDirectiveLocation(std::string next, std::string *locationDir);
 		std::string		checkRedirect(std::string redir);
 		unsigned long	isValidLimit(std::string num);
+		std::string		checkAuth(std::string auth);
+		std::string		checkAuthUserFile(std::string path);
 
 		/* debug */
 		void			debugConfigVector();

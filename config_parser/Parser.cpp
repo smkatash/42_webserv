@@ -31,11 +31,11 @@ void	Parser::openFile(std::ifstream &file) {
 /********************* tokenizer *************************/
 
 Token	Parser::getToken(const std::string& str) {
-	static std::string tokens[14] = {"server", "listen", "server_name",
+	static std::string tokens[16] = {"server", "listen", "server_name",
 									"root", "index", "error_page", "location",
 									"method", "cgi", "autoindex", "}", "return",
-									"max_client_body"};
-	for (int i = 0; i < 14; ++i) {
+									"max_client_body", "auth_basic", "auth_basic_user_file"};
+	for (int i = 0; i < 16; ++i) {
 		if (str == tokens[i]) {
 			return static_cast<Token>(i);
 		}
@@ -76,6 +76,30 @@ std::string	Parser::checkRedirect(std::string redir) {
 			return redir;
 	}
 	throw std::invalid_argument("parser: invalid redirect");
+}
+
+std::string	Parser::checkAuth(std::string auth) {
+	std::cout << auth << std::endl;
+	size_t semicolonPos = auth.find(';');
+    if (semicolonPos != std::string::npos) {
+		size_t firstQuotePos = auth.find('"');
+		if (firstQuotePos != std::string::npos) {
+			size_t secondQuotePos = auth.find('"', firstQuotePos + 1);
+			if (secondQuotePos != std::string::npos) {
+				auth = auth.substr(firstQuotePos + 1, secondQuotePos - firstQuotePos - 1);
+			}
+    	}
+    	return auth;
+	}
+	throw std::invalid_argument("parser: invalid auth");
+}
+
+std::string	Parser::checkAuthUserFile(std::string path) {
+	if (stripBrackets(&path)) {
+		if (!path.empty())
+			return path;
+	}
+	throw std::invalid_argument("parser: invalid auth_basic_user_file");
 }
 
 unsigned long	Parser::isValidLimit(std::string num) {
@@ -229,6 +253,17 @@ void	Parser::parseSyntax() {
 				break;
 			case MAX_CLIENT:
 				conf.setClientMaxBodySize(isValidLimit(input_[++i]));
+				break;
+			case AUTH:
+				buff = input_[++i];
+				while (buff.find(";") == std::string::npos) {
+					buff += 32;
+					buff += input_[++i];
+				}
+				conf.setAuthBasic(locationDir, checkAuth(buff));
+				break;
+			case AUTH_FILE:
+				conf.setAuthBasicUserFile(locationDir, checkAuthUserFile(input_[++i]));
 				break;
 			default:
 				std::cerr << "Generic Unknown directive " << input_[i] << std::endl;
