@@ -6,7 +6,6 @@ CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep)
 , ep_(ep)
 {
 	// get data from Request and ConfigFile into CGI struct
-	std::cout << "This is CGI " << ep_ << std::endl;
 	setRequestInfo();
 	setConfigInfo();
 }
@@ -105,7 +104,6 @@ void CGIHandler::setFileUpload() {
 			}
 			tempFile.close();
 			setenv("UPLOADED_FILE_PATH", tmpPath.c_str(), 1);
-			std::cout << "FILE UPLOAD SET" << std::endl;
 		}
 	}
 }
