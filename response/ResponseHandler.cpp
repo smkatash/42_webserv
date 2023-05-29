@@ -1,6 +1,7 @@
 #include <map>
 #include <fstream>
 #include <string>
+#include <random>
 #include "Response.hpp" // Status codes definitions
 #include "Parser.hpp" // Methods enum
 #include "response_utils.hpp"
@@ -51,7 +52,7 @@ std::string ResponseHandler::generalHeader()
 {
 	std::string line;
 	if (!res_.gheader.cache.empty())
-		line.append("Cache-Control: " + res_.gheader.cache + "\r\n");
+		line.append("\r\nCache-Control: " + res_.gheader.cache);
 	if (!res_.gheader.connection.empty())
 		line.append("Connection: " + res_.gheader.connection + "\r\n");
 	if (!res_.gheader.date.empty())
@@ -78,6 +79,8 @@ std::string ResponseHandler::responseHeader()
 		line.append("Accept-Ranges: " + res_.rheader.acceptRanges + "\r\n");
 	if (!res_.rheader.age.empty())
 		line.append("Age: " + res_.rheader.age + "\r\n");
+	if (!res_.rheader.setCookie.empty())
+		line.append("Set-Cookie: " + res_.rheader.setCookie + "\r\n");
 	if (!res_.rheader.eTag.empty())
 		line.append("ETag: " + res_.rheader.eTag + "\r\n");
 	if (!res_.rheader.location.empty())
@@ -169,6 +172,8 @@ void	ResponseHandler::setCode(int code)
 	res_.rline.statusCode = toString(code);
 	if (code == OK)
 		res_.rline.reasonPhrase = "OK";
+	if (code == NOCONTENT)
+		res_.rline.reasonPhrase = "No Content";
 	else if (code == FOUND)
 		res_.rline.reasonPhrase = "Found";
 	else if (code == UNAUTHORIZED)
@@ -405,6 +410,25 @@ std::string ResponseHandler::generate()
 	return header;
 }
 
+std::string get_uuid()
+{
+	static std::random_device dev;
+	static std::mt19937 rng(dev());
+
+	std::uniform_int_distribution<int> dist(0, 15);
+
+	const char *v = "0123456789abcdef";
+	const bool dash[] = { 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 };
+
+	std::string res;
+	for (int i = 0; i < 16; i++) {
+		if (dash[i]) res += "-";
+		res += v[dist(rng)];
+		res += v[dist(rng)];
+	}
+	return res;
+}
+
 bool	ResponseHandler::authorized(std::string authorization)
 {
 	if (endpoint_ != "/delete") // Instead of this I should check if there's the auth_basic in config file in this location
@@ -413,7 +437,7 @@ bool	ResponseHandler::authorized(std::string authorization)
 		return false;
 	std::string auth = base64Decode(&authorization[6]);
 
-	std::cout << location_.lroot + "documents/.htpassword" << std::endl;
+	std::cout << location_.lroot + "documents/.htpassword" << std::endl; // Instead of documents/.htpassword I should take the value from the config file
 	std::cout << auth << std::endl;
 
 	// std::ifstream htpassFile(location_.lroot + conf_.getAuthFile());
@@ -425,7 +449,10 @@ bool	ResponseHandler::authorized(std::string authorization)
 	{
 		std::cout << buffer << std::endl;
 		if (buffer == auth)
+		{
+			res_.rheader.setCookie = "session_id=" + get_uuid();
 			return true;
+		}
 	}
 	return false;
 }
@@ -434,7 +461,7 @@ bool	ResponseHandler::authenticated()
 {
 	if (!authorized(req_.rheader.authorization))
 		return false;
-	// if (!validCookie(req_.rheader.cookie))
+	// else if (!validCookie(req_.rheader.cookie))
 	// 	return false;
 	return true;
 }
@@ -442,6 +469,8 @@ bool	ResponseHandler::authenticated()
 void	ResponseHandler::authenticate()
 {
 	res_.rheader.wwwAuth = "Basic realm=\"Realm from config file\"";
+	res_.gheader.connection = "keep-alive";
+	res_.eheader.contentLength = "0";
 	return setCode(UNAUTHORIZED);
 }
 

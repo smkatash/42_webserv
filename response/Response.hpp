@@ -7,6 +7,7 @@
 /* Most common status codes, may be add more later*/
 #define	OK				200		// "200 OK" /* Request is okay, entity body contains requested resource. */
 #define	CREATED			201		// "201 Created" /* For requests that create server objects (e.g., PUT). */
+#define	NOCONTENT		204		// "204 No Content"
 
 #define	MOVEDPERMAN		301		// "301 Moved Permanently" /* page moved to a different url*/
 #define	FOUND			302		// "302 Found" /* used for temporary redirect */
@@ -28,6 +29,7 @@ struct response_line {
 struct response_header {
 	std::string acceptRanges;
 	std::string age;
+	std::string	setCookie;
 	std::string	eTag;
 	std::string location;
 	std::string retryAfter;
