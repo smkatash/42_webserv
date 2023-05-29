@@ -47,6 +47,7 @@ void	RequestParser::initParser(std::string input) {
 			break;
 		}
 	}
+	std::cout << "here is the body: " << req_.rbody << std::endl;
 }
 
 

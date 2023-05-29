@@ -16,6 +16,8 @@ typedef struct s_endpoint {
 	std::pair<int, std::string>				lcgi;
 	std::string 							lredirect;
 	bool			 						lautoindex;
+	std::string								lauth_basic;
+	std::string								lauth_basic_user_file;
 }											t_endpoint;
 
 class	ConfigFile {
@@ -44,7 +46,8 @@ class	ConfigFile {
 		void								setAutoIndex(std::string endpoint, bool opt);
 		void								setLocation(std::string endpoint);
 		void								setClientMaxBodySize(unsigned long sizeMax);
-
+		void								setAuthBasic(std::string endpoint, std::string auth);
+		void								setAuthBasicUserFile(std::string endpoint, std::string auth);
 		/* getters */
 		int									getListenPort(void) const;
 		const std::string					getServerName(void) const;
@@ -56,6 +59,8 @@ class	ConfigFile {
 		const std::string					getEndPoint(std::string name) const;
 		unsigned long						getClientMaxBodySize(void) const;
 		int									getScriptType(std::string endpoint);
+		const std::string					getAuthBasic(std::string endpoint) const;
+		const std::string					getAuthBasicUserFile(std::string endpoint) const;
 		void								clear();
 
 		/* print all to debug */

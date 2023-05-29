@@ -27,14 +27,11 @@ void	ConfigFile::setRoot(std::string endpoint, std::string path) {
 	}
 }
 
-void	ConfigFile::setIndexFile(std::string endpoint, std::string file) {
+void	ConfigFile::setAuthBasic(std::string endpoint, std::string auth) {
 	if (!endpoint.empty()) {
-		std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
-		if (it != location_.end()) {
-			it->second.lindex.push_back(file);
-		}
-	} else {
-		indexFile_.push_back(file);
+		std::map<std::string, t_endpoint>::iterator	it = location_.find(endpoint);
+		if (it != location_.end())
+			it->second.lauth_basic = auth;
 	}
 }
 
@@ -88,6 +85,25 @@ void	ConfigFile::setLocation(std::string endpoint) {
 
 void	ConfigFile::setClientMaxBodySize(unsigned long sizeMax) {
 	clientMaxBodySize_ = sizeMax;
+}
+
+void	ConfigFile::setAuthBasicUserFile(std::string endpoint, std::string auth) {
+	if (!endpoint.empty()) {
+		std::map<std::string, t_endpoint>::iterator	it = location_.find(endpoint);
+		if (it != location_.end())
+			it->second.lauth_basic_user_file = auth;
+	}
+}
+
+void	ConfigFile::setIndexFile(std::string endpoint, std::string file) {
+	if (!endpoint.empty()) {
+		std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
+		if (it != location_.end()) {
+			it->second.lindex.push_back(file);
+		}
+	} else {
+		indexFile_.push_back(file);
+	}
 }
 
 /********************* getters *************************/
@@ -166,6 +182,24 @@ unsigned long	ConfigFile::getClientMaxBodySize(void) const {
 }
 
 
+const std::string	ConfigFile::getAuthBasic(std::string endpoint) const {
+	if (!endpoint.empty()) {
+		std::map<std::string, t_endpoint>::const_iterator	it = location_.find(endpoint);
+		if (it != location_.end())
+			return it->second.lauth_basic;
+	} 
+	return "";
+}
+
+const std::string	ConfigFile::getAuthBasicUserFile(std::string endpoint) const {
+	if (!endpoint.empty()) {
+		std::map<std::string, t_endpoint>::const_iterator	it = location_.find(endpoint);
+		if (it != location_.end())
+			return it->second.lauth_basic_user_file;
+	} 
+	return "";
+}
+
 void	ConfigFile::clear(void) {
 	listen_ = 0;
 	serverName_.clear();
@@ -214,6 +248,8 @@ void	ConfigFile::debugConfigFile(void) {
 
 		std::cout << std::endl << "redirects: " << itm->second.lredirect;
 		std::cout << std::endl << "autoindex: " << std::boolalpha << itm->second.lautoindex;
+		std::cout << std::endl << "auth_basic: " << itm->second.lauth_basic;
+		std::cout << std::endl << "auth_basic_user_file: " << itm->second.lauth_basic_user_file;
 	}
 	std::cout << std::endl;
 }
