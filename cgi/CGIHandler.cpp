@@ -51,12 +51,6 @@ void	CGIHandler::setRequestInfo()
 	cgi_.userAgent = req_.rheader.userAgent;
 	cgi_.body = req_.rbody;
 	cgi_.postType = (cgi_.contenType == MULTIPART) ? 0 : 1;
-	// std::cout << "CGI Info" << std::endl;
-	// std::cout << cgi_.method << std::endl;
-	// std::cout << cgi_.contenType << std::endl;
-	// std::cout << cgi_.fileContentType << std::endl;
-	// std::cout << cgi_.fileName<< std::endl;
-	// std::cout << cgi_.postType << std::endl;
 }
 
 void	CGIHandler::setConfigInfo()

@@ -277,7 +277,7 @@ int Socket::readHandler(size_t sizeToRead)
 				  << "Closed connection client side;\n"
 				  << "Socket file_descriptor = " << getSocketDescriptor() << " \n"
 				  << std::endl;
-		#endif SOCKET_VERBOSE
+		#endif
 		return(closeConnection());
 	}
 	else if (bytes < 0)// && errno == EAGAIN)
