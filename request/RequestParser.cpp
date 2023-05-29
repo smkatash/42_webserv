@@ -19,6 +19,10 @@ void	RequestParser::initParser(std::string input) {
 	std::stringstream	ss(input);
 	std::string			line;
 
+	std::cout << "here is the request" << std::endl;
+	std::cout << input << std::endl;
+	std::cout << "---" << std::endl;
+
 	while(std::getline(ss, line)) {
 		if (!line.empty() && isRequestLine(line))
 			parseRequestLine_(line);
@@ -47,10 +51,8 @@ void	RequestParser::initParser(std::string input) {
 			break;
 		}
 	}
-	std::cout << "here is the body: " << req_.rbody << std::endl;
+	std::cout << "The body: " << req_.rbody << std::endl;
 }
-
-
 
 
 void	RequestParser::parseRequestLine_(std::string line) {

@@ -88,18 +88,18 @@ static struct timespec setTimer(int sec, int nsec)
 	return (timeout);
 }
 
-void Core::receiver(RequestParser *request, Socket *socket)
+void Core::receiver(RequestParser *request, Socket& socket)
 {
 	#ifdef DEBUG
 		std::cout << "LA DEMANDE ---------------------------------------------------------------------------------------------------------------->>" << std::endl;
-		std::cout << socket->getData() << std::endl;
+		std::cout << socket.getData() << std::endl;
 		std::cout << "<<------------------------------------------------------------------------------------------------------------------------END" << std::endl;
 	#endif
 
-	request->initParser(socket->getData());
+	request->initParser(socket.getData());
 	ResponseHandler response(request->getRequest(), configs_.getConfigFile());
 	response.handle();
-	socket->setResponse(response.generate());
+	socket.setResponse(response.generate());
 }
 
 void Core::sender( Socket *socket)
@@ -147,7 +147,7 @@ void Core::connectionHandler(struct kevent currentEvent)
 			// if(checkTimeout(&(socketIterator->second)) == true)
 			// {
 				if(socketIterator->second.readHandler(currentEvent.data) >= 0 && socketIterator->second.getRequestStatus() == true)// && socketIterator->second.getRequestStatus() == false)
-					receiver(&request, &(socketIterator->second));
+					receiver(&request, socketIterator->second);
 			// }
 		}
 		if (currentEvent.filter == EVFILT_WRITE && socketIterator->second.getRequestStatus() == true)
@@ -178,10 +178,10 @@ void	Core::run()
 		i = 0;
 		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &refresh);
 		// numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, NULL);
-		if(numOfEvent == 0)
-		{
+		// if(numOfEvent == 0)
+		// {
 			
-		}
+		// }
 		while (i < numOfEvent)
 		{
 			currentEvent = eventlist_[i];
