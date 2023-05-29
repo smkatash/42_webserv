@@ -1,4 +1,8 @@
 <?php
+header_remove("X-Powered-By");
+ini_set('expose_php', 'off'); // Disable PHP version information in headers
+ini_set('default_mimetype', ''); // Disable automatic "Content-type" header generation
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $uploadedFilePath = getenv('UPLOADED_FILE_PATH');
     $destinationDirectory = dirname(dirname(__FILE__)). '/' . 'documents' . '/';
