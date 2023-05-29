@@ -1,6 +1,9 @@
 #include "Socket.hpp"
 #include "stdlib.h"
 
+
+#define SOCKET_VERBOSE
+
 Socket::Socket()
 : requestIsComplete_(false)
 {
@@ -239,10 +242,23 @@ size_t Socket::getContentLength()
 	return (contentLenght);
 }
 
+static size_t getHeaderLenght(std::string string)
+{
+	int index = 0;
+
+	std::string substring( "\r\n\r\n");
+	index = string.find(substring);
+	if(index == -1)
+		return (string.size());
+	return (index + 4);
+}
+
 void Socket::setRequestLength()
 {
 	size_t contentLength = getContentLength();
-	headerLength_ = data_.size();
+
+	headerLength_ = getHeaderLenght(data_);
+	//NB: what if someone send something with no header? so with no \r\n\r\n?
 	// if the request don't have Content-Lenght the request is exactly data_.size();
 	requestLength_ = contentLength + headerLength_;
 }
@@ -255,7 +271,15 @@ int Socket::readHandler(size_t sizeToRead)
 	buffer = (char *)malloc(sizeToRead + 1);
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
 	if(bytes == 0) //close Connection
+	{
+		#ifdef SOCKET_VERBOSE
+			std::cout << "CONNECTION CLOSING--------------------------------------------------------------------------------------------------------->>\n"
+				  << "Closed connection client side;\n"
+				  << "Socket file_descriptor = " << getSocketDescriptor() << " \n"
+				  << std::endl;
+		#endif SOCKET_VERBOSE
 		return(closeConnection());
+	}
 	else if (bytes < 0)// && errno == EAGAIN)
 	{
 		std::cerr << "ERROR: SOCKET PROBABLY BLOCKING" << std::endl;
@@ -263,14 +287,30 @@ int Socket::readHandler(size_t sizeToRead)
 	}
 	buffer[bytes] = '\0';
 	data_.append(buffer, bytes);
+
+	#ifdef SOCKET_VERBOSE
+		std::cout << "DATA ARE:--------------------------------------------------------------------------------------------------------->>\n"
+				  << data_ 
+				  << "\n which size is" << data_.size() << "\n FROM THE FILE " << clientSd_ << " \n" << " WHICH HAS initial request_lenght = to " << requestLength_ 
+				  << std::endl;
+	#endif
+
 	if(requestLength_ == 0)
 		setRequestLength();
+	
+	#ifdef SOCKET_VERBOSE
+		std::cout << "So now we set it up to: " << requestLength_ 
+				  << std::endl;
+	#endif
+	
 	if(data_.size() >= requestLength_)
+	{
 		requestIsComplete_ = true;
+		requestLength_ = 0;
+	}
 	free(buffer);
 	return (0);
 }
-
 // we should sett an offset;
 bool Socket::writeHandler(std::string response)
 {
