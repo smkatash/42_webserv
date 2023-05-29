@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <sstream>
 #include <unistd.h>
 #include <fstream>
 #include <fcntl.h>
@@ -47,6 +48,7 @@ private:
 	ConfigFile			conf_;
 	std::string			ep_;
 	WebservCGI			cgi_;
+	FILE*				responseFile_;
 	std::string			cgiResponse_;
 
 	void				setRequestInfo();
@@ -56,7 +58,7 @@ private:
 
 	void				runChildProcess(int *fd, char** argv);
 	void				runParentProcess(int *fd);
-	void				setCGIResponse(char* tmpname);
+	void				setCGIResponse();
 
 public:
 	CGIHandler(Request req, ConfigFile conf, std::string location);
@@ -66,7 +68,6 @@ public:
 	std::string			getCGIResponse();
 };
 
-// std::vector<char>		base64Decode(const std::string& input);
 std::string				base64Decode(const std::string& input);
 std::string				currentDirectory();
 std::string				getAbsolutePath(std::string rootPath, std::string scriptPath);

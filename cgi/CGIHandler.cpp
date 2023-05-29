@@ -72,7 +72,11 @@ void	CGIHandler::setConfigInfo()
 void	CGIHandler::execute() {
 	int	fd[2];
 	char **argv = setArgArray(cgi_.cgiPathInfo, cgi_.epScriptRoot);
-	
+	responseFile_ = tmpfile();
+	if (responseFile_ == nullptr) {
+		throw std::runtime_error("Failed to create a temporary file");
+	}
+
 	if (pipe(fd) == -1)
 		throw std::runtime_error("Failed to pipe");
 
@@ -115,9 +119,12 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 	if (dup2(fd[0], STDIN_FILENO) == -1)
 		std::runtime_error("Failed to redirect stdout");
 
-	int filefd = open("dummy.html", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR, 0777);
-	if (filefd < 0)
-		throw std::runtime_error("Failed to open a file");
+	int filefd = fileno(responseFile_);
+	if (filefd == -1) {
+		close(filefd);
+		throw std::runtime_error("Failed to retrieve file descriptor");
+	}
+
 	if (dup2(filefd, STDOUT_FILENO) == -1)
 		std::runtime_error("Failed to redirect stdout");
 	if (dup2(filefd, STDERR_FILENO) == -1)
@@ -151,16 +158,20 @@ void CGIHandler::runParentProcess(int *fd)
 		status = WTERMSIG(status) + 128;
 	if (status != 0)
 		throw std::runtime_error("execution problem");
-
-	//setCGIResponse(tmpname);
+	setCGIResponse();
 }
 
-void	CGIHandler::setCGIResponse(char* tmpname)
+void	CGIHandler::setCGIResponse()
 {
-	std::fstream file(tmpname);
-	std::string buffer;
-	while(std::getline(file, buffer))
-		cgiResponse_ += buffer + '\n';
+	std::ostringstream oss;
+	char buffer[1024];
+
+	rewind(responseFile_);
+	while (fgets(buffer, sizeof(buffer), responseFile_) != NULL) {
+		oss << buffer;
+	}
+	fclose(responseFile_);
+	cgiResponse_ = oss.str();
 }
 
 std::string	CGIHandler::getCGIResponse()

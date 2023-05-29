@@ -1,4 +1,8 @@
 <?php
+header_remove("X-Powered-By");
+ini_set('expose_php', 'off'); // Disable PHP version information in headers
+ini_set('default_mimetype', ''); // Disable automatic "Content-type" header generation
+
 $requestBody = file_get_contents("php://input");
 
 if (empty($requestBody)) {
@@ -23,7 +27,7 @@ $response .= "</body>\n";
 $response .= "</html>\n";
 
 $fullResponse = "HTTP/1.1 " . http_response_code() . " " . http_response_code_message(http_response_code()) . "\r\n";
-$fullResponse .= "Content-Type: text/html\r\n";
+$fullResponse .= "Content-Type: text/html; charset=UTF-8\r\n";
 $fullResponse .= "Content-Length: " . strlen($response) . "\r\n";
 $fullResponse .= "\r\n";
 $fullResponse .= $response;

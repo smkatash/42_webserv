@@ -2,7 +2,7 @@
 #include "stdlib.h"
 
 
-#define SOCKET_VERBOSE
+// #define SOCKET_VERBOSE
 
 Socket::Socket()
 : requestIsComplete_(false)
