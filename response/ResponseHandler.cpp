@@ -8,6 +8,8 @@
 #include "CGIHandler.hpp"
 #include "ResponseHandler.hpp"
 
+#define COOKIES
+
 ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 : req_(req)
 , conf_(conf)
@@ -22,6 +24,10 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 		uri_ = removeDuplicateSlashes(req_.rline.uri);
 		endpoint_ = findUriEndpoint(uri_.substr(0, uri_.find('?')));
 		location_ = conf_.getLocation(endpoint_); // try-catch because getLocation may throw an exception
+#ifdef COOKIES
+		if (!authenticated())
+			authenticate();
+#endif
 	}
 	catch(const std::exception& e)
 	{
@@ -429,6 +435,17 @@ std::string get_uuid()
 	return res;
 }
 
+void	ResponseHandler::addToSessionIds(std::string id)
+{
+	std::ofstream sessionIds;
+	sessionIds.open("./var/www/pages/documents/session_ids", std::ios::out | std::ios::app);
+	if (sessionIds.fail())
+		throw std::ios_base::failure(std::strerror(errno));
+	sessionIds.exceptions(sessionIds.exceptions() | std::ios::failbit | std::ifstream::badbit);
+	sessionIds << id << std::endl;
+	sessionIds.close();
+}
+
 bool	ResponseHandler::authorized(std::string authorization)
 {
 	if (endpoint_ != "/delete") // Instead of this I should check if there's the auth_basic in config file in this location
@@ -437,11 +454,19 @@ bool	ResponseHandler::authorized(std::string authorization)
 		return false;
 	std::string auth = base64Decode(&authorization[6]);
 
-	std::cout << location_.lroot + "documents/.htpassword" << std::endl; // Instead of documents/.htpassword I should take the value from the config file
+	std::string htPassFileName = conf_.getAuthBasicUserFile(endpoint_);
+	if (htPassFileName.front() == '/')
+		htPassFileName.erase(0, 1);
+
+	std::string filename = "." + location_.lroot + htPassFileName;
+
+	std::cout << filename << std::endl; // Instead of documents/.htpassword I should take the value from the config file
 	std::cout << auth << std::endl;
 
 	// std::ifstream htpassFile(location_.lroot + conf_.getAuthFile());
-	std::ifstream htpassFile("." + location_.lroot + "documents/.htpassword");
+	std::ifstream htpassFile(filename);
+	if (!htpassFile.is_open())
+		exit(EXIT_FAILURE);
 	if (htpassFile.bad())
 		exit(EXIT_FAILURE);
 	std::string buffer;
@@ -450,40 +475,49 @@ bool	ResponseHandler::authorized(std::string authorization)
 		std::cout << buffer << std::endl;
 		if (buffer == auth)
 		{
-			res_.rheader.setCookie = "session_id=" + get_uuid();
+			std::string id = get_uuid();
+			addToSessionIds(id);
+			res_.rheader.setCookie = "session_id=" + id + "; path=/delete";
 			return true;
 		}
+	} 
+	return false;
+}
+
+bool	ResponseHandler::validCookie()
+{
+	if (req_.rheader.cookie.empty())
+		return false;
+	std::string cookie = req_.rheader.cookie.substr(req_.rheader.cookie.find("=") + 1);
+	std::ifstream sessionIds("./var/www/pages/documents/session_ids");
+	std::string	buffer;
+	while (std::getline(sessionIds, buffer))
+	{
+		if (std::strncmp(cookie.c_str(), buffer.c_str(), buffer.size()) == 0)
+			return true;
 	}
 	return false;
 }
 
 bool	ResponseHandler::authenticated()
 {
-	if (!authorized(req_.rheader.authorization))
-		return false;
-	// else if (!validCookie(req_.rheader.cookie))
-	// 	return false;
-	return true;
+	if (validCookie() || authorized(req_.rheader.authorization))
+		return true;
+	return false;
 }
 
 void	ResponseHandler::authenticate()
 {
-	res_.rheader.wwwAuth = "Basic realm=\"Realm from config file\"";
-	res_.gheader.connection = "keep-alive";
-	res_.eheader.contentLength = "0";
-	return setCode(UNAUTHORIZED);
+	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
+	res_.rbody = "\r\n";
+	setCode(UNAUTHORIZED);
 }
 
-#define COOKIES
 
 void	ResponseHandler::handle()
 {
 	if (res_.rline.statusCode != "200") // Probably endpoint not found, or error in constructor
 		return;
-#ifdef COOKIES
-	if (!authenticated())
-		return authenticate();
-#endif
 	if (req_.rline.method == "GET")
 		return get();
 	if (req_.rline.method == "POST")

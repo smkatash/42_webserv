@@ -39,6 +39,8 @@ private:
 	void		normalDelResponse(t_endpoint loc, std::string uri);
 	void		dirDelResponse(t_endpoint loc, std::string ep);
 
+	void		addToSessionIds(std::string id);
+	bool		validCookie();
 	bool		authorized(std::string authorization);
 	bool		authenticated();
 	void		authenticate();
