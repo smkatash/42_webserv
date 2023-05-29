@@ -64,14 +64,13 @@ int main(int argc, char **argv)
 
 	configFileOpen(argc, argv, file);
 	configs = configInit(file);
-	configs.debugConfigVector();
 
-	// if( kqCreate() == false )
-	// 	return (0);
+	if( kqCreate() == false )
+		return (0);
 
-	// Core core(configs);
-	// core.run();
-	// return (EXIT_SUCCESS);
+	Core core(configs);
+	core.run();
+	return (EXIT_SUCCESS);
 }
 
 

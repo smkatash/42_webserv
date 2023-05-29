@@ -79,7 +79,6 @@ std::string	Parser::checkRedirect(std::string redir) {
 }
 
 std::string	Parser::checkAuth(std::string auth) {
-	std::cout << auth << std::endl;
 	size_t semicolonPos = auth.find(';');
     if (semicolonPos != std::string::npos) {
 		size_t firstQuotePos = auth.find('"');
