@@ -32,7 +32,7 @@ class Core
 
 	void connectionHandler(struct kevent currentEvent);
 	void receiver(RequestParser *request, Socket *socket);
-	void sender(Socket *socket);
+	bool sender(Socket *socket);
 
 	bool setNewConnection(Server server);
 };

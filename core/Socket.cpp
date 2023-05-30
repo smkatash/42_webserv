@@ -222,7 +222,7 @@ bool Socket::getConnectionStatus()
 int Socket::closeConnection()
 {
 	close(clientSd_);
-	requestIsComplete_ = true;
+	requestIsComplete_ = false;
 	connectionUp_ = false;
 	return (0);
 }
@@ -239,10 +239,21 @@ size_t Socket::getContentLength()
 	return (contentLenght);
 }
 
+static size_t getHeaderLength(std::string string)
+{
+	int index = 0;
+
+	std::string substring ("\r\n\r\n");
+	index = string.find(substring);
+	if(index == -1)
+		return(string.size());
+	return(index + 4);
+}
+
 void Socket::setRequestLength()
 {
 	size_t contentLength = getContentLength();
-	headerLength_ = data_.size();
+	headerLength_ = getHeaderLength(data_);//data_.size();
 	// if the request don't have Content-Lenght the request is exactly data_.size();
 	requestLength_ = contentLength + headerLength_;
 }
@@ -256,8 +267,8 @@ int Socket::readHandler(size_t sizeToRead)
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
 	if(bytes == 0) //close Connection
 	{
-			std::cout << "connection being closed for: " << clientSd_ << "from CLIENT side" << std::endl;
-		return(closeConnection());
+			// std::cout << "connection being closed for: " << clientSd_ << "from CLIENT side" << std::endl;
+		// return(closeConnection());
 	}
 	else if (bytes < 0)// && errno == EAGAIN)
 	{
@@ -285,15 +296,16 @@ bool Socket::writeHandler(std::string response)
 	if (bytes < 0)
 		return false;
 	response_ = response_.substr(bytes);
+	std::cout << "RESPONSE SIZE AFTER WRITE: " << response_.size() << std::endl;
 	if (response_.empty())
 	{
+		// we want to reset the request_value in the socket, in order to handle the next;
 		data_ = "";
-		requestIsComplete_ = false;
 		requestLength_ = 0;
+		requestIsComplete_ = false;
 		setRequestStatus(false);
 		closeConnection();
 		std::cout << "connection being closed for: " << clientSd_ << "from SERVER side" << std::endl;
-
 	}
 	return true;
 }

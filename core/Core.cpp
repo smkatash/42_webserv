@@ -7,7 +7,7 @@
 #include <map>
 #include <ctime>
 
-#define DEBUG
+// #define DEBUG
 
 Core::Core(Parser configs)
 : configs_(configs)
@@ -92,7 +92,7 @@ void Core::receiver(RequestParser *request, Socket *socket)
 {
 	#ifdef DEBUG
 		std::cout << "LA DEMANDE ---------------------------------------------------------------------------------------------------------------->>" << std::endl;
-		std::cout << socket->getData() << std::endl;
+		std::cout << "DATA SIZE: " << socket->getData() << std::endl;
 		std::cout << "<<------------------------------------------------------------------------------------------------------------------------END" << std::endl;
 	#endif
 
@@ -102,11 +102,11 @@ void Core::receiver(RequestParser *request, Socket *socket)
 	socket->setResponse(response.generate());
 }
 
-void Core::sender( Socket *socket)
+bool Core::sender( Socket *socket)
 {
 	#ifdef DEBUG
 		std::cout << "LA RESPONSE--------------------------------------------------------------------------------------------------------------->>" << std::endl;
-		std::cout << socket->getResponse() << std::endl;
+		std::cout << "RESPONSE SIZE: " << socket->getResponse() << std::endl;
 		std::cout << "<<-----------------------------------------------------------------------------------------------------------------------END" << std::endl;
 	#endif
 	
@@ -114,7 +114,10 @@ void Core::sender( Socket *socket)
 	{
 		socket->closeConnection();
 		sockets_.erase(socket->getSocketDescriptor());
+		return (false);
 	}
+	else 
+		return true;
 }
 
 // static bool checkTimeout(Socket *socket)
@@ -161,8 +164,13 @@ void Core::connectionHandler(struct kevent currentEvent)
 			// if(checkTimeout(&(socketIterator->second)) == true)
 			// {
 				if (socketIterator->second.getConnectionStatus() == true)
-					sender(&(socketIterator->second));
-				sockets_.erase(socketIterator->second.getSocketDescriptor());
+				{
+					if(sender(&(socketIterator->second)) == false)
+					;
+						// sockets_.erase(socketIterator->second.getSocketDescriptor());
+				}
+				if (socketIterator->second.getConnectionStatus() == false)
+					sockets_.erase(socketIterator->second.getSocketDescriptor());
 			// }
 		}
 	}
