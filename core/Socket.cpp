@@ -1,6 +1,9 @@
 #include "Socket.hpp"
 #include "stdlib.h"
 
+
+// #define SOCKET_VERBOSE
+
 Socket::Socket()
 : requestIsComplete_(false)
 {
@@ -267,8 +270,13 @@ int Socket::readHandler(size_t sizeToRead)
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
 	if(bytes == 0) //close Connection
 	{
-			// std::cout << "connection being closed for: " << clientSd_ << "from CLIENT side" << std::endl;
-		// return(closeConnection());
+		#ifdef SOCKET_VERBOSE
+			std::cout << "CONNECTION CLOSING--------------------------------------------------------------------------------------------------------->>\n"
+				  << "Closed connection client side;\n"
+				  << "Socket file_descriptor = " << getSocketDescriptor() << " \n"
+				  << std::endl;
+		#endif
+		return(closeConnection());
 	}
 	else if (bytes < 0)// && errno == EAGAIN)
 	{
@@ -277,14 +285,30 @@ int Socket::readHandler(size_t sizeToRead)
 	}
 	buffer[bytes] = '\0';
 	data_.append(buffer, bytes);
+
+	#ifdef SOCKET_VERBOSE
+		std::cout << "DATA ARE:--------------------------------------------------------------------------------------------------------->>\n"
+				  << data_ 
+				  << "\n which size is" << data_.size() << "\n FROM THE FILE " << clientSd_ << " \n" << " WHICH HAS initial request_lenght = to " << requestLength_ 
+				  << std::endl;
+	#endif
+
 	if(requestLength_ == 0)
 		setRequestLength();
+	
+	#ifdef SOCKET_VERBOSE
+		std::cout << "So now we set it up to: " << requestLength_ 
+				  << std::endl;
+	#endif
+	
 	if(data_.size() >= requestLength_)
-		requestIsComplete_ = true; //here we set the request as complete
+	{
+		requestIsComplete_ = true;
+		requestLength_ = 0;
+	}
 	free(buffer);
 	return (1);
 }
-
 // we should sett an offset;
 bool Socket::writeHandler(std::string response)
 {

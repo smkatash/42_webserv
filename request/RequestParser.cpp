@@ -36,8 +36,11 @@ void	RequestParser::initParser(std::string input) {
 						break;
 					parseEntityHeader_(line);
 				}
+			} else {
+				req_.rbody += line;
 			}
-			while (std::getline(ss, line)) {
+			std::cout << line << std::endl;
+			while (!ss.eof() && std::getline(ss, line)) {
 				if (startsWith(line, "--") && isBoundary(line, req_.eheader.boundaryName))
 					break;
 				if (!ss.eof())
@@ -48,8 +51,6 @@ void	RequestParser::initParser(std::string input) {
 		}
 	}
 }
-
-
 
 
 void	RequestParser::parseRequestLine_(std::string line) {

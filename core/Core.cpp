@@ -88,11 +88,11 @@ static struct timespec setTimer(int sec, int nsec)
 	return (timeout);
 }
 
-void Core::receiver(RequestParser *request, Socket *socket)
+void Core::receiver(RequestParser *request, Socket* socket)
 {
 	#ifdef DEBUG
 		std::cout << "LA DEMANDE ---------------------------------------------------------------------------------------------------------------->>" << std::endl;
-		std::cout << "DATA SIZE: " << socket->getData() << std::endl;
+		std::cout << socket->getData() << std::endl;
 		std::cout << "<<------------------------------------------------------------------------------------------------------------------------END" << std::endl;
 	#endif
 
@@ -193,10 +193,10 @@ void	Core::run()
 		i = 0;
 		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &refresh);
 		// numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, NULL);
-		if(numOfEvent == 0)
-		{
+		// if(numOfEvent == 0)
+		// {
 			
-		}
+		// }
 		while (i < numOfEvent)
 		{
 			currentEvent = eventlist_[i];

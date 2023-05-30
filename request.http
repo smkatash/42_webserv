@@ -1,6 +1,6 @@
-@endpoint = localhost:8080
+@endpoint = www.nginx.com
 
 
-GET localhost:8080
+GET {{endpoint}}
 
 

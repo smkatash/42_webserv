@@ -6,7 +6,6 @@ CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep)
 , ep_(ep)
 {
 	// get data from Request and ConfigFile into CGI struct
-	std::cout << "This is CGI " << ep_ << std::endl;
 	setRequestInfo();
 	setConfigInfo();
 }
@@ -51,12 +50,6 @@ void	CGIHandler::setRequestInfo()
 	cgi_.userAgent = req_.rheader.userAgent;
 	cgi_.body = req_.rbody;
 	cgi_.postType = (cgi_.contenType == MULTIPART) ? 0 : 1;
-	// std::cout << "CGI Info" << std::endl;
-	// std::cout << cgi_.method << std::endl;
-	// std::cout << cgi_.contenType << std::endl;
-	// std::cout << cgi_.fileContentType << std::endl;
-	// std::cout << cgi_.fileName<< std::endl;
-	// std::cout << cgi_.postType << std::endl;
 }
 
 void	CGIHandler::setConfigInfo()
@@ -78,7 +71,11 @@ void	CGIHandler::setConfigInfo()
 void	CGIHandler::execute() {
 	int	fd[2];
 	char **argv = setArgArray(cgi_.cgiPathInfo, cgi_.epScriptRoot);
-	
+	responseFile_ = tmpfile();
+	if (responseFile_ == nullptr) {
+		throw std::runtime_error("Failed to create a temporary file");
+	}
+
 	if (pipe(fd) == -1)
 		throw std::runtime_error("Failed to pipe");
 
@@ -107,7 +104,6 @@ void CGIHandler::setFileUpload() {
 			}
 			tempFile.close();
 			setenv("UPLOADED_FILE_PATH", tmpPath.c_str(), 1);
-			std::cout << "FILE UPLOAD SET" << std::endl;
 		}
 	}
 }
@@ -121,9 +117,12 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 	if (dup2(fd[0], STDIN_FILENO) == -1)
 		std::runtime_error("Failed to redirect stdout");
 
-	int filefd = open("dummy.html", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR, 0777);
-	if (filefd < 0)
-		throw std::runtime_error("Failed to open a file");
+	int filefd = fileno(responseFile_);
+	if (filefd == -1) {
+		close(filefd);
+		throw std::runtime_error("Failed to retrieve file descriptor");
+	}
+
 	if (dup2(filefd, STDOUT_FILENO) == -1)
 		std::runtime_error("Failed to redirect stdout");
 	if (dup2(filefd, STDERR_FILENO) == -1)
@@ -157,16 +156,20 @@ void CGIHandler::runParentProcess(int *fd)
 		status = WTERMSIG(status) + 128;
 	if (status != 0)
 		throw std::runtime_error("execution problem");
-
-	//setCGIResponse(tmpname);
+	setCGIResponse();
 }
 
-void	CGIHandler::setCGIResponse(char* tmpname)
+void	CGIHandler::setCGIResponse()
 {
-	std::fstream file(tmpname);
-	std::string buffer;
-	while(std::getline(file, buffer))
-		cgiResponse_ += buffer + '\n';
+	std::ostringstream oss;
+	char buffer[1024];
+
+	rewind(responseFile_);
+	while (fgets(buffer, sizeof(buffer), responseFile_) != NULL) {
+		oss << buffer;
+	}
+	fclose(responseFile_);
+	cgiResponse_ = oss.str();
 }
 
 std::string	CGIHandler::getCGIResponse()

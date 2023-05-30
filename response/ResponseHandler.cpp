@@ -404,9 +404,6 @@ void ResponseHandler::del()
 
 std::string ResponseHandler::generate()
 {
-	// if (!res_.cgiResponse.empty())
-	// 	return res_.cgiResponse;
-	// return "IT IS EMPTY";
 	if (!res_.cgiResponse.empty())
 		return res_.cgiResponse;
 	std::string	header;
