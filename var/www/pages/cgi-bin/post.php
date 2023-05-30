@@ -12,23 +12,32 @@ if (empty($requestBody)) {
 $dataEntry = $requestBody . PHP_EOL;
 $directory = dirname(dirname(__FILE__)). '/' . 'documents' . '/' . 'kanydb';
 
-$response = "<html>\n";
-$response .= "<body>\n";
 
 if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
 	http_response_code(200);
-	$response .= "<h1> Data has been saved to file: ". $directory ." </h1>\n";
+	$responseFile = './temp.html';
+	
+	if (file_exists($responseFile)) {
+		$response = file_get_contents($responseFile);
+		$message = "✅ Data saved successfully to ";
+		$message .=  $directory . "\n";
+	} else {
+		$message = "❌ Failed to load response template";
+	}
 } else {
 	http_response_code(500);
-	$response .= "<h1> Error occurred while saving the data: ". $directory ." </h1>\n";
+	$message = "❌ Internal error 500";
+	
 }
-
-$response .= "</body>\n";
-$response .= "</html>\n";
+$response = preg_replace('/{{message}}/i', $message, $response);
+$date = gmdate('D, d M Y H:i:s T');
 
 $fullResponse = "HTTP/1.1 " . http_response_code() . " " . http_response_code_message(http_response_code()) . "\r\n";
 $fullResponse .= "Content-Type: text/html; charset=UTF-8\r\n";
 $fullResponse .= "Content-Length: " . strlen($response) . "\r\n";
+$fullResponse .= "Connection: "  . "close\r\n";
+$fullResponse .= "Date: " . $date . "\r\n";
+$fullResponse .= "Server: "  . getenv('SERVER_NAME') . "\r\n";
 $fullResponse .= "\r\n";
 $fullResponse .= $response;
 
