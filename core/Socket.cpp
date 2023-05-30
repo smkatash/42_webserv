@@ -224,7 +224,7 @@ int Socket::closeConnection()
 	close(clientSd_);
 	requestIsComplete_ = true;
 	connectionUp_ = false;
-	return (1);
+	return (0);
 }
 
 size_t Socket::getContentLength()
@@ -255,7 +255,10 @@ int Socket::readHandler(size_t sizeToRead)
 	buffer = (char *)malloc(sizeToRead + 1);
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
 	if(bytes == 0) //close Connection
+	{
+			std::cout << "connection being closed for: " << clientSd_ << "from CLIENT side" << std::endl;
 		return(closeConnection());
+	}
 	else if (bytes < 0)// && errno == EAGAIN)
 	{
 		std::cerr << "ERROR: SOCKET PROBABLY BLOCKING" << std::endl;
@@ -266,9 +269,9 @@ int Socket::readHandler(size_t sizeToRead)
 	if(requestLength_ == 0)
 		setRequestLength();
 	if(data_.size() >= requestLength_)
-		requestIsComplete_ = true;
+		requestIsComplete_ = true; //here we set the request as complete
 	free(buffer);
-	return (0);
+	return (1);
 }
 
 // we should sett an offset;
@@ -288,6 +291,9 @@ bool Socket::writeHandler(std::string response)
 		requestIsComplete_ = false;
 		requestLength_ = 0;
 		setRequestStatus(false);
+		closeConnection();
+		std::cout << "connection being closed for: " << clientSd_ << "from SERVER side" << std::endl;
+
 	}
 	return true;
 }

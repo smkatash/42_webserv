@@ -246,6 +246,7 @@ void	ResponseHandler::setResponseBody(std::string fileName)
 void ResponseHandler::returnResponse(t_endpoint loc)
 {
 	res_.rheader.location = loc.lredirect;
+	res_.rbody = "\r\n";
 	if (loc.lredirect.substr(0, 4) == "http")
 		return setCode(FOUND);
 	else
@@ -512,7 +513,6 @@ void	ResponseHandler::authenticate()
 	res_.rbody = "\r\n";
 	setCode(UNAUTHORIZED);
 }
-
 
 void	ResponseHandler::handle()
 {
