@@ -54,6 +54,11 @@ Socket Server::getServerSocket()
 	return (serverSocket_);
 }
 
+ConfigFile Server::getConfig()
+{
+	return config_;
+}
+
 
 // INIT-----------------------------------------------------------------------
 bool Server::initServerAddress(struct sockaddr_in* serverAdd)

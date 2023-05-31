@@ -65,7 +65,7 @@ void Core::populateMap(Socket socket)
 
 bool Core::setNewConnection(Server server)
 {
-	Socket newSocket(server.getPort(), server.getServerAddress(), server.getServerSocketDescriptor());
+	Socket newSocket(server.getPort(), server.getServerAddress(), server.getServerSocketDescriptor(), server.getConfig());
 	if(newSocket.socketInit() == false)
 	{
 		printf("error socket init");
@@ -97,7 +97,7 @@ void Core::receiver(RequestParser *request, Socket* socket)
 	#endif
 
 	request->initParser(socket->getData());
-	ResponseHandler response(request->getRequest(), configs_.getConfigFile());
+	ResponseHandler response(request->getRequest(), socket->getServerConfiguration());
 	response.handle();
 	socket->setResponse(response.generate());
 }
