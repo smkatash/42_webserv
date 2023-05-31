@@ -1,11 +1,14 @@
 #include <map>
 #include <fstream>
 #include <string>
+#include <random>
 #include "Response.hpp" // Status codes definitions
 #include "Parser.hpp" // Methods enum
 #include "response_utils.hpp"
 #include "CGIHandler.hpp"
 #include "ResponseHandler.hpp"
+
+#define COOKIES
 
 ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 : req_(req)
@@ -21,6 +24,10 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 		uri_ = removeDuplicateSlashes(req_.rline.uri);
 		endpoint_ = findUriEndpoint(uri_.substr(0, uri_.find('?')));
 		location_ = conf_.getLocation(endpoint_); // try-catch because getLocation may throw an exception
+#ifdef COOKIES
+		if (!authenticated())
+			authenticate();
+#endif
 	}
 	catch(const std::exception& e)
 	{
@@ -51,7 +58,7 @@ std::string ResponseHandler::generalHeader()
 {
 	std::string line;
 	if (!res_.gheader.cache.empty())
-		line.append("Cache-Control: " + res_.gheader.cache + "\r\n");
+		line.append("\r\nCache-Control: " + res_.gheader.cache);
 	if (!res_.gheader.connection.empty())
 		line.append("Connection: " + res_.gheader.connection + "\r\n");
 	if (!res_.gheader.date.empty())
@@ -78,6 +85,8 @@ std::string ResponseHandler::responseHeader()
 		line.append("Accept-Ranges: " + res_.rheader.acceptRanges + "\r\n");
 	if (!res_.rheader.age.empty())
 		line.append("Age: " + res_.rheader.age + "\r\n");
+	if (!res_.rheader.setCookie.empty())
+		line.append("Set-Cookie: " + res_.rheader.setCookie + "\r\n");
 	if (!res_.rheader.eTag.empty())
 		line.append("ETag: " + res_.rheader.eTag + "\r\n");
 	if (!res_.rheader.location.empty())
@@ -169,6 +178,8 @@ void	ResponseHandler::setCode(int code)
 	res_.rline.statusCode = toString(code);
 	if (code == OK)
 		res_.rline.reasonPhrase = "OK";
+	if (code == NOCONTENT)
+		res_.rline.reasonPhrase = "No Content";
 	else if (code == FOUND)
 		res_.rline.reasonPhrase = "Found";
 	else if (code == UNAUTHORIZED)
@@ -235,6 +246,7 @@ void	ResponseHandler::setResponseBody(std::string fileName)
 void ResponseHandler::returnResponse(t_endpoint loc)
 {
 	res_.rheader.location = loc.lredirect;
+	res_.rbody = "\r\n";
 	if (loc.lredirect.substr(0, 4) == "http")
 		return setCode(FOUND);
 	else
@@ -402,6 +414,36 @@ std::string ResponseHandler::generate()
 	return header;
 }
 
+std::string get_uuid()
+{
+	static std::random_device dev;
+	static std::mt19937 rng(dev());
+
+	std::uniform_int_distribution<int> dist(0, 15);
+
+	const char *v = "0123456789abcdef";
+	const bool dash[] = { 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 };
+
+	std::string res;
+	for (int i = 0; i < 16; i++) {
+		if (dash[i]) res += "-";
+		res += v[dist(rng)];
+		res += v[dist(rng)];
+	}
+	return res;
+}
+
+void	ResponseHandler::addToSessionIds(std::string id)
+{
+	std::ofstream sessionIds;
+	sessionIds.open("./var/www/pages/documents/session_ids", std::ios::out | std::ios::app);
+	if (sessionIds.fail())
+		throw std::ios_base::failure(std::strerror(errno));
+	sessionIds.exceptions(sessionIds.exceptions() | std::ios::failbit | std::ifstream::badbit);
+	sessionIds << id << std::endl;
+	sessionIds.close();
+}
+
 bool	ResponseHandler::authorized(std::string authorization)
 {
 	if (endpoint_ != "/delete") // Instead of this I should check if there's the auth_basic in config file in this location
@@ -410,11 +452,19 @@ bool	ResponseHandler::authorized(std::string authorization)
 		return false;
 	std::string auth = base64Decode(&authorization[6]);
 
-	std::cout << location_.lroot + "documents/.htpassword" << std::endl;
+	std::string htPassFileName = conf_.getAuthBasicUserFile(endpoint_);
+	if (htPassFileName.front() == '/')
+		htPassFileName.erase(0, 1);
+
+	std::string filename = "." + location_.lroot + htPassFileName;
+
+	std::cout << filename << std::endl; // Instead of documents/.htpassword I should take the value from the config file
 	std::cout << auth << std::endl;
 
 	// std::ifstream htpassFile(location_.lroot + conf_.getAuthFile());
-	std::ifstream htpassFile("." + location_.lroot + "documents/.htpassword");
+	std::ifstream htpassFile(filename);
+	if (!htpassFile.is_open())
+		exit(EXIT_FAILURE);
 	if (htpassFile.bad())
 		exit(EXIT_FAILURE);
 	std::string buffer;
@@ -422,6 +472,26 @@ bool	ResponseHandler::authorized(std::string authorization)
 	{
 		std::cout << buffer << std::endl;
 		if (buffer == auth)
+		{
+			std::string id = get_uuid();
+			addToSessionIds(id);
+			res_.rheader.setCookie = "session_id=" + id + "; path=/delete";
+			return true;
+		}
+	} 
+	return false;
+}
+
+bool	ResponseHandler::validCookie()
+{
+	if (req_.rheader.cookie.empty())
+		return false;
+	std::string cookie = req_.rheader.cookie.substr(req_.rheader.cookie.find("=") + 1);
+	std::ifstream sessionIds("./var/www/pages/documents/session_ids");
+	std::string	buffer;
+	while (std::getline(sessionIds, buffer))
+	{
+		if (std::strncmp(cookie.c_str(), buffer.c_str(), buffer.size()) == 0)
 			return true;
 	}
 	return false;
@@ -429,29 +499,22 @@ bool	ResponseHandler::authorized(std::string authorization)
 
 bool	ResponseHandler::authenticated()
 {
-	if (!authorized(req_.rheader.authorization))
-		return false;
-	// if (!validCookie(req_.rheader.cookie))
-	// 	return false;
-	return true;
+	if (validCookie() || authorized(req_.rheader.authorization))
+		return true;
+	return false;
 }
 
 void	ResponseHandler::authenticate()
 {
-	res_.rheader.wwwAuth = "Basic realm=\"Realm from config file\"";
-	return setCode(UNAUTHORIZED);
+	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
+	res_.rbody = "\r\n";
+	setCode(UNAUTHORIZED);
 }
-
-#define COOKIES
 
 void	ResponseHandler::handle()
 {
 	if (res_.rline.statusCode != "200") // Probably endpoint not found, or error in constructor
 		return;
-#ifdef COOKIES
-	if (!authenticated())
-		return authenticate();
-#endif
 	if (req_.rline.method == "GET")
 		return get();
 	if (req_.rline.method == "POST")
