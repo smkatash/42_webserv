@@ -14,14 +14,15 @@ $directory = dirname(dirname(__FILE__)). '/' . 'documents' . '/' . 'kanydb';
 
 
 if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
-	http_response_code(200);
+	http_response_code(201);
 	$responseFile = './temp.html';
 	
 	if (file_exists($responseFile)) {
 		$response = file_get_contents($responseFile);
 		$message = "✅ Data saved successfully to ";
-		$message .=  $directory . "\n";
+		$message .=  $directory . "\r\n";
 	} else {
+		http_response_code(500);
 		$message = "❌ Failed to load response template";
 	}
 } else {
@@ -45,7 +46,7 @@ echo $fullResponse;
 
 function http_response_code_message($code) {
 	$messages = array(
-		200 => 'OK',
+		201 => 'Created',
 		500 => 'Internal Server Error',
 	);
 	return isset($messages[$code]) ? $messages[$code] : '';

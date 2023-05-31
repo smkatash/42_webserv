@@ -45,6 +45,7 @@ $fullResponse .= "Content-Type: text/html; charset=UTF-8\r\n";
 $fullResponse .= "Content-Length: " . strlen($response) . "\r\n";
 $fullResponse .= "Connection: "  . "close\r\n";
 $fullResponse .= "Date: " . $date . "\r\n";
+$fullResponse .= "Location: "  . $destinationDirectory . "\r\n";
 $fullResponse .= "Server: "  . getenv('SERVER_NAME') . "\r\n";
 $fullResponse .= "\r\n";
 $fullResponse .= $response;
@@ -53,7 +54,7 @@ echo $fullResponse;
 
 function http_response_code_message($code) {
 	$messages = array(
-		200 => 'OK',
+		201 => 'Created',
 		400 => 'Bad Request',
 		405 => 'Method Not Allowed',
 		500 => 'Internal Server Error',
