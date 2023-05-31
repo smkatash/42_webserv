@@ -8,6 +8,8 @@
 #include <sys/event.h>
 #include <unistd.h>
 
+#include "ConfigFile.hpp"
+
 extern int kqFd;
 
 class Socket 
@@ -30,17 +32,17 @@ class Socket
 	bool connectionUp_;
 	bool requestIsComplete_;
 
+	ConfigFile serverConfiguration_;
 	struct kevent event_;
 	// struct kevent events_[MAX_EVENTS];
 	struct kevent events_[2];
-
-	
 	int nEvent_; //number of the events returned by kevent;
+
 
 	public: //init bla bla 
 		Socket();
 		Socket(int port, struct sockaddr_in servAddr);
-		Socket(int port, struct sockaddr_in servAddr, int fd);
+		Socket(int port, struct sockaddr_in servAddr, int fd, ConfigFile serverConfig);
 		// Socket(const Socket &other);
 		Socket &operator= (const Socket& other);
 		~Socket();
@@ -74,13 +76,15 @@ class Socket
 		bool				getConnectionStatus();
 		bool				getRequestStatus();
 		time_t				getConnectionTimer();
+		ConfigFile			getServerConfiguration();
+		size_t 				getContentLength();
+
 
 		bool socketInit();
 		bool socketPassiveInit();
 		int closeConnection();
 		int readHandler(size_t sizeToRead);
 		bool writeHandler(std::string response);
-		size_t getContentLength();
 
 };
 

@@ -41,6 +41,7 @@ class Server
 		int getServerSocketDescriptor();
 		struct sockaddr_in getServerAddress();
 		Socket getServerSocket();
+		ConfigFile getConfig();
 
 		// INIT---------------------------------------------------
 		std::vector <Socket> initClientsSocket();

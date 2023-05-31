@@ -17,7 +17,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.version = "HTTP/1.1";
 	res_.rline.statusCode = "200";
 	res_.rline.reasonPhrase = "OK";
-	res_.rheader.server = "Francesco's Pizzeria/2.0 (MacOS)";
+	res_.rheader.server = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName();
 	try
 	{
 		res_.gheader.date = findCurrentTimeGMT();

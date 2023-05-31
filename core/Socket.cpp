@@ -18,10 +18,11 @@ Socket::Socket(int port, struct sockaddr_in servAddr)
 	setConnectionTimer();
 }
 
-Socket::Socket(int port, struct sockaddr_in servAddr, int fd)
+Socket::Socket(int port, struct sockaddr_in servAddr, int fd, ConfigFile serverConfig)
 : port_(port)
 , serverSd_(fd)
 , sourceAddress_(servAddr)
+, serverConfiguration_(serverConfig)
 {
 	requestIsComplete_= false;
 	requestLength_ = 0;
@@ -202,25 +203,18 @@ struct sockaddr_in& Socket::getSocketDestinationAddress()
 	return (destinationAddress_);
 }
 
-struct sockaddr_in& Socket::getSocketSourceAddress()
-{
-	return (sourceAddress_);
-}
+struct sockaddr_in& Socket::getSocketSourceAddress(){		return (sourceAddress_);}
 
-bool Socket::getRequestStatus()
-{
-	return(requestIsComplete_);
-}
+bool Socket::getRequestStatus(){							return(requestIsComplete_);}
 
+bool Socket::getConnectionStatus(){							return(connectionUp_);}
+
+ConfigFile Socket::getServerConfiguration(){ return (serverConfiguration_);}
 void Socket::setRequestStatus(bool status)
 {
 	requestIsComplete_ = status;
 }
 
-bool Socket::getConnectionStatus()
-{
-	return(connectionUp_);
-}
 
 int Socket::closeConnection()
 {
