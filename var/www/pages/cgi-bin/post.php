@@ -3,52 +3,47 @@ header_remove("X-Powered-By");
 ini_set('expose_php', 'off'); // Disable PHP version information in headers
 ini_set('default_mimetype', ''); // Disable automatic "Content-type" header generation
 
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $requestBody = file_get_contents("php://input");
 
-if (empty($requestBody)) {
-	$requestBody = "Empty";
-}
+	if (empty($requestBody)) {
+		$requestBody = "Empty";
+	}
 
-$dataEntry = $requestBody . PHP_EOL;
-$directory = dirname(dirname(__FILE__)). '/' . 'documents' . '/' . 'kanydb';
+	$dataEntry = $requestBody . PHP_EOL;
+	$directory = dirname(dirname(__FILE__)) . '/' . 'documents' . '/' . 'kanydb';
 
+	if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
+		$responseFile = './temp.html';
 
-if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
-	http_response_code(201);
-	$responseFile = './temp.html';
-	
-	if (file_exists($responseFile)) {
-		$response = file_get_contents($responseFile);
-		$message = "✅ Data saved successfully to ";
-		$message .=  $directory . "\r\n";
+		if (file_exists($responseFile)) {
+			$response = file_get_contents($responseFile);
+			$message = "✅ Data saved successfully to ";
+			$message .= $directory . "\r\n";
+			http_response_code(201);
+		} else {
+			http_response_code(500);
+			$message = "❌ Failed to load response template";
+		}
 	} else {
 		http_response_code(500);
-		$message = "❌ Failed to load response template";
+		$message = "❌ Internal error 500";
 	}
 } else {
-	http_response_code(500);
-	$message = "❌ Internal error 500";
-	
+	http_response_code(405);
+	$message = "❌ Method Not Allowed\r\n";
 }
+
 $response = preg_replace('/{{message}}/i', $message, $response);
 $date = gmdate('D, d M Y H:i:s T');
+$server = getenv('SERVER_NAME');
 
-$fullResponse = "HTTP/1.1 " . http_response_code() . " " . http_response_code_message(http_response_code()) . "\r\n";
-$fullResponse .= "Content-Type: text/html; charset=UTF-8\r\n";
-$fullResponse .= "Content-Length: " . strlen($response) . "\r\n";
-$fullResponse .= "Connection: "  . "close\r\n";
-$fullResponse .= "Date: " . $date . "\r\n";
-$fullResponse .= "Server: "  . getenv('SERVER_NAME') . "\r\n";
-$fullResponse .= "\r\n";
-$fullResponse .= $response;
+header("Content-Type: text/html; charset=UTF-8");
+header("Content-Length: " . strlen($response));
+header("Connection: close");
+header("Date: " . $date);
+header("Server: " . $server);
+echo $response;
 
-echo $fullResponse;
-
-function http_response_code_message($code) {
-	$messages = array(
-		201 => 'Created',
-		500 => 'Internal Server Error',
-	);
-	return isset($messages[$code]) ? $messages[$code] : '';
-}
 ?>

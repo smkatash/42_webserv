@@ -7,7 +7,7 @@
 #include <map>
 #include <ctime>
 
-// #define DEBUG
+#define DEBUG
 
 Core::Core(Parser configs)
 : configs_(configs)

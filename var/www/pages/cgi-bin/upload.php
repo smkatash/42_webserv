@@ -13,10 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$destinationFilePath = $destinationDirectory . $fileName;
 
 		if (rename($uploadedFilePath, $destinationFilePath)) {
-			http_response_code(200);
 			$responseFile = './temp.html';
-	
+			
 			if (file_exists($responseFile)) {
+				http_response_code(201);
 				$response = file_get_contents($responseFile);
 				$message = "✅ File uploaded and saved successfully to ";
 				$message .=  $destinationFilePath . "\n";
@@ -39,26 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $response = preg_replace('/{{message}}/i', $message, $response);
 $date = gmdate('D, d M Y H:i:s T');
+$server = getenv('SERVER_NAME');
 
-$fullResponse = "HTTP/1.1 " . http_response_code() . " " . http_response_code_message(http_response_code()) . "\r\n";
-$fullResponse .= "Content-Type: text/html; charset=UTF-8\r\n";
-$fullResponse .= "Content-Length: " . strlen($response) . "\r\n";
-$fullResponse .= "Connection: "  . "close\r\n";
-$fullResponse .= "Date: " . $date . "\r\n";
-$fullResponse .= "Location: "  . $destinationDirectory . "\r\n";
-$fullResponse .= "Server: "  . getenv('SERVER_NAME') . "\r\n";
-$fullResponse .= "\r\n";
-$fullResponse .= $response;
+header("Content-Type: text/html; charset=UTF-8");
+header("Content-Length: " . strlen($response));
+header("Connection: close");
+header("Date: " . $date);
+header("Server: " . $server);
+echo $response;
 
-echo $fullResponse;
-
-function http_response_code_message($code) {
-	$messages = array(
-		201 => 'Created',
-		400 => 'Bad Request',
-		405 => 'Method Not Allowed',
-		500 => 'Internal Server Error',
-	);
-	return isset($messages[$code]) ? $messages[$code] : '';
-}
 ?>
