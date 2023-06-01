@@ -11,13 +11,17 @@
 
 #define	MOVEDPERMAN		301		// "301 Moved Permanently" /* page moved to a different url*/
 #define	FOUND			302		// "302 Found" /* used for temporary redirect */
+#define	BADREQ			400		// "400 Bad Request" /* malformed syntax */
 #define	UNAUTHORIZED	401		// "401 Unauthorized" /* unauthenticated request */
 #define NOTFOUND		404		// "404 Not Found" /* requested page not found */
-#define NOTALLOWED		405		// "404 Not Allowed" /* requested page is incompatible with method */
-#define GONE			410		// "410 Gone" /* like 404, but temporary*/
-#define TOOLARGE		413		// "413 Content Too Large" /* like 404, but temporary*/
+#define NOTALLOWED		405		// "405 Not Allowed" /* requested page is incompatible with method */
+#define LENGTHPLS		411		// "411 Length Required"
+#define TOOLARGE		413		// "413 Content Too Large"
+#define LONGURI			414		// "414 URI Too Long"
+// #define UNSUPPORTED		415		// "415 Unsupported Media Type"
 #define	INTERNALERROR	500		// "500 Internal Server Error" /* generic server error */
-#define	BADGATEWAY		502		// "502 Bad Gateway" /* invalid response from another server */
+#define	UNIMPLEMENTED	501		// "501 Not Implemeneted" /* Method not implemented */
+#define	HTTPNONO		505		// "505 HTTP Version Not Supported"
 
 
 struct response_line {

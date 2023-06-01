@@ -10,6 +10,21 @@
 
 #define COOKIES
 
+bool	ResponseHandler::checkRequest()
+{
+	if (req_.rline.method.empty() || req_.rline.uri.empty() || req_.rline.httpVersion.empty())
+		return (setCode(BADREQ), false);
+	if (req_.rline.uri.front() != '/')
+		return (setCode(BADREQ), false);
+	if (req_.rline.uri.size() > 512)
+		return (setCode(LONGURI), false);
+	if (req_.rline.method != "GET" && req_.rline.method != "POST" && req_.rline.method != "DELETE")
+		return (setCode(UNIMPLEMENTED), false);
+	if (req_.rline.httpVersion != "HTTP/1.1")
+		return (setCode(HTTPNONO), false);
+	return true;
+}
+
 ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 : req_(req)
 , conf_(conf)
@@ -18,6 +33,9 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.statusCode = "200";
 	res_.rline.reasonPhrase = "OK";
 	res_.rheader.server = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName();
+	res_.gheader.connection = "close";
+	if (!checkRequest())
+		return;
 	try
 	{
 		res_.gheader.date = findCurrentTimeGMT();
@@ -176,23 +194,56 @@ void	ResponseHandler::setCode(int code)
 {
 	// TODO: Set different error page from config file
 	res_.rline.statusCode = toString(code);
-	if (code == OK)
-		res_.rline.reasonPhrase = "OK";
-	if (code == NOCONTENT)
-		res_.rline.reasonPhrase = "No Content";
-	else if (code == FOUND)
-		res_.rline.reasonPhrase = "Found";
-	else if (code == UNAUTHORIZED)
-		res_.rline.reasonPhrase = "Unauthorized";
-	else if (code == NOTFOUND)
+
+	switch (code)
 	{
+	case OK:
+		res_.rline.reasonPhrase = "OK";
+		break;
+	// case NOCONTENT:
+	// 	res_.rline.reasonPhrase = "No Content";
+	// 	break;
+	case MOVEDPERMAN:
+		res_.rline.reasonPhrase = "Moved Permanently";
+		break;
+	case FOUND:
+		res_.rline.reasonPhrase = "Found";
+		break;
+	case BADREQ:
+		res_.rline.reasonPhrase = "Bad Request";
+		break;
+	case UNAUTHORIZED:
+		res_.rline.reasonPhrase = "Unauthorized";
+		break;
+	case NOTFOUND:
 		res_.rline.reasonPhrase = "Not Found";
 		setBodyErrorPage(code);
-	}
-	else if (code == NOTALLOWED)
+		break;
+	case NOTALLOWED:
 		res_.rline.reasonPhrase = "Not Allowed";
-	else if (code == INTERNALERROR)
+		break;
+	case LENGTHPLS:
+		res_.rline.reasonPhrase = "Length Required";
+		break;
+	case TOOLARGE:
+		res_.rline.reasonPhrase = "Content Too Large";
+		break;
+	case LONGURI:
+		res_.rline.reasonPhrase = "URI Too Long";
+		break;
+	case INTERNALERROR:
 		res_.rline.reasonPhrase = "Internal Server Error";
+		break;
+	case UNIMPLEMENTED:
+		res_.rline.reasonPhrase = "Not Implemented";
+		break;
+	case HTTPNONO:
+		res_.rline.reasonPhrase = "HTTP Version Not Supported";
+		break;
+
+	default:
+		break;
+	}
 }
 
 std::string ResponseHandler::findUriEndpoint(const std::string& uri)
@@ -238,7 +289,6 @@ void	ResponseHandler::setResponseBody(std::string fileName)
 			res_.rbody += temp + '\n';
 	}
 	res_.eheader.contentLength = toString(res_.rbody.length());
-	res_.gheader.connection = "keep-alive";
 	file.close();
 	return setCode(OK);
 }
@@ -309,6 +359,7 @@ void ResponseHandler::get()
 			res_.cgiResponse = cgi.getCGIResponse();
 			return ;
 		}
+		// TODO: Should do get if there's no cgi
 		if (!location_.lredirect.empty())
 			return returnResponse(location_);
 		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
@@ -325,17 +376,21 @@ void ResponseHandler::post()
 {
 	try
 	{
-		/* TODO: Handle cases where content length isn't known */
-		if (conf_.getClientMaxBodySize() != 0
-			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
-			return setCode(NOTALLOWED);
 		if (!isMethodAllowed(POST))
 			return setCode(NOTALLOWED);
 
 		/* check if chunked and dechunk accordingly */
-		if (req_.gheader.transferEncoding.compare("chunked") == 0) {
+		if (req_.gheader.transferEncoding.compare("chunked") == 0)
 			req_.rbody = unchunkData(req_.rbody);
-		}
+	
+		if (req_.eheader.contentLength.empty())
+			return setCode(LENGTHPLS);
+
+		/* TODO: Handle cases where content length isn't known */
+		if (conf_.getClientMaxBodySize() != 0
+			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
+			return setCode(TOOLARGE);
+
 		/* Check if you have to send to cgi handler by checking if
 		there's a query */
 		if (!req_.rbody.empty())
@@ -346,6 +401,7 @@ void ResponseHandler::post()
 			// std::cout << "CGI Response " << res_.cgiResponse << std::endl;
 			return ;
 		}
+		// TODO: Should do get if there's no cgi
 	}
 	catch(const std::exception& e)
 	{
