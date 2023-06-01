@@ -358,6 +358,7 @@ void ResponseHandler::normalDelResponse(t_endpoint loc, std::string uri)
 	prepUriFile(uri, loc);
 	res_.eheader.contentType = findContentType(uri.substr(uri.find_last_of('.')));
 	unlink(uri.c_str());
+	setCode(ACCEPTED);
 	return ;
 }
 
@@ -385,13 +386,13 @@ void ResponseHandler::del()
 	{
 		if (!isMethodAllowed(DELETE))
 			return setCode(NOTALLOWED);
-		if (uri_.find('?') != std::string::npos)
-		{
-			CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
-			cgi.execute();
-			res_.cgiResponse = cgi.getCGIResponse();
-			return ;
-		}
+		// if (uri_.find('?') != std::string::npos)
+		// {
+		// 	CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
+		// 	cgi.execute();
+		// 	res_.cgiResponse = cgi.getCGIResponse();
+		// 	return ;
+		// }
 		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
 			return dirDelResponse(location_, endpoint_);
 		return normalDelResponse(location_, uri_);

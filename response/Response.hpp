@@ -7,7 +7,7 @@
 /* Most common status codes, may be add more later*/
 #define	OK				200		// "200 OK" /* Request is okay, entity body contains requested resource. */
 #define	CREATED			201		// "201 Created" /* For requests that create server objects (e.g., PUT). */
-#define	NOCONTENT		204		// "204 No Content"
+#define	ACCEPTED		202		// "202 Accepted" /* the action will likely succeed but has not yet been enacted */
 
 #define	MOVEDPERMAN		301		// "301 Moved Permanently" /* page moved to a different url*/
 #define	FOUND			302		// "302 Found" /* used for temporary redirect */

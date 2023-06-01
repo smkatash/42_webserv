@@ -12,9 +12,8 @@ if (empty($requestBody)) {
 $dataEntry = $requestBody . PHP_EOL;
 $directory = dirname(dirname(__FILE__)). '/' . 'documents' . '/' . 'kanydb';
 
-
+$status = 201;
 if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
-	http_response_code(201);
 	$responseFile = './temp.html';
 	
 	if (file_exists($responseFile)) {
@@ -22,18 +21,18 @@ if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
 		$message = "✅ Data saved successfully to ";
 		$message .=  $directory . "\r\n";
 	} else {
-		http_response_code(500);
+		$status = 500;
 		$message = "❌ Failed to load response template";
 	}
 } else {
-	http_response_code(500);
+	$status = 500;
 	$message = "❌ Internal error 500";
 	
 }
 $response = preg_replace('/{{message}}/i', $message, $response);
 $date = gmdate('D, d M Y H:i:s T');
 
-$fullResponse = "HTTP/1.1 " . http_response_code() . " " . http_response_code_message(http_response_code()) . "\r\n";
+$fullResponse = "HTTP/1.1 " . $status . " " . http_response_code_message($status) . "\r\n";
 $fullResponse .= "Content-Type: text/html; charset=UTF-8\r\n";
 $fullResponse .= "Content-Length: " . strlen($response) . "\r\n";
 $fullResponse .= "Connection: "  . "close\r\n";

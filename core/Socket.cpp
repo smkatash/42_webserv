@@ -314,7 +314,7 @@ bool Socket::writeHandler(std::string response)
 	if (bytes < 0)
 		return false;
 	response_ = response_.substr(bytes);
-	std::cout << "RESPONSE SIZE AFTER WRITE: " << response_.size() << std::endl;
+	// std::cout << "RESPONSE SIZE AFTER WRITE: " << response_.size() << std::endl;
 	if (response_.empty())
 	{
 		// we want to reset the request_value in the socket, in order to handle the next;
@@ -323,7 +323,7 @@ bool Socket::writeHandler(std::string response)
 		requestIsComplete_ = false;
 		setRequestStatus(false);
 		closeConnection();
-		std::cout << "connection being closed for: " << clientSd_ << "from SERVER side" << std::endl;
+		// std::cout << "connection being closed for: " << clientSd_ << "from SERVER side" << std::endl;
 	}
 	return true;
 }

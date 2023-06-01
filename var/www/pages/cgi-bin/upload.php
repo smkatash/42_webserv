@@ -12,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		$destinationFilePath = $destinationDirectory . $fileName;
 
+		$status = 201;
 		if (rename($uploadedFilePath, $destinationFilePath)) {
-			http_response_code(200);
 			$responseFile = './temp.html';
 	
 			if (file_exists($responseFile)) {
@@ -25,22 +25,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			}
 
 		} else {
-			http_response_code(500);
+			$status = 500;
 			$message = "❌ Internal error 500";
 		}
 	} else {
-		http_response_code(500);
+		$status = 500;
 		$message = "❌ Internal error 500";
 	}
 } else {
-	http_response_code(405);
+	$status = 405;
 	$message = "❌ Method Not Allowed\r\n";
 }
 
 $response = preg_replace('/{{message}}/i', $message, $response);
 $date = gmdate('D, d M Y H:i:s T');
 
-$fullResponse = "HTTP/1.1 " . http_response_code() . " " . http_response_code_message(http_response_code()) . "\r\n";
+$fullResponse = "HTTP/1.1 " . $status . " " . http_response_code_message($status) . "\r\n";
 $fullResponse .= "Content-Type: text/html; charset=UTF-8\r\n";
 $fullResponse .= "Content-Length: " . strlen($response) . "\r\n";
 $fullResponse .= "Connection: "  . "close\r\n";
