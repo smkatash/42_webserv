@@ -123,13 +123,14 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 		throw std::runtime_error("Failed to retrieve file descriptor");
 	}
 
-	if (dup2(filefd, STDOUT_FILENO) == -1)
-		std::runtime_error("Failed to redirect stdout");
-	if (dup2(filefd, STDERR_FILENO) == -1)
-		std::runtime_error("Failed to redirect stderr");
+	if (dup2(filefd, STDOUT_FILENO) == -1) {
+		throw std::runtime_error("Failed to redirect stdout");
+	}
+	if (dup2(filefd, STDERR_FILENO) == -1) {
+		throw std::runtime_error("Failed to redirect stderr");
+	}
 	close(fd[0]);
 	close(filefd);
-
 	if (!check_access(argv[0]) || !check_access(argv[1]))
 		throw std::runtime_error("Unauthorized");
 
@@ -154,8 +155,9 @@ void CGIHandler::runParentProcess(int *fd)
 		status = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
 		status = WTERMSIG(status) + 128;
-	if (status != 0)
-		throw std::runtime_error("execution problem");
+	if (status != 0) {
+		throw std::runtime_error("execution failed");
+	}
 	setCGIResponse();
 }
 

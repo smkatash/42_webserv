@@ -1,55 +1,60 @@
 import os
+import sys
+import datetime
+
 
 def http_response_code_message(code):
 	messages = {
-		200: "OK",
-		500: "Internal Server Error",
+		201: 'Created',
+		405: 'Method Not Allowed',
+		500: 'Internal Server Error',
 	}
-	return messages.get(code, "")
-
-# Remove "X-Powered-By" header
-os.environ["TZ"] = "UTC"
-os.environ.pop("TZ", None)
+	return messages.get(code, '')
 
 # Disable PHP version information in headers
-os.environ["expose_php"] = "off"
-
+os.environ['expose_php'] = 'off'
 # Disable automatic "Content-type" header generation
-os.environ["default_mimetype"] = ""
+os.environ['default_mimetype'] = ''
 
-# Read request body from stdin
-request_body = input()
+if os.getenv('REQUEST_METHOD') == 'POST':
+	requestBody = sys.stdin.read()
 
-if not request_body:
-	request_body = "Empty"
+	if not requestBody:
+		requestBody = "Empty"
 
-data_entry = request_body + "\n"
-directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "documents", "kanydb")
-
-if os.path.isfile(directory):
-	with open(directory, "a") as file:
-		file.write(data_entry)
-	response_file = "./temp.html"
-	
-	if os.path.isfile(response_file):
-		with open(response_file, "r") as file:
+	dataEntry = requestBody + '\n'
+	directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'documents', 'kanydb')
+	current_directory = os.path.dirname(os.path.abspath(__file__))
+	responseFile = os.path.join(current_directory, 'temp.html')
+	if os.path.exists(responseFile):
+		with open(responseFile, 'r') as file:
 			response = file.read()
-		message = "✅ Data saved successfully to " + directory + "\n"
 	else:
-		message = "❌ Failed to load response template"
+		response = "Failed to load response template"
+		httpStatusCode = 500
+	try:
+		with open(directory, 'a') as file:
+			file.write(dataEntry)
+			message = "Data saved successfully to " + directory + '\n'
+			httpStatusCode = 201
+	except:
+		message = "Internal error 500"
+		httpStatusCode = 500
 else:
-	response_code = 500
-	message = "❌ Internal error 500"
+	message = "Method Not Allowed\r\n"
+	httpStatusCode = 405
 
-response = response.replace("{{message}}", message)
+response = response.replace('{{message}}', message)
 
-full_response = "HTTP/1.1 " + str(response_code) + " " + http_response_code_message(response_code) + "\r\n"
-full_response += "Content-Type: text/html; charset=UTF-8\r\n"
-full_response += "Content-Length: " + str(len(response)) + "\r\n"
-full_response += "Server: " + os.environ.get("SERVER_NAME", "") + "\r\n"
-full_response += "Connection: close\r\n"
-full_response += "\r\n"
-full_response += response
 
-print(full_response)
+date = datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+server = os.getenv('SERVER_NAME')
 
+print("HTTP/1.1 " + str(httpStatusCode) + " " + http_response_code_message(httpStatusCode))
+print("Content-Type: text/html; charset=UTF-8")
+print("Content-Length: " + str(len(response)))
+print("Connection: close")
+print("Date: " + date)
+print("Server: " + server)
+print
+print(response)

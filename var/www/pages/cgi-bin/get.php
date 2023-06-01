@@ -1,4 +1,9 @@
 <?php
+header_remove("X-Powered-By");
+ini_set('expose_php', 'off'); // Disable PHP version information in headers
+ini_set('default_mimetype', '');  // Disable automatic "Content-type" header generation
+
+
 $database = dirname(dirname(__FILE__)). '/' . 'documents' . '/' . 'kanydb';
 
 // read the contents of the file
