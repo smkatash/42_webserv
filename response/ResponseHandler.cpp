@@ -203,6 +203,9 @@ void	ResponseHandler::setCode(int code)
 	// case NOCONTENT:
 	// 	res_.rline.reasonPhrase = "No Content";
 	// 	break;
+	case ACCEPTED:
+		res_.rline.reasonPhrase = "Accepted";
+		break;
 	case MOVEDPERMAN:
 		res_.rline.reasonPhrase = "Moved Permanently";
 		break;
@@ -372,35 +375,55 @@ void ResponseHandler::get()
 	}
 }
 
+void ResponseHandler::processCGIResponse(std::string& cgi)
+{
+	std::istringstream iss(cgi);
+	std::string buffer;
+	iss >> buffer;
+	if (buffer.compare(0, 4, "HTTP") == 0) // There's nothing to change
+		return;
+
+	size_t statusLocation = cgi.find("Status: ");
+	if (statusLocation == std::string::npos) // Extra safety
+		return ;
+
+	std::string status = cgi.substr(statusLocation + 8);
+	setCode(strtonum<int>(status));
+	cgi = cgi.erase(statusLocation, cgi.find('\n', statusLocation) + 1);
+	std::string rline = res_.rline.version + ' ' + res_.rline.statusCode + ' ' + res_.rline.reasonPhrase + "\r\n";
+	cgi.insert(0, rline);
+}
+
 void ResponseHandler::post()
 {
 	try
 	{
 		if (!isMethodAllowed(POST))
 			return setCode(NOTALLOWED);
-
-		/* check if chunked and dechunk accordingly */
-		if (req_.gheader.transferEncoding.compare("chunked") == 0)
-			req_.rbody = unchunkData(req_.rbody);
 	
 		if (req_.eheader.contentLength.empty())
 			return setCode(LENGTHPLS);
 
 		/* TODO: Handle cases where content length isn't known */
-		if (conf_.getClientMaxBodySize() != 0
-			&& conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
+		if (conf_.getClientMaxBodySize() != 0 && conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(TOOLARGE);
 
 		/* Check if you have to send to cgi handler by checking if
-		there's a query */
-		if (!req_.rbody.empty())
+		there's a body and if there's cgi in config file */
+		if (!req_.rbody.empty() && !location_.lcgi.second.empty())
 		{
+			/* check if chunked and dechunk accordingly */
+			if (req_.gheader.transferEncoding.compare("chunked") == 0)
+				req_.rbody = unchunkData(req_.rbody);
+
 			CGIHandler cgi(req_, conf_, endpoint_);
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
-			// std::cout << "CGI Response " << res_.cgiResponse << std::endl;
+
+			processCGIResponse(res_.cgiResponse);
 			return ;
 		}
+		return get();
 		// TODO: Should do get if there's no cgi
 	}
 	catch(const std::exception& e)
@@ -442,13 +465,6 @@ void ResponseHandler::del()
 	{
 		if (!isMethodAllowed(DELETE))
 			return setCode(NOTALLOWED);
-		// if (uri_.find('?') != std::string::npos)
-		// {
-		// 	CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
-		// 	cgi.execute();
-		// 	res_.cgiResponse = cgi.getCGIResponse();
-		// 	return ;
-		// }
 		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
 			return dirDelResponse(location_, endpoint_);
 		return normalDelResponse(location_, uri_);
@@ -493,7 +509,7 @@ std::string get_uuid()
 void	ResponseHandler::addToSessionIds(std::string id)
 {
 	std::ofstream sessionIds;
-	sessionIds.open("./var/www/pages/documents/session_ids", std::ios::out | std::ios::app);
+	sessionIds.open("./var/www/pages/documents/session_ids", std::ios::out | std::ios::app); // TODO: Maybe change the location of session ids
 	if (sessionIds.fail())
 		throw std::ios_base::failure(std::strerror(errno));
 	sessionIds.exceptions(sessionIds.exceptions() | std::ios::failbit | std::ifstream::badbit);

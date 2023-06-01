@@ -11,6 +11,7 @@
 
 #define	MOVEDPERMAN		301		// "301 Moved Permanently" /* page moved to a different url*/
 #define	FOUND			302		// "302 Found" /* used for temporary redirect */
+
 #define	BADREQ			400		// "400 Bad Request" /* malformed syntax */
 #define	UNAUTHORIZED	401		// "401 Unauthorized" /* unauthenticated request */
 #define NOTFOUND		404		// "404 Not Found" /* requested page not found */
@@ -19,6 +20,7 @@
 #define TOOLARGE		413		// "413 Content Too Large"
 #define LONGURI			414		// "414 URI Too Long"
 // #define UNSUPPORTED		415		// "415 Unsupported Media Type"
+
 #define	INTERNALERROR	500		// "500 Internal Server Error" /* generic server error */
 #define	UNIMPLEMENTED	501		// "501 Not Implemeneted" /* Method not implemented */
 #define	HTTPNONO		505		// "505 HTTP Version Not Supported"
