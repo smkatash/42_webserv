@@ -56,8 +56,6 @@ void	RequestParser::initParser(std::string input) {
 void	RequestParser::parseRequestLine_(std::string line) {
 	std::stringstream ss(line);
 	ss >> req_.rline.method >> req_.rline.uri >> req_.rline.httpVersion;
-	if (req_.rline.method.empty() || req_.rline.uri.empty() || req_.rline.httpVersion.empty())
-		throw std::runtime_error("request line parse error");
 }
 
 void	RequestParser::parseGeneralHeader_(std::string line) {

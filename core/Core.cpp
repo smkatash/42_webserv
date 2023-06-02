@@ -106,7 +106,7 @@ bool Core::sender( Socket *socket)
 {
 	#ifdef DEBUG
 		std::cout << "LA RESPONSE--------------------------------------------------------------------------------------------------------------->>" << std::endl;
-		std::cout << "RESPONSE SIZE: " << socket->getResponse() << std::endl;
+		std::cout << socket->getResponse() << std::endl;
 		std::cout << "<<-----------------------------------------------------------------------------------------------------------------------END" << std::endl;
 	#endif
 	

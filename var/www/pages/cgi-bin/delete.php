@@ -12,6 +12,7 @@ $file_contents = file_get_contents($database);
 $lines = explode("\n", $file_contents);
 
 // loop through each line and check if it matches the query
+$status = 200;
 $match = false;
 if (isset($_GET['name']))
 {
@@ -27,12 +28,11 @@ if (isset($_GET['name']))
 			$file_contents = implode("\n", $lines);
 			file_put_contents($database, $file_contents);
 			if (file_exists($responseFile)) {
-				http_response_code(204);
+				$status = 200;
 				$response = file_get_contents($responseFile);
-				$message = "Profile for " . $values['name'] . PHP_EOL;
-				$message =. "✅ Entry deleted successfully\r\n";
+				$message = "✅ Entry deleted successfully\r\n";
 			} else {
-				http_response_code(500);
+				$status = 500;
 				$message = "❌ Failed to load response template\r\n";
 			}
 			
@@ -45,14 +45,14 @@ if (isset($_GET['name']))
 
 if (!$match)
 {
-	http_response_code(404);
+	$status = 404;
 	$message = "❌ No match found\r\n";
 }
 
 $response = preg_replace('/{{message}}/i', $message, $response);
 $date = gmdate('D, d M Y H:i:s T');
 
-$fullResponse = "HTTP/1.1 " . http_response_code() . " " . http_response_code_message(http_response_code()) . "\r\n";
+$fullResponse = "HTTP/1.1 " . $status . " " . http_response_code_message($status) . "\r\n";
 $fullResponse .= "Content-Type: text/html; charset=UTF-8\r\n";
 $fullResponse .= "Content-Length: " . strlen($response) . "\r\n";
 $fullResponse .= "Connection: "  . "close\r\n";
@@ -65,6 +65,7 @@ echo $fullResponse;
 
 function http_response_code_message($code) {
 	$messages = array(
+		200 => 'OK',
 		204 => 'No Content',
 		404 => 'Not Found',
 		500 => 'Internal Server Error',

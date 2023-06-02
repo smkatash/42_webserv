@@ -24,36 +24,33 @@
 			</nav>
 		  </div>
 
-		  <form onsubmit="deleteUser(event)">
+		  <form onsubmit="deleteFile(event)">
 			<div>
-				<label for="file_name">Delete a user:</label>
-				<input type="text" name="name" id="name" required>
+				<label for="file_name">Delete a file:</label>
+				<input type="text" id="fileToDelete" placeholder="e.g. /path/to/file.txt" required>
 			</div>
 			<div>
-				<input type="submit" value="Delete User">
+				<input type="submit" value="Delete File">
+				<!-- <button onclick="deleteFile()">Delete</button> -->
 			</div>
 		</form>
 		
 		<script>
-			function deleteUser(event) {
+			function deleteFile() {
 				event.preventDefault();
-		
-				const userId = document.getElementById('name').value;
-		
-				fetch(`/delete?name=${userId}`, {
-					method: 'DELETE',
-				}).then(response => {
-					if (response.ok) {
-						console.log(response);
-					} else {
-						console.log(response);
-					}
-				})
-				.catch(error => {
-					console.log(error);
-				});
-		}
-		</script>
+				var fileToDelete = document.getElementById("fileToDelete").value;
+				var xhr = new XMLHttpRequest();
+				xhr.open("DELETE", fileToDelete, true);
+				xhr.onreadystatechange = function ()
+				{
+					if (xhr.readyState === 4 && xhr.status === 202)
+						alert("File deleted successfully!");
+					else if (xhr.readyState === 4 && xhr.status !== 200)
+						alert("Error deleting file.");
+				};
+				xhr.send();
+			}
+		  </script>
 
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>

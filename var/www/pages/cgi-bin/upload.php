@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		$destinationFilePath = $destinationDirectory . $fileName;
 
+		$status = 201;
 		if (rename($uploadedFilePath, $destinationFilePath)) {
 			$responseFile = './temp.html';
 			
@@ -25,15 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			}
 
 		} else {
-			http_response_code(500);
+			$status = 500;
 			$message = "❌ Internal error 500";
 		}
 	} else {
-		http_response_code(500);
+		$status = 500;
 		$message = "❌ Internal error 500";
 	}
 } else {
-	http_response_code(405);
+	$status = 405;
 	$message = "❌ Method Not Allowed\r\n";
 }
 

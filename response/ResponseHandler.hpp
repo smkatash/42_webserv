@@ -25,6 +25,8 @@ private:
 	void		setBodyErrorPage(int code);
 
 	// Response Handling
+	void		processCGIResponse(std::string& cgiResponse);
+	bool		checkRequest();
 	bool		isMethodAllowed(Methods method);
 	void		setCode(int code);
 	std::string	findUriEndpoint(const std::string& uri);
