@@ -126,9 +126,7 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 	if (dup2(filefd, STDOUT_FILENO) == -1) {
 		throw std::runtime_error("Failed to redirect stdout");
 	}
-	if (dup2(filefd, STDERR_FILENO) == -1) {
-		throw std::runtime_error("Failed to redirect stderr");
-	}
+
 	close(fd[0]);
 	close(filefd);
 	if (!check_access(argv[0]) || !check_access(argv[1]))

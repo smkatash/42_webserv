@@ -11,8 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$fileName = getenv('FILE_NAME');
 
 		$destinationFilePath = $destinationDirectory . $fileName;
-
-		$status = 201;
 		if (rename($uploadedFilePath, $destinationFilePath)) {
 			$responseFile = './temp.html';
 			
@@ -22,19 +20,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$message = "✅ File uploaded and saved successfully to ";
 				$message .=  $destinationFilePath . "\n";
 			} else {
-					$message = "❌ Failed to load response template";
+				$message = "❌ Failed to load response template";
 			}
-
+			
 		} else {
-			$status = 500;
+			http_response_code(500);
 			$message = "❌ Internal error 500";
 		}
 	} else {
-		$status = 500;
+		http_response_code(500);
 		$message = "❌ Internal error 500";
 	}
 } else {
-	$status = 405;
+	http_response_code(405);
 	$message = "❌ Method Not Allowed\r\n";
 }
 

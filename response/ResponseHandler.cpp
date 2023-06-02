@@ -199,6 +199,9 @@ void	ResponseHandler::setCode(int code)
 	case OK:
 		res_.rline.reasonPhrase = "OK";
 		break;
+	case CREATED:
+		res_.rline.reasonPhrase = "Created";
+		break;
 	// case NOCONTENT:
 	// 	res_.rline.reasonPhrase = "No Content";
 	// 	break;
@@ -429,7 +432,7 @@ void ResponseHandler::post()
 			CGIHandler cgi(req_, conf_, endpoint_);
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
-
+			std::cout << "CGI " << res_.cgiResponse << std::endl;
 			processCGIResponse(res_.cgiResponse);
 			return ;
 		}

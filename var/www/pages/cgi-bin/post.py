@@ -5,7 +5,7 @@ import datetime
 
 def http_response_code_message(code):
 	messages = {
-		201: 'Created',
+		200: 'OK',
 		405: 'Method Not Allowed',
 		500: 'Internal Server Error',
 	}
@@ -36,15 +36,14 @@ if os.getenv('REQUEST_METHOD') == 'POST':
 		with open(directory, 'a') as file:
 			file.write(dataEntry)
 			message = "Data saved successfully to " + directory + '\n'
-			httpStatusCode = 201
+			httpStatusCode = 200
+			response = response.replace('{{message}}', message)
 	except:
-		message = "Internal error 500"
+		response = "Internal error 500"
 		httpStatusCode = 500
 else:
-	message = "Method Not Allowed\r\n"
+	response = "Method Not Allowed\r\n"
 	httpStatusCode = 405
-
-response = response.replace('{{message}}', message)
 
 
 date = datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')

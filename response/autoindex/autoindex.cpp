@@ -61,11 +61,21 @@ static std::string getListedDir(std::string root) {
 	return files;
 }
 
+std::string	mergeString(std::string ep, std::string root) {
+	if (root.length() > 0 && root[root.length()] != '/') {
+		root.insert(0, "/");
+	}
+	if (ep[0] == '/')
+		ep.erase(0,1);
+	root += ep;
+	return root;
+}
+
 std::string	initAutoIndex(std::string endpoint, std::string root) {
 	std::string templateFile = insertHeader(endpoint);
 	std::string	targetPos = "<ul class=\"item5\">";
 	size_t pos = templateFile.find(targetPos);
-	std::string files = getListedDir(root);
+	std::string files = getListedDir(mergeString(endpoint, root));
 	if (pos != std::string::npos) {
 		templateFile.insert(pos + targetPos.length(), files);
 	}
