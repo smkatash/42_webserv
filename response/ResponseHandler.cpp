@@ -522,7 +522,7 @@ void	ResponseHandler::addToSessionIds(std::string id)
 
 bool	ResponseHandler::authorized(std::string authorization)
 {
-	if (endpoint_ != "/delete") // Instead of this I should check if there's the auth_basic in config file in this location
+	if (endpoint_ != "/login") // Instead of this I should check if there's the auth_basic in config file in this location
 		return true;
 	if (authorization.empty())
 		return false;

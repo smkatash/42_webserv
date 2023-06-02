@@ -54,8 +54,8 @@ int		Parser::checkPort(std::string p) {
 
 std::string	Parser::checkServerName(std::string s) {
 	if (stripBrackets(&s)) {
-		if (s.empty())
-			s = "localhost";
+		if (s.empty() || s.compare("_") == 0)
+			s = "Francesco's Pizzeria";
 	}
 	else 
 		throw std::invalid_argument("parser: server name invalid");
