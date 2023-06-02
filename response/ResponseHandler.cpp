@@ -33,7 +33,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.statusCode = "200";
 	res_.rline.reasonPhrase = "OK";
 	res_.rheader.server = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName();
-	res_.gheader.connection = "close";
+	// res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
 	if (!checkRequest())
 		return;
 	try
@@ -55,7 +55,6 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 		else
 			setCode(INTERNALERROR);
 	}
-	
 }
 
 ResponseHandler::~ResponseHandler() {}
@@ -214,9 +213,11 @@ void	ResponseHandler::setCode(int code)
 		break;
 	case BADREQ:
 		res_.rline.reasonPhrase = "Bad Request";
+		setBodyErrorPage(code);
 		break;
 	case UNAUTHORIZED:
 		res_.rline.reasonPhrase = "Unauthorized";
+		setBodyErrorPage(code);
 		break;
 	case NOTFOUND:
 		res_.rline.reasonPhrase = "Not Found";
@@ -224,24 +225,31 @@ void	ResponseHandler::setCode(int code)
 		break;
 	case NOTALLOWED:
 		res_.rline.reasonPhrase = "Not Allowed";
+		setBodyErrorPage(code);
 		break;
 	case LENGTHPLS:
 		res_.rline.reasonPhrase = "Length Required";
+		setBodyErrorPage(code);
 		break;
 	case TOOLARGE:
 		res_.rline.reasonPhrase = "Content Too Large";
+		setBodyErrorPage(code);
 		break;
 	case LONGURI:
 		res_.rline.reasonPhrase = "URI Too Long";
+		setBodyErrorPage(code);
 		break;
 	case INTERNALERROR:
 		res_.rline.reasonPhrase = "Internal Server Error";
+		setBodyErrorPage(code);
 		break;
 	case UNIMPLEMENTED:
 		res_.rline.reasonPhrase = "Not Implemented";
+		setBodyErrorPage(code);
 		break;
 	case HTTPNONO:
 		res_.rline.reasonPhrase = "HTTP Version Not Supported";
+		setBodyErrorPage(code);
 		break;
 
 	default:
@@ -377,6 +385,7 @@ void ResponseHandler::get()
 
 void ResponseHandler::processCGIResponse(std::string& cgi)
 {
+	// TODO: If no content_length is set from the cgi. The server should set it manually.
 	std::istringstream iss(cgi);
 	std::string buffer;
 	iss >> buffer;
@@ -405,6 +414,7 @@ void ResponseHandler::post()
 			return setCode(LENGTHPLS);
 
 		/* TODO: Handle cases where content length isn't known */
+
 		if (conf_.getClientMaxBodySize() != 0 && conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
 			return setCode(TOOLARGE);
 
@@ -509,7 +519,7 @@ std::string get_uuid()
 void	ResponseHandler::addToSessionIds(std::string id)
 {
 	std::ofstream sessionIds;
-	sessionIds.open("./var/www/pages/documents/session_ids", std::ios::out | std::ios::app); // TODO: Maybe change the location of session ids
+	sessionIds.open("./authentication_db/session_ids", std::ios::out | std::ios::app);
 	if (sessionIds.fail())
 		throw std::ios_base::failure(std::strerror(errno));
 	sessionIds.exceptions(sessionIds.exceptions() | std::ios::failbit | std::ifstream::badbit);
@@ -519,22 +529,21 @@ void	ResponseHandler::addToSessionIds(std::string id)
 
 bool	ResponseHandler::authorized(std::string authorization)
 {
-	if (endpoint_ != "/delete") // Instead of this I should check if there's the auth_basic in config file in this location
+	if (location_.lauth_basic.empty())
 		return true;
 	if (authorization.empty())
 		return false;
 	std::string auth = base64Decode(&authorization[6]);
 
-	std::string htPassFileName = conf_.getAuthBasicUserFile(endpoint_);
+	std::string htPassFileName = location_.lauth_basic_user_file;
 	if (htPassFileName.front() == '/')
 		htPassFileName.erase(0, 1);
 
 	std::string filename = "." + location_.lroot + htPassFileName;
 
-	std::cout << filename << std::endl; // Instead of documents/.htpassword I should take the value from the config file
+	std::cout << filename << std::endl;
 	std::cout << auth << std::endl;
 
-	// std::ifstream htpassFile(location_.lroot + conf_.getAuthFile());
 	std::ifstream htpassFile(filename);
 	if (!htpassFile.is_open())
 		exit(EXIT_FAILURE);
@@ -548,7 +557,7 @@ bool	ResponseHandler::authorized(std::string authorization)
 		{
 			std::string id = get_uuid();
 			addToSessionIds(id);
-			res_.rheader.setCookie = "session_id=" + id + "; path=/delete";
+			res_.rheader.setCookie = "session_id=" + id + "; path=" + endpoint_;
 			return true;
 		}
 	} 
@@ -560,7 +569,7 @@ bool	ResponseHandler::validCookie()
 	if (req_.rheader.cookie.empty())
 		return false;
 	std::string cookie = req_.rheader.cookie.substr(req_.rheader.cookie.find("=") + 1);
-	std::ifstream sessionIds("./var/www/pages/documents/session_ids");
+	std::ifstream sessionIds("./authentication_db/session_ids");
 	std::string	buffer;
 	while (std::getline(sessionIds, buffer))
 	{
