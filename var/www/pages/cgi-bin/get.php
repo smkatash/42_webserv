@@ -4,7 +4,7 @@ ini_set('expose_php', 'off'); // Disable PHP version information in headers
 ini_set('default_mimetype', '');  // Disable automatic "Content-type" header generation
 
 
-$database = dirname(dirname(__FILE__)). '/' . 'documents' . '/' . 'kanydb';
+$database = dirname(dirname(__FILE__)). '/' . 'data' . '/' . 'kanydb';
 
 // read the contents of the file
 $file_contents = file_get_contents($database);

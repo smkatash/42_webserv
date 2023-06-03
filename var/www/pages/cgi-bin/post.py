@@ -23,8 +23,8 @@ if os.getenv('REQUEST_METHOD') == 'POST':
 		requestBody = "Empty"
 
 	session = os.getenv('SESSION')
-	dataEntry = session + requestBody + '\n'
-	directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'documents', 'kanydb')
+	dataEntry = session + '&' +requestBody + '\n'
+	directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'kanydb')
 	current_directory = os.path.dirname(os.path.abspath(__file__))
 	responseFile = os.path.join(current_directory, 'temp.html')
 	if os.path.exists(responseFile):

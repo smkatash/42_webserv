@@ -12,8 +12,8 @@ $requestBody = file_get_contents("php://input");
 	}
 
 	$session = getenv('SESSION');
-	$dataEntry = $session . $requestBody . PHP_EOL;
-	$directory = dirname(dirname(__FILE__)) . '/' . 'documents' . '/' . 'kanydb';
+	$dataEntry = $session . '&' . $requestBody . PHP_EOL;
+	$directory = dirname(dirname(__FILE__)) . '/' . 'data' . '/' . 'kanydb';
 
 	if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
 		$responseFile = './temp.html';

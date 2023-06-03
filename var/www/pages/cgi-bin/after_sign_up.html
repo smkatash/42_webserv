@@ -16,7 +16,7 @@
 			color:  white;
 		}
 
-		.list-form {
+		.output-form {
 			display: flex;
 			justify-content: center;
 			align-items: center;
@@ -42,27 +42,20 @@
   <body style="background-color: #f8e6d77d;">
 		<nav class="navbar navbar-light" style="background-color: rgb(154, 25, 25);">
 		  <h3 class="my-0 mr-md-auto font-weight-bold" style="font-family: cursive;"><a class="p-2 text-white" href="/"> FRANCESCO'S PIZZERIA </a></h3>
-		<a class="p-2 text-white-p" href="/get">Menu</a>
-		<a class="p-2 text-white-p" href="/add">Place Order</a>
-		<a class="p-2 text-white-p" href="/upload">Upload</a>
-		<a class="p-2 text-white-p" href="/delete">Delete</a>
-		<a class="p-2 text-white-p" href="/login">Order Basket</a>
+		  <a class="p-2 text-white-p" href="/get">Menu</a>
+		  <a class="p-2 text-white-p" href="/login">Login</a>
+		  <a class="p-2 text-white-p" href="/signup">Sign-up</a>
   </nav>
-<div class="list-form">
-  <form action="" method="get">
-	<div class="form-container"> 
-	<div class="list-form"> 
-	<div>
+  		<div class="output-form">
 		<p style="margin-top:80px;"></p>
-		<h3 style="font-style:italic; font-size: 35px;">My Order List: </h3>
-		<br>
-		<ul> {{orders}}
-		  </ul>
-		  </div>
-	  </div>
-  </form>
-
-  </div>
+		<form action="" method="">
+			<div>
+			  <ul>
+				<h4>{{message}}</h4>
+			</ul>
+			</div>
+		  </form>
+		</div>
 
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>

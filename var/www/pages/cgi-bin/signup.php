@@ -18,7 +18,7 @@ $requestBody = file_get_contents("php://input");
 
 
 	if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
-		$responseFile = './temp.html';
+		$responseFile = './after_sign_up.html';
 
 		if (file_exists($responseFile)) {
 			$response = file_get_contents($responseFile);

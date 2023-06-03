@@ -4,34 +4,37 @@ ini_set('expose_php', 'off'); // Disable PHP version information in headers
 ini_set('default_mimetype', ''); // Disable automatic "Content-type" header generation
 
 if (getenv('REQUEST_METHOD') == 'POST') {
-	$database = dirname(dirname(__FILE__)) . '/' . 'documents' . '/' . 'kanydb';
+	$database = dirname(dirname(__FILE__)) . '/' . 'data' . '/' . 'kanydb';
 	$session = getenv('SESSION');
-	if (file_exists($database) && $session ) {
+	if (file_exists($database) && $session) {
 		parse_str($session, $params);
 		$session_id = $params['session_id'];
 	
 		$fileContents = file_get_contents($database);
-		$lines = explode("\n", $fileContents);
+		$listItems = '';
+		if ($fileContents) {
+			$lines = explode("\n", $fileContents);
 	
-		$orderValues = array();
+			$orderValues = array();
 	
-		foreach ($lines as $line) {
-			if (strpos($line, $session_id) !== false) {
-				parse_str($line, $params);
-				$orderValues[] = $params['order'];
+			foreach ($lines as $line) {
+				if (strpos($line, $session_id) !== false) {
+					parse_str($line, $params);
+					$orderValue = isset($params['order']) ? $params['order'] : 'undefined';
+					$quantityValue = isset($params['quantity']) ? $params['quantity'] : 'undefined'; // Retrieve the 'quantity' parameter
+					$orderValues[] = $orderValue . ': ' . $quantityValue;
+				}
+			}
+	
+			foreach ($orderValues as $orderValue) {
+				$listItems .= '<li>' . $orderValue . '</li>';
 			}
 		}
-	
-		$listItems = '';
-		foreach ($orderValues as $orderValue) {
-			$listItems .= '<li>' . $orderValue . '</li>';
-		}
-
 		$responseFile = './login.html';
 
 		if (file_exists($responseFile)) {
 			$response = file_get_contents($responseFile);
-			if ($response && $listItems) {
+			if ($response) {
 				http_response_code(200);
 				$response = preg_replace('/{{orders}}/i', $listItems, $response);
 			}
