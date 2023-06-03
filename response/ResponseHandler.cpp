@@ -1,7 +1,6 @@
 #include <map>
 #include <fstream>
 #include <string>
-#include <random>
 #include "Response.hpp" // Status codes definitions
 #include "Parser.hpp" // Methods enum
 #include "response_utils.hpp"
@@ -10,42 +9,24 @@
 
 #define COOKIES
 
-bool	ResponseHandler::checkRequest()
-{
-	if (req_.rline.method.empty() || req_.rline.uri.empty() || req_.rline.httpVersion.empty())
-		return (setCode(BADREQ), false);
-	if (req_.rline.uri.front() != '/')
-		return (setCode(BADREQ), false);
-	if (req_.rline.uri.size() > 512)
-		return (setCode(LONGURI), false);
-	if (req_.rline.method != "GET" && req_.rline.method != "POST" && req_.rline.method != "DELETE")
-		return (setCode(UNIMPLEMENTED), false);
-	if (req_.rline.httpVersion != "HTTP/1.1")
-		return (setCode(HTTPNONO), false);
-	return true;
-}
-
 ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 : req_(req)
 , conf_(conf)
 {
-	res_.rline.version = "HTTP/1.1";
-	res_.rline.statusCode = "200";
+	/* basic setup for creating a response */
+	res_.rline.version      = HTTPVERSION;
+	res_.rline.statusCode   = "200";
 	res_.rline.reasonPhrase = "OK";
-	res_.rheader.server = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName();
+	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName();
+	res_.gheader.date       = findCurrentTimeGMT();
 	// res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
 	if (!checkRequest())
 		return;
 	try
 	{
-		res_.gheader.date = findCurrentTimeGMT();
-		uri_ = removeDuplicateSlashes(req_.rline.uri);
+		uri_      = removeDuplicateSlashes(req_.rline.uri);
 		endpoint_ = findUriEndpoint(uri_.substr(0, uri_.find('?')));
-		location_ = conf_.getLocation(endpoint_); // try-catch because getLocation may throw an exception
-#ifdef COOKIES
-		if (!authenticated())
-			authenticate();
-#endif
+		location_ = conf_.getLocation(endpoint_);
 	}
 	catch(const std::exception& e)
 	{
@@ -55,9 +36,474 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 		else
 			setCode(INTERNALERROR);
 	}
+#ifdef COOKIES
+		if (!authenticated())
+			authenticate();
+#endif
 }
 
 ResponseHandler::~ResponseHandler() {}
+
+/* Methods ---------------------------------------------------------------------------------------------- */
+
+void ResponseHandler::get()
+{
+	if (!isMethodAllowed(GET))
+		return setCode(NOTALLOWED);
+
+	/* Check if you have to send to cgi handler by checking if
+	there's a query */
+	if (!location_.lcgi.second.empty() && uri_.find('?') != std::string::npos)
+	{
+		CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
+		cgi.execute();
+		res_.cgiResponse = cgi.getCGIResponse();
+		return ;
+	}
+
+	// TODO: Should do get if there's no cgi
+	if (!location_.lredirect.empty())
+		return returnResponse();
+	if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
+		return dirResponse();
+	return normalResponse();
+}
+
+void ResponseHandler::post()
+{
+	if (!isMethodAllowed(POST))
+		return setCode(NOTALLOWED);
+
+	if (req_.eheader.contentLength.empty())
+		return setCode(LENGTHPLS);
+
+	/* TODO: Handle cases where content length isn't known */
+
+	if (conf_.getClientMaxBodySize() != 0 && conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
+		return setCode(TOOLARGE);
+
+	/* Check if you have to send to cgi handler by checking if
+	there's a body and if there's cgi in config file */
+	if (!req_.rbody.empty() && !location_.lcgi.second.empty())
+	{
+		/* check if chunked and dechunk accordingly */
+		if (req_.gheader.transferEncoding.compare("chunked") == 0)
+			req_.rbody = unchunkData(req_.rbody);
+
+		CGIHandler cgi(req_, conf_, endpoint_);
+		cgi.execute();
+		res_.cgiResponse = cgi.getCGIResponse();
+		std::cout << "CGI " << res_.cgiResponse << std::endl;
+		processCGIResponse(res_.cgiResponse);
+		return ;
+	}
+	// TODO: Should do get if there's no cgi
+}
+
+void ResponseHandler::del()
+{
+	if (!isMethodAllowed(DELETE))
+		return setCode(NOTALLOWED);
+	if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
+		return dirDelResponse();
+	return normalDelResponse();
+}
+
+void ResponseHandler::handle()
+{
+	try
+	{
+		if (res_.rline.statusCode != "200") // Probably endpoint not found, or error in constructor
+			return;
+		if (req_.rline.method == "GET")
+			return get();
+		if (req_.rline.method == "POST")
+			return post();
+		if (req_.rline.method == "DELETE")
+			return del();
+	}
+	catch(const std::exception& e)
+	{
+		return setCode(INTERNALERROR);
+	}
+	// Otherwise method not implemented
+	return setCode(UNIMPLEMENTED);
+}
+
+/* Response Handling ------------------------------------------------------------------------------------ */
+
+void ResponseHandler::setBodyErrorPage(int code)
+{
+	std::string fileName;
+	std::map<int, std::string> errfile = conf_.getErrorFile();
+	std::map<int, std::string>::iterator it = errfile.find(code);
+	if (it != errfile.end())
+	{
+		fileName = conf_.getRoot("").substr(0, conf_.getRoot("").find_last_of('/')) + it->second;
+		fileName.insert(fileName.begin(), '.');
+	}
+	else
+		fileName = "./error_pages/" + toString(code) + ".html";
+
+	std::ifstream file;
+	file.open(fileName.c_str());
+	if (!file.is_open() || !file.good())
+		return ;
+	std::string temp;
+	while (std::getline(file, temp))
+	{
+		if (file.eof())
+			res_.rbody += temp;
+		else
+			res_.rbody += temp + '\n';
+	}
+	res_.eheader.contentLength = toString(res_.rbody.length());
+	file.close();
+}
+
+void ResponseHandler::setCode(int code)
+{
+	// TODO: Set different error page from config file
+	res_.rline.statusCode = toString(code);
+
+	switch (code)
+	{
+	case OK:
+		res_.rline.reasonPhrase = "OK";
+		break;
+	case CREATED:
+		res_.rline.reasonPhrase = "Created";
+		break;
+	// case NOCONTENT:
+	// 	res_.rline.reasonPhrase = "No Content";
+	// 	break;
+	case ACCEPTED:
+		res_.rline.reasonPhrase = "Accepted";
+		break;
+	case MOVEDPERMAN:
+		res_.rline.reasonPhrase = "Moved Permanently";
+		break;
+	case FOUND:
+		res_.rline.reasonPhrase = "Found";
+		break;
+	case BADREQ:
+		res_.rline.reasonPhrase = "Bad Request";
+		setBodyErrorPage(code);
+		break;
+	case UNAUTHORIZED:
+		res_.rline.reasonPhrase = "Unauthorized";
+		setBodyErrorPage(code);
+		break;
+	case NOTFOUND:
+		res_.rline.reasonPhrase = "Not Found";
+		setBodyErrorPage(code);
+		break;
+	case NOTALLOWED:
+		res_.rline.reasonPhrase = "Not Allowed";
+		setBodyErrorPage(code);
+		break;
+	case LENGTHPLS:
+		res_.rline.reasonPhrase = "Length Required";
+		setBodyErrorPage(code);
+		break;
+	case TOOLARGE:
+		res_.rline.reasonPhrase = "Content Too Large";
+		setBodyErrorPage(code);
+		break;
+	case LONGURI:
+		res_.rline.reasonPhrase = "URI Too Long";
+		setBodyErrorPage(code);
+		break;
+	case INTERNALERROR:
+		res_.rline.reasonPhrase = "Internal Server Error";
+		setBodyErrorPage(code);
+		break;
+	case UNIMPLEMENTED:
+		res_.rline.reasonPhrase = "Not Implemented";
+		setBodyErrorPage(code);
+		break;
+	case HTTPNONO:
+		res_.rline.reasonPhrase = "HTTP Version Not Supported";
+		setBodyErrorPage(code);
+		break;
+
+	default:
+		break;
+	}
+}
+
+std::string ResponseHandler::findUriEndpoint(const std::string& uri)
+{
+	if (uri == "")
+		return "/";
+	std::string ep = conf_.getEndPoint(uri);
+	if (ep == "")
+		return findUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start until '/' (basically with every function call we step back a directory)
+	return ep;
+}
+
+/* Prepares URI to be opened as a file by appending it to the root folder,
+	removing a forward slash from the end, and adding a '.' to the front */
+void ResponseHandler::prepUriFile()
+{
+	if (uri_[0] == '/')
+		uri_.erase(uri_.begin());
+	if (location_.lroot.empty())
+		uri_.insert(0, conf_.getRoot(""));
+	else
+		uri_.insert(0, location_.lroot);
+	if (uri_[uri_.size() - 1] == '/')
+		uri_.erase(uri_.end());
+	if (uri_[0] == '/')
+		uri_.insert(0, ".");
+}
+
+void ResponseHandler::setResponseBody(std::string fileName)
+{
+	std::ifstream file;
+	file.open(fileName.c_str());
+	if (!file.is_open())
+		return setCode(NOTFOUND);
+	if (!file.good())
+		return setCode(INTERNALERROR);
+	std::string temp;
+	while (std::getline(file, temp))
+	{
+		if (file.eof())
+			res_.rbody += temp;
+		else
+			res_.rbody += temp + '\n';
+	}
+	res_.eheader.contentLength = toString(res_.rbody.length());
+	file.close();
+	return setCode(OK);
+}
+
+void ResponseHandler::returnResponse()
+{
+	res_.rheader.location = location_.lredirect;
+	res_.rbody = "\r\n";
+	if (location_.lredirect.substr(0, 4) == "http")
+		return setCode(FOUND);
+	else
+		return setCode(MOVEDPERMAN);
+}
+
+void ResponseHandler::autoIndexResponse(t_endpoint loc, std::string ep)
+{
+	std::string templateFile;
+	if (loc.lroot.empty())
+		templateFile = initAutoIndex(ep, conf_.getRoot(""));
+	else
+		templateFile = initAutoIndex(ep, loc.lroot);
+	if (templateFile.empty())
+		return setCode(NOTFOUND);
+	res_.rbody = templateFile;
+	res_.eheader.contentType = findContentType(".html");
+	res_.eheader.contentLength = toString(templateFile.size());
+	return setCode(OK);
+}
+
+void ResponseHandler::dirResponse()
+{
+	std::cout << location_.lautoindex << std::endl;
+	if (location_.lautoindex)
+		return autoIndexResponse(location_, endpoint_);
+	if (location_.lindex.empty())
+		return setCode(NOTFOUND);
+
+	std::string dir;
+	if (location_.lroot.empty())
+		dir = conf_.getRoot("") + endpoint_.substr(1);
+	else
+		dir = location_.lroot + endpoint_.substr(1);
+
+	uri_ = findUsableFile(location_.lindex, dir);
+	if (uri_.empty())
+		return setCode(NOTFOUND);
+
+	uri_ = endpoint_ + '/' + uri_;
+	return normalResponse();
+}
+
+void ResponseHandler::normalResponse()
+{
+	prepUriFile();
+	std::string uriPath = uri_.substr(0, uri_.find('?'));
+	res_.eheader.contentType = findContentType(uriPath.substr(uri_.find_last_of('.')));
+	return setResponseBody(uriPath);
+}
+
+void ResponseHandler::processCGIResponse(std::string& cgi)
+{
+	// TODO: If no content_length is set from the cgi. The server should set it manually.
+	std::istringstream iss(cgi);
+	std::string buffer;
+	iss >> buffer;
+	if (buffer.compare(0, 4, "HTTP") == 0) // There's nothing to change
+		return;
+
+	size_t statusLocation = cgi.find("Status: ");
+	if (statusLocation == std::string::npos) // Extra safety
+		return ;
+
+	std::string status = cgi.substr(statusLocation + 8);
+	setCode(strtonum<int>(status));
+	cgi = cgi.erase(statusLocation, cgi.find('\n', statusLocation) + 1);
+	std::string rline = res_.rline.version + ' ' + res_.rline.statusCode + ' ' + res_.rline.reasonPhrase + "\r\n";
+	cgi.insert(0, rline);
+}
+
+
+
+void ResponseHandler::normalDelResponse()
+{
+	prepUriFile();
+	res_.eheader.contentType = findContentType(uri_.substr(uri_.find_last_of('.')));
+	unlink(uri_.c_str());
+	setCode(ACCEPTED);
+	return ;
+}
+
+void ResponseHandler::dirDelResponse()
+{
+	if (location_.lautoindex)
+		return autoIndexResponse(location_, endpoint_);
+	if (location_.lindex.empty())
+		return setCode(NOTFOUND);
+	std::string dir;
+	if (location_.lroot.empty())
+		dir = conf_.getRoot("") + endpoint_.substr(1);
+	else
+		dir = location_.lroot + endpoint_.substr(1);
+	uri_ = findUsableFile(location_.lindex, dir);
+	if (uri_.empty())
+		return setCode(NOTFOUND);
+	uri_ = endpoint_ + '/' + uri_;
+	return normalDelResponse();
+}
+
+
+
+
+
+
+
+/* Session Handling ------------------------------------------------------------------------------------- */
+
+void ResponseHandler::addToSessionIds(const std::string& id)
+{
+	std::ofstream sessionIds;
+	sessionIds.open(SIDPATH, std::ios::out | std::ios::app);
+	if (sessionIds.fail())
+		throw std::ios_base::failure(std::strerror(errno));
+	sessionIds.exceptions(sessionIds.exceptions() | std::ios::failbit | std::ifstream::badbit);
+	sessionIds << id << std::endl;
+	sessionIds.close();
+}
+
+bool ResponseHandler::authorized(std::string authorization)
+{
+	if (authorization.empty())
+		return false;
+
+	std::string htPassFileName = location_.lauth_basic_user_file; // parse the auth_basic_user_file
+	if (htPassFileName.front() == '/')
+		htPassFileName.erase(0, 1);
+
+	std::string filename = "." + location_.lroot + htPassFileName;
+	std::ifstream htpassFile(filename);
+	if (!htpassFile.is_open() || htpassFile.bad())
+		exit(EXIT_FAILURE);
+
+	std::string auth = base64Decode(&authorization[6]); // from 6 because I want to skip "Basic "
+	std::string buffer;
+	while (std::getline(htpassFile, buffer))
+	{
+		std::cout << buffer << std::endl;
+		if (buffer == auth)
+		{
+			std::string id = get_uuid();
+			addToSessionIds(id);
+			res_.rheader.setCookie = "session_id=" + id; // TODO: Add expiration date for cookie
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ResponseHandler::validCookie()
+{
+	if (req_.rheader.cookie.empty())
+		return false;
+	std::string cookie = req_.rheader.cookie.substr(req_.rheader.cookie.find("=") + 1);
+	std::ifstream sessionIds(SIDPATH);
+	std::string	buffer;
+	while (std::getline(sessionIds, buffer))
+	{
+		if (buffer.compare(0, buffer.size(), cookie) == 0)
+			return true;
+	}
+	return false;
+}
+
+bool ResponseHandler::authenticated()
+{
+	if (location_.lauth_basic.empty())
+		return true;
+	if (validCookie() || authorized(req_.rheader.authorization))
+		return true;
+	return false;
+}
+
+void ResponseHandler::authenticate()
+{
+	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
+	res_.rbody = "\r\n";
+	setCode(UNAUTHORIZED);
+}
+
+/* Checks ----------------------------------------------------------------------------------------------- */
+
+bool ResponseHandler::checkRequest()
+{
+	if (req_.rline.method.empty() || req_.rline.uri.empty() || req_.rline.httpVersion.empty())
+		return (setCode(BADREQ), false);
+	if (req_.rline.uri.front() != '/')
+		return (setCode(BADREQ), false);
+	if (req_.rline.uri.size() > 1024)
+		return (setCode(LONGURI), false);
+	if (req_.rline.httpVersion != HTTPVERSION)
+		return (setCode(HTTPNONO), false);
+	return true;
+}
+
+bool ResponseHandler::isMethodAllowed(Methods method)
+{
+	if (location_.lmethod.empty())
+		return true;
+	std::vector<int>::iterator it = std::find(location_.lmethod.begin(), location_.lmethod.end(), method);
+	if (it == location_.lmethod.end())
+	{
+		setCode(NOTALLOWED);
+		return false;
+	}
+	return true;
+}
+
+/* Response Generation ---------------------------------------------------------------------------------- */
+
+std::string ResponseHandler::generate()
+{
+	if (!res_.cgiResponse.empty())
+		return res_.cgiResponse;
+	std::string	header;
+	header = responseLine() + generalHeader()
+				+ responseHeader() + entityHeader();
+	if (!res_.rbody.empty())
+		header.append("\r\n" + res_.rbody);
+	return header;
+}
 
 std::string ResponseHandler::responseLine()
 {
@@ -145,466 +591,4 @@ std::string ResponseHandler::entityHeader()
 	if (!res_.eheader.lastModified.empty())
 		line.append("Last-Modified: " + res_.eheader.lastModified + "\r\n");
 	return line;
-}
-
-bool	ResponseHandler::isMethodAllowed(Methods method)
-{
-	if (location_.lmethod.empty())
-		return true;
-	std::vector<int>::iterator it = std::find(location_.lmethod.begin(), location_.lmethod.end(), method);
-	if (it == location_.lmethod.end())
-	{
-		setCode(NOTALLOWED);
-		return false;
-	}
-	return true;
-}
-
-void	ResponseHandler::setBodyErrorPage(int code)
-{
-	std::string fileName;
-	std::map<int, std::string> errfile = conf_.getErrorFile();
-	std::map<int, std::string>::iterator it = errfile.find(code);
-	if (it != errfile.end())
-	{
-		fileName = conf_.getRoot("").substr(0, conf_.getRoot("").find_last_of('/')) + it->second;
-		fileName.insert(fileName.begin(), '.');
-	}
-	else
-		fileName = "./error_pages/" + toString(code) + ".html";
-
-	std::ifstream file;
-	file.open(fileName.c_str());
-	if (!file.is_open() || !file.good())
-		return ;
-	std::string temp;
-	while (std::getline(file, temp))
-	{
-		if (file.eof())
-			res_.rbody += temp;
-		else
-			res_.rbody += temp + '\n';
-	}
-	res_.eheader.contentLength = toString(res_.rbody.length());
-	file.close();
-}
-
-void	ResponseHandler::setCode(int code)
-{
-	// TODO: Set different error page from config file
-	res_.rline.statusCode = toString(code);
-
-	switch (code)
-	{
-	case OK:
-		res_.rline.reasonPhrase = "OK";
-		break;
-	case CREATED:
-		res_.rline.reasonPhrase = "Created";
-		break;
-	// case NOCONTENT:
-	// 	res_.rline.reasonPhrase = "No Content";
-	// 	break;
-	case ACCEPTED:
-		res_.rline.reasonPhrase = "Accepted";
-		break;
-	case MOVEDPERMAN:
-		res_.rline.reasonPhrase = "Moved Permanently";
-		break;
-	case FOUND:
-		res_.rline.reasonPhrase = "Found";
-		break;
-	case BADREQ:
-		res_.rline.reasonPhrase = "Bad Request";
-		setBodyErrorPage(code);
-		break;
-	case UNAUTHORIZED:
-		res_.rline.reasonPhrase = "Unauthorized";
-		setBodyErrorPage(code);
-		break;
-	case NOTFOUND:
-		res_.rline.reasonPhrase = "Not Found";
-		setBodyErrorPage(code);
-		break;
-	case NOTALLOWED:
-		res_.rline.reasonPhrase = "Not Allowed";
-		setBodyErrorPage(code);
-		break;
-	case LENGTHPLS:
-		res_.rline.reasonPhrase = "Length Required";
-		setBodyErrorPage(code);
-		break;
-	case TOOLARGE:
-		res_.rline.reasonPhrase = "Content Too Large";
-		setBodyErrorPage(code);
-		break;
-	case LONGURI:
-		res_.rline.reasonPhrase = "URI Too Long";
-		setBodyErrorPage(code);
-		break;
-	case INTERNALERROR:
-		res_.rline.reasonPhrase = "Internal Server Error";
-		setBodyErrorPage(code);
-		break;
-	case UNIMPLEMENTED:
-		res_.rline.reasonPhrase = "Not Implemented";
-		setBodyErrorPage(code);
-		break;
-	case HTTPNONO:
-		res_.rline.reasonPhrase = "HTTP Version Not Supported";
-		setBodyErrorPage(code);
-		break;
-
-	default:
-		break;
-	}
-}
-
-std::string ResponseHandler::findUriEndpoint(const std::string& uri)
-{
-	if (uri == "")
-		return "/";
-	std::string ep = conf_.getEndPoint(uri);
-	if (ep == "")
-		return findUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start until '/' (basically with every function call we step back a directory)
-	return ep;
-}
-
-/* Prepares URI to be opened as a file by appending it to the root folder,
-	removing a forward slash from the end, and adding a '.' to the front */
-void ResponseHandler::prepUriFile(std::string& uri, const t_endpoint& loc)
-{
-	if (uri[0] == '/')
-		uri.erase(uri.begin());
-	if (loc.lroot.empty())
-		uri.insert(0, conf_.getRoot(""));
-	else
-		uri.insert(0, loc.lroot);
-	if (uri[uri.size() - 1] == '/')
-		uri.erase(uri.end());
-	if (uri[0] == '/')
-		uri.insert(0, ".");
-}
-
-void	ResponseHandler::setResponseBody(std::string fileName)
-{
-	std::ifstream file;
-	file.open(fileName.c_str());
-	if (!file.is_open())
-		return setCode(NOTFOUND);
-	if (!file.good())
-		return setCode(INTERNALERROR);
-	std::string temp;
-	while (std::getline(file, temp))
-	{
-		if (file.eof())
-			res_.rbody += temp;
-		else
-			res_.rbody += temp + '\n';
-	}
-	res_.eheader.contentLength = toString(res_.rbody.length());
-	file.close();
-	return setCode(OK);
-}
-
-void ResponseHandler::returnResponse(t_endpoint loc)
-{
-	res_.rheader.location = loc.lredirect;
-	res_.rbody = "\r\n";
-	if (loc.lredirect.substr(0, 4) == "http")
-		return setCode(FOUND);
-	else
-		return setCode(MOVEDPERMAN);
-}
-
-void ResponseHandler::autoIndexResponse(t_endpoint loc, std::string ep)
-{
-	std::string templateFile;
-	if (loc.lroot.empty())
-		templateFile = initAutoIndex(ep, conf_.getRoot(""));
-	else
-		templateFile = initAutoIndex(ep, loc.lroot);
-	if (templateFile.empty())
-		return setCode(NOTFOUND);
-	res_.rbody = templateFile;
-	res_.eheader.contentType = findContentType(".html");
-	res_.eheader.contentLength = toString(templateFile.size());
-	return setCode(OK);
-}
-
-void ResponseHandler::dirResponse(t_endpoint loc, std::string ep)
-{
-	if (loc.lautoindex)
-		return autoIndexResponse(loc, ep);
-	if (loc.lindex.empty())
-		return setCode(NOTFOUND);
-	std::string dir;
-	if (loc.lroot.empty())
-		dir = conf_.getRoot("") + ep.substr(1);
-	else
-		dir = loc.lroot + ep.substr(1);
-	std::string uri = findUsableFile(loc.lindex, dir);
-	if (uri.empty())
-		return setCode(NOTFOUND);
-	uri = ep + '/' + uri;
-	return normalResponse(loc, uri);
-}
-
-void ResponseHandler::normalResponse(t_endpoint loc, std::string uri)
-{
-	prepUriFile(uri, loc);
-	std::string uriPath = uri.substr(0, uri.find('?'));
-	res_.eheader.contentType = findContentType(uriPath.substr(uri.find_last_of('.')));
-	return setResponseBody(uriPath);
-}
-
-void ResponseHandler::get()
-{
-	try
-	{
-		if (!isMethodAllowed(GET))
-			return setCode(NOTALLOWED);
-		/* Check if you have to send to cgi handler by checking if
-		there's a query */
-		if (uri_.find('?') != std::string::npos)
-		{
-			CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
-			cgi.execute();
-			res_.cgiResponse = cgi.getCGIResponse();
-			return ;
-		}
-		// TODO: Should do get if there's no cgi
-		if (!location_.lredirect.empty())
-			return returnResponse(location_);
-		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
-			return dirResponse(location_, endpoint_);
-		return normalResponse(location_, uri_);
-	}
-	catch(const std::exception& e)
-	{
-		return setCode(INTERNALERROR);
-	}
-}
-
-void ResponseHandler::processCGIResponse(std::string& cgi)
-{
-	// TODO: If no content_length is set from the cgi. The server should set it manually.
-	std::istringstream iss(cgi);
-	std::string buffer;
-	iss >> buffer;
-	if (buffer.compare(0, 4, "HTTP") == 0) // There's nothing to change
-		return;
-
-	size_t statusLocation = cgi.find("Status: ");
-	if (statusLocation == std::string::npos) // Extra safety
-		return ;
-
-	std::string status = cgi.substr(statusLocation + 8);
-	setCode(strtonum<int>(status));
-	cgi = cgi.erase(statusLocation, cgi.find('\n', statusLocation) + 1);
-	std::string rline = res_.rline.version + ' ' + res_.rline.statusCode + ' ' + res_.rline.reasonPhrase + "\r\n";
-	cgi.insert(0, rline);
-}
-
-void ResponseHandler::post()
-{
-	try
-	{
-		if (!isMethodAllowed(POST))
-			return setCode(NOTALLOWED);
-	
-		if (req_.eheader.contentLength.empty())
-			return setCode(LENGTHPLS);
-
-		/* TODO: Handle cases where content length isn't known */
-
-		if (conf_.getClientMaxBodySize() != 0 && conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
-			return setCode(TOOLARGE);
-
-		/* Check if you have to send to cgi handler by checking if
-		there's a body and if there's cgi in config file */
-		if (!req_.rbody.empty() && !location_.lcgi.second.empty())
-		{
-			/* check if chunked and dechunk accordingly */
-			if (req_.gheader.transferEncoding.compare("chunked") == 0)
-				req_.rbody = unchunkData(req_.rbody);
-
-			CGIHandler cgi(req_, conf_, endpoint_);
-			cgi.execute();
-			res_.cgiResponse = cgi.getCGIResponse();
-			std::cout << "CGI " << res_.cgiResponse << std::endl;
-			processCGIResponse(res_.cgiResponse);
-			return ;
-		}
-		return get();
-		// TODO: Should do get if there's no cgi
-	}
-	catch(const std::exception& e)
-	{
-		return setCode(INTERNALERROR);
-	}
-}
-
-void ResponseHandler::normalDelResponse(t_endpoint loc, std::string uri)
-{
-	prepUriFile(uri, loc);
-	res_.eheader.contentType = findContentType(uri.substr(uri.find_last_of('.')));
-	unlink(uri.c_str());
-	setCode(ACCEPTED);
-	return ;
-}
-
-void ResponseHandler::dirDelResponse(t_endpoint loc, std::string ep)
-{
-	if (loc.lautoindex)
-		return autoIndexResponse(loc, ep);
-	if (loc.lindex.empty())
-		return setCode(NOTFOUND);
-	std::string dir;
-	if (loc.lroot.empty())
-		dir = conf_.getRoot("") + ep.substr(1);
-	else
-		dir = loc.lroot + ep.substr(1);
-	std::string uri = findUsableFile(loc.lindex, dir);
-	if (uri.empty())
-		return setCode(NOTFOUND);
-	uri = ep + '/' + uri;
-	return normalDelResponse(loc, uri);
-}
-
-void ResponseHandler::del()
-{
-	try
-	{
-		if (!isMethodAllowed(DELETE))
-			return setCode(NOTALLOWED);
-		if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
-			return dirDelResponse(location_, endpoint_);
-		return normalDelResponse(location_, uri_);
-	}
-	catch(const std::exception& e)
-	{
-		return setCode(INTERNALERROR);
-	}
-}
-
-std::string ResponseHandler::generate()
-{
-	if (!res_.cgiResponse.empty())
-		return res_.cgiResponse;
-	std::string	header;
-	header = responseLine() + generalHeader()
-				+ responseHeader() + entityHeader();
-	if (!res_.rbody.empty())
-		header.append("\r\n" + res_.rbody);
-	return header;
-}
-
-std::string get_uuid()
-{
-	static std::random_device dev;
-	static std::mt19937 rng(dev());
-
-	std::uniform_int_distribution<int> dist(0, 15);
-
-	const char *v = "0123456789abcdef";
-	const bool dash[] = { 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 };
-
-	std::string res;
-	for (int i = 0; i < 16; i++) {
-		if (dash[i]) res += "-";
-		res += v[dist(rng)];
-		res += v[dist(rng)];
-	}
-	return res;
-}
-
-void	ResponseHandler::addToSessionIds(std::string id)
-{
-	std::ofstream sessionIds;
-	sessionIds.open("./authentication_db/session_ids", std::ios::out | std::ios::app);
-	if (sessionIds.fail())
-		throw std::ios_base::failure(std::strerror(errno));
-	sessionIds.exceptions(sessionIds.exceptions() | std::ios::failbit | std::ifstream::badbit);
-	sessionIds << id << std::endl;
-	sessionIds.close();
-}
-
-bool	ResponseHandler::authorized(std::string authorization)
-{
-	if (location_.lauth_basic.empty())
-		return true;
-	if (authorization.empty())
-		return false;
-	std::string auth = base64Decode(&authorization[6]);
-
-	std::string htPassFileName = location_.lauth_basic_user_file;
-	if (htPassFileName.front() == '/')
-		htPassFileName.erase(0, 1);
-
-	std::string filename = "." + location_.lroot + htPassFileName;
-
-	std::cout << filename << std::endl;
-	std::cout << auth << std::endl;
-
-	std::ifstream htpassFile(filename);
-	if (!htpassFile.is_open())
-		exit(EXIT_FAILURE);
-	if (htpassFile.bad())
-		exit(EXIT_FAILURE);
-	std::string buffer;
-	while (std::getline(htpassFile, buffer))
-	{
-		std::cout << buffer << std::endl;
-		if (buffer == auth)
-		{
-			std::string id = get_uuid();
-			addToSessionIds(id);
-			res_.rheader.setCookie = "session_id=" + id + "; path=" + endpoint_;
-			return true;
-		}
-	} 
-	return false;
-}
-
-bool	ResponseHandler::validCookie()
-{
-	if (req_.rheader.cookie.empty())
-		return false;
-	std::string cookie = req_.rheader.cookie.substr(req_.rheader.cookie.find("=") + 1);
-	std::ifstream sessionIds("./authentication_db/session_ids");
-	std::string	buffer;
-	while (std::getline(sessionIds, buffer))
-	{
-		if (std::strncmp(cookie.c_str(), buffer.c_str(), buffer.size()) == 0)
-			return true;
-	}
-	return false;
-}
-
-bool	ResponseHandler::authenticated()
-{
-	if (validCookie() || authorized(req_.rheader.authorization))
-		return true;
-	return false;
-}
-
-void	ResponseHandler::authenticate()
-{
-	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
-	res_.rbody = "\r\n";
-	setCode(UNAUTHORIZED);
-}
-
-void	ResponseHandler::handle()
-{
-	if (res_.rline.statusCode != "200") // Probably endpoint not found, or error in constructor
-		return;
-	if (req_.rline.method == "GET")
-		return get();
-	if (req_.rline.method == "POST")
-		return post();
-	if (req_.rline.method == "DELETE")
-		return del();
-	// otherwise send unhandled method
 }
