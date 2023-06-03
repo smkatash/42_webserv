@@ -16,7 +16,7 @@
 			color:  white;
 		}
 
-		.upload-form {
+		.add-form {
 			display: flex;
 			justify-content: center;
 			align-items: center;
@@ -25,6 +25,7 @@
 			font-family: 'Franklin Gothic Medium', sans-serif;
 			color: #2c6404;
 		}
+
 
 
 	</style>
@@ -43,22 +44,34 @@
   <body style="background-color: #f8e6d77d;">
 		<nav class="navbar navbar-light" style="background-color: rgb(154, 25, 25);">
 		  <h3 class="my-0 mr-md-auto font-weight-bold" style="font-family: cursive;"><a class="p-2 text-white" href="/"> FRANCESCO'S PIZZERIA </a></h3>
-			<a class="p-2 text-white-p" href="/get">Menu</a>
-			<a class="p-2 text-white-p" href="/add">Place Order</a>
-			<a class="p-2 text-white-p" href="/upload">Upload</a>
-			<a class="p-2 text-white-p" href="/delete">Delete</a>
-			<a class="p-2 text-white-p" href="/logout">Logout</a>
+		  <a class="p-2 text-white-p" href="/get">Menu</a>
+		  <a class="p-2 text-white-p" href="/login">Login</a>
+		  <a class="p-2 text-white-p" href="/signup">Sign-up</a>
   </nav>
-  		<div class="upload-form">
-			  <p style="margin-top:80px;"></p>
-			  <form action="/upload" method="post" enctype="multipart/form-data">
-			  Select file to upload:
-			  <input type="file" name="file" id="file">
-			  <input type="submit" value="Upload a file" name="submit">
-		  </form>
-		</div>
-
-
+		  
+  <form action="/signup" method="post">
+	<div class="add-form"> 
+	<div>
+		<p style="margin-top:80px;"></p>
+		<label for="username">Username: </label>
+		<input type="text" name="username" id="username" required> &nbsp;
+		<br>
+		<br>
+		<label for="email">Email: </label> &nbsp; &nbsp; &nbsp;
+		<input type="text" name="email" id="email" required> &nbsp;
+		<br>
+		<br>
+		<label for="password">Password: </label>
+		<input type="text" name="password" id="password" required> &nbsp;
+		<br>
+		<br>
+	</div>
+	<div>
+		<p style="margin-bottom:400px;"></p>
+	  <input type="submit" name="submit" value="Sign-up">
+	</div>
+</div>
+</form>
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>

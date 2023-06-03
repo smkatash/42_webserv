@@ -16,12 +16,15 @@
 			color:  white;
 		}
 
-		.upload-form {
+		.form-container {
 			display: flex;
-			justify-content: center;
-			align-items: center;
+			justify-content: space-around; /* Place forms on the left and right */
+		}
+
+		.list-form, .delete-form {
+			width: 30%; /* Adjust the width as needed */
 			height: 50vh;
-			font-size: 24px;
+			font-size: 28px;
 			font-family: 'Franklin Gothic Medium', sans-serif;
 			color: #2c6404;
 		}
@@ -43,21 +46,60 @@
   <body style="background-color: #f8e6d77d;">
 		<nav class="navbar navbar-light" style="background-color: rgb(154, 25, 25);">
 		  <h3 class="my-0 mr-md-auto font-weight-bold" style="font-family: cursive;"><a class="p-2 text-white" href="/"> FRANCESCO'S PIZZERIA </a></h3>
-			<a class="p-2 text-white-p" href="/get">Menu</a>
-			<a class="p-2 text-white-p" href="/add">Place Order</a>
-			<a class="p-2 text-white-p" href="/upload">Upload</a>
-			<a class="p-2 text-white-p" href="/delete">Delete</a>
-			<a class="p-2 text-white-p" href="/logout">Logout</a>
+		<a class="p-2 text-white-p" href="/get">Menu</a>
+		<a class="p-2 text-white-p" href="/add">Place Order</a>
+		<a class="p-2 text-white-p" href="/upload">Upload</a>
+		<a class="p-2 text-white-p" href="/delete">Delete</a>
+		<a class="p-2 text-white-p" href="/logout">Logout</a>
   </nav>
-  		<div class="upload-form">
-			  <p style="margin-top:80px;"></p>
-			  <form action="/upload" method="post" enctype="multipart/form-data">
-			  Select file to upload:
-			  <input type="file" name="file" id="file">
-			  <input type="submit" value="Upload a file" name="submit">
-		  </form>
-		</div>
+		  
+  <form action="" method="get">
+	<div class="form-container"> 
+	<div class="list-form"> 
+	<div>
+		<p style="margin-top:80px;"></p>
+		<h3 style="font-style:italic; font-size: 35px;">My Order: </h3>
+		<br>
+		<ul>
+			  <li>Original Jad Thin Crust</li>
+			  <li>Mare e Monti e Stefan Pizza</li>
+			  <li>Kany Porchetta Pizza </li>
+			  <li>Arvydas-City Style Pizza</li>
+		  </ul>
+		  </div>
+	  </div>
+  </form>
 
+  <form onsubmit="deleteFile(event)">
+			<div class="delete-form">
+				<br>
+				<br>
+				<label for="file_name">Delete a file:</label>
+				<input type="text" id="fileToDelete" placeholder="e.g. /path/to/file.txt" required>
+				<input type="submit" value="Delete File">
+			</div>
+			<div>
+				<!-- <button onclick="deleteFile()">Delete</button> -->
+			</div>
+			</div>
+		</form>
+		
+		<script>
+			function deleteFile() {
+				event.preventDefault();
+				var fileToDelete = document.getElementById("fileToDelete").value;
+				var xhr = new XMLHttpRequest();
+				xhr.open("DELETE", fileToDelete, true);
+				xhr.onreadystatechange = function ()
+				{
+					if (xhr.readyState === 4 && xhr.status === 202)
+						alert("File deletion carried out according to RFC");
+					else if (xhr.readyState === 4 && xhr.status !== 200)
+						alert("Error deleting file.");
+				};
+				xhr.send();
+			}
+		  </script>
 
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>

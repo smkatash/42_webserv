@@ -36,6 +36,7 @@ struct cgi_handler {
 	std::string body;
 	std::string fileContentType;
 	std::string fileName;
+	std::string session;
 	int			postType;
 };
 

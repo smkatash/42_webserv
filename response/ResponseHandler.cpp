@@ -366,7 +366,7 @@ void ResponseHandler::get()
 			return setCode(NOTALLOWED);
 		/* Check if you have to send to cgi handler by checking if
 		there's a query */
-		if (uri_.find('?') != std::string::npos)
+		if (!location_.lcgi.second.empty() && uri_.find('?') != std::string::npos)
 		{
 			CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
 			cgi.execute();
@@ -560,7 +560,7 @@ bool	ResponseHandler::authorized(std::string authorization)
 		{
 			std::string id = get_uuid();
 			addToSessionIds(id);
-			res_.rheader.setCookie = "session_id=" + id + "; path=" + endpoint_;
+			res_.rheader.setCookie = "session_id=" + id;
 			return true;
 		}
 	} 
@@ -572,7 +572,7 @@ bool	ResponseHandler::validCookie()
 	if (req_.rheader.cookie.empty())
 		return false;
 	std::string cookie = req_.rheader.cookie.substr(req_.rheader.cookie.find("=") + 1);
-	std::ifstream sessionIds("./authentication_db/session_ids");
+	std::ifstream sessionIds(AUTH_FILE_PATH);
 	std::string	buffer;
 	while (std::getline(sessionIds, buffer))
 	{

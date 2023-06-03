@@ -6,6 +6,8 @@
 #include "ConfigFile.hpp"
 #include "Parser.hpp" // Methods enum
 
+#define AUTH_FILE_PATH "./authentication_db/session_ids"
+
 class ResponseHandler
 {
 private:
