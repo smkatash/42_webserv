@@ -1,5 +1,5 @@
-#ifndef RESPONSE_UTILS
-#define RESPONSE_UTILS
+#ifndef RESPONSEUTILS
+#define RESPONSEUTILS
 
 #include <iostream>
 #include <vector>

@@ -10,7 +10,7 @@ SRC		=	main.cpp \
 			Core.cpp Server.cpp Socket.cpp \
 			RequestParserUtils.cpp RequestParser.cpp \
 			autoindex.cpp \
-			response_utils.cpp ResponseHandler.cpp
+			responseUtils.cpp ResponseHandler.cpp
 
 OBJ		=	$(addprefix obj/,$(notdir $(SRC:.cpp=.o)))
 INC		=	-I cgi -I config_parser -I core -I request -I response

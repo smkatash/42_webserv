@@ -3,7 +3,7 @@
 #include <string>
 #include "Response.hpp" // Status codes definitions
 #include "Parser.hpp" // Methods enum
-#include "response_utils.hpp"
+#include "responseUtils.hpp"
 #include "CGIHandler.hpp"
 #include "ResponseHandler.hpp"
 
@@ -36,9 +36,11 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 		else
 			setCode(INTERNALERROR);
 	}
+	if (!checkMethod())
+		return;
 #ifdef COOKIES
-		if (!authenticated())
-			authenticate();
+	if (!authenticated())
+		authenticate();
 #endif
 }
 
@@ -49,9 +51,6 @@ ResponseHandler::~ResponseHandler() {}
 
 void ResponseHandler::get()
 {
-	if (!isMethodAllowed(GET))
-		return setCode(NOTALLOWED);
-
 	/* Check if you have to send to cgi handler by checking if
 	there's a query and if there's cgi in config file */
 	if (!location_.lcgi.second.empty() && uri_.find('?') != std::string::npos)
@@ -71,15 +70,13 @@ void ResponseHandler::get()
 
 void ResponseHandler::post()
 {
-	if (!isMethodAllowed(POST))
-		return setCode(NOTALLOWED);
-
 	if (req_.eheader.contentLength.empty())
 		return setCode(LENGTHPLS);
 
 	/* TODO: Handle cases where content length isn't known */
-
-	if (conf_.getClientMaxBodySize() != 0 && conf_.getClientMaxBodySize() < strtonum<unsigned long>(req_.eheader.contentLength))
+	size_t maxBodySize = conf_.getClientMaxBodySize();
+	size_t reqContentLength = strtonum<unsigned long>(req_.eheader.contentLength);
+	if (maxBodySize != 0 && maxBodySize < reqContentLength)
 		return setCode(TOOLARGE);
 
 	/* Check if you have to send to cgi handler by checking if
@@ -93,7 +90,6 @@ void ResponseHandler::post()
 		CGIHandler cgi(req_, conf_, endpoint_);
 		cgi.execute();
 		res_.cgiResponse = cgi.getCGIResponse();
-		std::cout << "CGI " << res_.cgiResponse << std::endl;
 		processCGIResponse(res_.cgiResponse);
 		return ;
 	}
@@ -103,8 +99,6 @@ void ResponseHandler::post()
 
 void ResponseHandler::del()
 {
-	if (!isMethodAllowed(DELETE))
-		return setCode(NOTALLOWED);
 	if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
 		return dirResponse(DELETE);
 	return normalResponse(DELETE);
@@ -298,72 +292,17 @@ void ResponseHandler::setBodyErrorPage(int code)
 
 void ResponseHandler::setCode(int code)
 {
-	// TODO: Set different error page from config file
 	res_.rline.statusCode = toString(code);
 
-	switch (code)
+	size_t numCodes = sizeof(rc) / sizeof(rc[0]);
+	for (size_t i = 0; i < numCodes; i++)
 	{
-	case OK:
-		res_.rline.reasonPhrase = "OK";
-		break;
-	case CREATED:
-		res_.rline.reasonPhrase = "Created";
-		break;
-	// case NOCONTENT:
-	// 	res_.rline.reasonPhrase = "No Content";
-	// 	break;
-	case ACCEPTED:
-		res_.rline.reasonPhrase = "Accepted";
-		break;
-	case MOVEDPERMAN:
-		res_.rline.reasonPhrase = "Moved Permanently";
-		break;
-	case FOUND:
-		res_.rline.reasonPhrase = "Found";
-		break;
-	case BADREQ:
-		res_.rline.reasonPhrase = "Bad Request";
-		setBodyErrorPage(code);
-		break;
-	case UNAUTHORIZED:
-		res_.rline.reasonPhrase = "Unauthorized";
-		setBodyErrorPage(code);
-		break;
-	case NOTFOUND:
-		res_.rline.reasonPhrase = "Not Found";
-		setBodyErrorPage(code);
-		break;
-	case NOTALLOWED:
-		res_.rline.reasonPhrase = "Not Allowed";
-		setBodyErrorPage(code);
-		break;
-	case LENGTHPLS:
-		res_.rline.reasonPhrase = "Length Required";
-		setBodyErrorPage(code);
-		break;
-	case TOOLARGE:
-		res_.rline.reasonPhrase = "Content Too Large";
-		setBodyErrorPage(code);
-		break;
-	case LONGURI:
-		res_.rline.reasonPhrase = "URI Too Long";
-		setBodyErrorPage(code);
-		break;
-	case INTERNALERROR:
-		res_.rline.reasonPhrase = "Internal Server Error";
-		setBodyErrorPage(code);
-		break;
-	case UNIMPLEMENTED:
-		res_.rline.reasonPhrase = "Not Implemented";
-		setBodyErrorPage(code);
-		break;
-	case HTTPNONO:
-		res_.rline.reasonPhrase = "HTTP Version Not Supported";
-		setBodyErrorPage(code);
-		break;
-
-	default:
-		break;
+		if (rc[i].statusCode == code)
+		{
+			if (rc[i].withBody == true)
+				setBodyErrorPage(code);
+			break;
+		}
 	}
 }
 
@@ -451,10 +390,26 @@ bool ResponseHandler::checkRequest()
 		return (setCode(BADREQ), false);
 	if (req_.rline.uri.front() != '/')
 		return (setCode(BADREQ), false);
-	if (req_.rline.uri.size() > 1024)
+	if (req_.rline.uri.size() > 2048)
 		return (setCode(LONGURI), false);
 	if (req_.rline.httpVersion != HTTPVERSION)
 		return (setCode(HTTPNONO), false);
+
+	return true;
+}
+
+bool ResponseHandler::checkMethod()
+{
+	size_t i = 0;
+	for(; i < 3; i++)
+	{
+		if (m[i].methodStr == req_.rline.method)
+			break;
+	}
+	if (i == 3)
+		return (setCode(UNIMPLEMENTED), false);
+	if (!isMethodAllowed(m[i].methodVal))
+		return (setCode(NOTALLOWED), false);
 	return true;
 }
 

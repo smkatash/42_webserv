@@ -9,6 +9,18 @@
 #define HTTPVERSION "HTTP/1.1"
 #define SIDPATH     "./authentication_db/session_ids"
 
+static const struct s_methods
+{
+	std::string methodStr;
+	Methods     methodVal;
+}
+m[] =
+{
+	{"GET", GET},
+	{"POST", POST},
+	{"DELETE", DELETE}
+};
+
 class ResponseHandler
 {
 public:
@@ -55,6 +67,7 @@ private:
 
 	/* Checks */
 	bool        checkRequest();
+	bool        checkMethod();
 	bool        isMethodAllowed(Methods method);
 
 	/* Response Generating */
