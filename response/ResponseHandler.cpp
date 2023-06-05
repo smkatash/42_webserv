@@ -371,6 +371,7 @@ void ResponseHandler::get()
 			CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
 			cgi.execute();
 			res_.cgiResponse = cgi.getCGIResponse();
+			processCGIResponse(res_.cgiResponse);
 			return ;
 		}
 		// TODO: Should do get if there's no cgi
