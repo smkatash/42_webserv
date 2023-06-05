@@ -379,6 +379,8 @@ void ResponseHandler::authenticate()
 {
 	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
 	res_.rbody = "\r\n";
+	res_.gheader.connection = "close";
+	res_.eheader.contentLength = "0";
 	setCode(UNAUTHORIZED);
 }
 

@@ -10,6 +10,7 @@
 
 #include "ConfigFile.hpp"
 
+#define RETRY 5
 extern int kqFd;
 
 class Socket 
@@ -34,24 +35,18 @@ class Socket
 
 	ConfigFile serverConfiguration_;
 	struct kevent event_;
-	// struct kevent events_[MAX_EVENTS];
 	struct kevent events_[2];
-	int nEvent_; //number of the events returned by kevent;
 
-
-	public: //init bla bla 
+	public: 
+		//////////////////////////////////////////////////// canonic methods:
 		Socket();
 		Socket(int port, struct sockaddr_in servAddr);
 		Socket(int port, struct sockaddr_in servAddr, int fd, ConfigFile serverConfig);
-		// Socket(const Socket &other);
 		Socket &operator= (const Socket& other);
 		~Socket();
 
-		// Socket &operator=(const Socket &other);
-
-	public: //method
+		//////////////////////////////////////////////////// set methods:
 		bool setSocketDescriptor();
-		void setResponse(std::string response);
 		bool setSocketOption();
 		bool setSocketBind();
 		bool setSocketPassive();
@@ -59,32 +54,39 @@ class Socket
 		bool setKevent();
 		bool setKeventForWrite();
 		bool unsetKevent(int filter);
-		void setDestinationAddress (struct sockaddr_in address);
-		void setAddress ();
+		void setResponse(std::string response);
+		void setConnectionStatus(bool status);
+		void setDestinationAddress(struct sockaddr_in address);
+		void setAddress();
 		void setRequestStatus(bool status);
 		void setRequestLength();
 		void setConnectionTimer();
 
-		int 				getPort();
-		std::string 		getResponse();
-		struct kevent 		getEvent();
-		struct kevent*		getEvents();
+		//////////////////////////////////////////////////// get methods:
+		int					getPort();
 		int					getSocketDescriptor();
-		std::string 		getData();
-		struct sockaddr_in&	getSocketDestinationAddress();
-		struct sockaddr_in&	getSocketSourceAddress();
 		bool				getConnectionStatus();
 		bool				getRequestStatus();
 		time_t				getConnectionTimer();
+		size_t				getContentLength();
 		ConfigFile			getServerConfiguration();
-		size_t 				getContentLength();
+		std::string			getResponse();
+		std::string			getData();
+		struct kevent		getEvent();
+		struct kevent*		getEvents();
+		struct sockaddr_in&	getSocketDestinationAddress();
+		struct sockaddr_in&	getSocketSourceAddress();
 
-
-		bool socketInit();
-		bool socketPassiveInit();
+		//////////////////////////////////////////////////// member functions:
 		int closeConnection();
+		int retry();
+		int closingConnectionServerSide();
+		int connectionClosedClientSide();
 		int readHandler(size_t sizeToRead);
-		bool writeHandler(std::string response);
+		bool writeHandler(std::string response, bool closeConnection); //overload for write;
+		bool socketPassiveInit();
+		bool socketInit();
+		void reset();
 
 };
 

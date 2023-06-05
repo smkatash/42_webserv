@@ -39,7 +39,7 @@ void	RequestParser::initParser(std::string input) {
 			} else {
 				req_.rbody += line;
 			}
-			std::cout << line << std::endl;
+			// std::cout << line << std::endl; //this line is a cancer;
 			while (!ss.eof() && std::getline(ss, line)) {
 				if (startsWith(line, "--") && isBoundary(line, req_.eheader.boundaryName))
 					break;

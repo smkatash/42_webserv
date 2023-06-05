@@ -1,5 +1,6 @@
 #include "Parser.hpp"
 #include "Core.hpp"
+#include "color.hpp"
 #include <fstream>
 
 void	configFileOpen(int argc, char* argv[], std::ifstream& file)
@@ -62,6 +63,7 @@ int main(int argc, char **argv)
 	std::ifstream	file;
 	Parser			configs;
 
+	
 	configFileOpen(argc, argv, file);
 	configs = configInit(file);
 
@@ -69,6 +71,8 @@ int main(int argc, char **argv)
 		return (0);
 
 	Core core(configs);
+	if(core.status() == false)
+		return(printError("ERROR: shade... \t\t| you could config better next time :(", 0));
 	core.run();
 	return (EXIT_SUCCESS);
 }
