@@ -3,7 +3,7 @@ header_remove("X-Powered-By");
 ini_set('expose_php', 'off'); // Disable PHP version information in headers
 ini_set('default_mimetype', '');
 
-$database = dirname(dirname(__FILE__)). '/' . 'documents' . '/' . 'kanydb';
+$database = dirname(dirname(__FILE__)). '/' . 'data' . '/' . 'kanydb';
 $responseFile = './temp.html';
 
 $file_contents = file_get_contents($database);

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import sys
 import datetime
@@ -22,8 +23,9 @@ if os.getenv('REQUEST_METHOD') == 'POST':
 	if not requestBody:
 		requestBody = "Empty"
 
-	dataEntry = requestBody + '\n'
-	directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'documents', 'kanydb')
+	session = os.getenv('SESSION')
+	dataEntry = session + '&' +requestBody + '\n'
+	directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'kanydb')
 	current_directory = os.path.dirname(os.path.abspath(__file__))
 	responseFile = os.path.join(current_directory, 'temp.html')
 	if os.path.exists(responseFile):
@@ -35,15 +37,12 @@ if os.getenv('REQUEST_METHOD') == 'POST':
 	try:
 		with open(directory, 'a') as file:
 			file.write(dataEntry)
-			message = "Data saved successfully to " + directory + '\n'
+			message = "Thanks for your order!"
 			httpStatusCode = 200
 			response = response.replace('{{message}}', message)
 	except:
 		response = "Internal error 500"
 		httpStatusCode = 500
-else:
-	response = "Method Not Allowed\r\n"
-	httpStatusCode = 405
 
 
 date = datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')

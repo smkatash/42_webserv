@@ -52,7 +52,7 @@ void	ConfigFile::setCGI(std::string endpoint, std::string lang, std::string path
 		type = PYTHON;
 	else if (lang.compare(".php") == 0)
 		type = PHP;
-	else if (lang.compare(".perl") == 0)
+	else if (lang.compare(".pl") == 0)
 		type = PERL;
 	std::map<std::string, t_endpoint>::iterator it = location_.find(endpoint);
 	if (it != location_.end()) {

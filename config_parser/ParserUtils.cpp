@@ -30,6 +30,6 @@ int	isValidMethod(std::string m) {
 }
 
 void	isValidLanguage(std::string lang) {
-	if (lang.empty() || ( lang != ".py" && lang != ".php")) 
+	if (lang.empty() || ( lang != ".py" && lang != ".php" && lang != ".pl")) 
 		throw std::invalid_argument("language not supported");
 }

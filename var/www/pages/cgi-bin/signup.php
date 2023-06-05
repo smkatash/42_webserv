@@ -10,17 +10,19 @@ $requestBody = file_get_contents("php://input");
 	if (empty($requestBody)) {
 		$requestBody = "Empty";
 	}
+	parse_str($requestBody, $params);
+	$username = $params['username'];
+	$password = $params['password'];
+	$dataEntry = $username . ':' . $password . PHP_EOL;
+	$directory = dirname(dirname(__FILE__)) . '/' . 'etc' . '/' . '.htpasswd';
 
-	$session = getenv('SESSION');
-	$dataEntry = $session . '&' . $requestBody . PHP_EOL;
-	$directory = dirname(dirname(__FILE__)) . '/' . 'data' . '/' . 'kanydb';
 
 	if (file_put_contents($directory, $dataEntry, FILE_APPEND) !== false) {
-		$responseFile = './temp.html';
+		$responseFile = './after_sign_up.html';
 
 		if (file_exists($responseFile)) {
 			$response = file_get_contents($responseFile);
-			$message = "✅ Thanks for your order!";
+			$message = "✅ Successfull Sign-up!";
 			http_response_code(200);
 		} else {
 			http_response_code(500);

@@ -36,6 +36,7 @@ void	CGIHandler::setEnvironment()
 	setenv("CONTENT_TYPE_FILE", cgi_.fileContentType.c_str(), 1);
 	setenv("SERVER_NAME", cgi_.serverName.c_str(), 1);
 	setenv("QUERY_STRING", cgi_.queryString.c_str(), 1);
+	setenv("SESSION", cgi_.session.c_str(), 1);
 	setenv("REDIRECT_STATUS", "200", 1);
 }
 
@@ -49,6 +50,7 @@ void	CGIHandler::setRequestInfo()
 	cgi_.contenLength = req_.eheader.contentLength;
 	cgi_.userAgent = req_.rheader.userAgent;
 	cgi_.body = req_.rbody;
+	cgi_.session = req_.rheader.cookie;
 	cgi_.postType = (cgi_.contenType == MULTIPART) ? 0 : 1;
 }
 
