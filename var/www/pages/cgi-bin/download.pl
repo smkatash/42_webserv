@@ -1,64 +1,52 @@
+#!/usr/bin/perl
 
 use strict;
 use warnings;
-use CGI qw(:standard);
 use File::Basename;
+use CGI qw(:standard);
 
-print "I am inside"
+$ENV{'expose_php'} = 'off';
+$ENV{'default_mimetype'} = '';
 
 if ($ENV{'REQUEST_METHOD'} eq 'GET') {
-    my $query_string = $ENV{'QUERY_STRING'};
+	my $destinationDirectory = dirname(dirname($0)) . '/' . 'documents' . '/';
+	my $file = param('file') || '';
+	my $FilePath = $destinationDirectory . $file;
 
-    if ($query_string) {
-        my %query_params = parse_query_string($query_string);
-        my $filename = $query_params{'file'};
+	if (-e $FilePath) {
+		# Set appropriate headers for file download
+		my $date = gmtime();
+		my $server = $ENV{'SERVER_NAME'};
 
-        if ($filename) {
-			my $up_dir = File::Spec->updir();
-			my $documents_dir = File::Spec->catdir($up_dir, "documents"); 
-            my $file = "$documents_dir/$filename";
+		print "HTTP/1.1 200 OK\n";
+		print "Content-Type: application/octet-stream\n";
+		print "Content-Disposition: attachment; filename=\"" . basename($FilePath) . "\"\n";
+		print "Content-Length: " . -s $FilePath . "\n";
+		print "Connection: close\n";
+		print "Date: $date\n";
+		print "Server: $server\n\n";
 
-            if (-e $file) {
-                open(my $fh, '<', $file) or die "Cannot open file: $!";
-                binmode($fh);
-
-                print "Content-Type: application/octet-stream\r\n";
-                print "Content-Disposition: attachment; filename=" . basename($file) . "\r\n";
-                print "Content-Length: " . (-s $fh) . "\r\n\r\n";
-
-                while (my $buffer = <$fh>) {
-                    print $buffer;
-                }
-
-                close($fh);
-            } else {
-                print "Content-Type: text/plain\r\n\r\n";
-                print "File not found.";
-            }
-        } else {
-            print "Content-Type: text/plain\r\n\r\n";
-            print "File name not provided.";
-        }
-    } else {
-        print "Content-Type: text/plain\r\n\r\n";
-        print "Invalid query string.";
-    }
+		# Read and output the file content
+		open(my $fh, '<', $FilePath) or die "Unable to open file: $!";
+		binmode($fh);
+		while (my $chunk = <$fh>) {
+			print $chunk;
+		}
+		close($fh);
+		exit;
+	} else {
+		print "HTTP/1.1 404 Not Found\n";
+		print "Content-Type: text/html; charset=UTF-8\n";
+		print "Connection: close\n";
+		print "Server: $ENV{'SERVER_NAME'}\n\n";
+		print "❌ Not Found 404";
+		exit;
+	}
 } else {
-    print "Content-Type: text/plain\r\n\r\n";
-    print "Invalid request method.";
-}
-
-sub parse_query_string {
-    my ($query_string) = @_;
-    my %params;
-
-    foreach my $param (split(/&/, $query_string)) {
-        my ($name, $value) = split(/=/, $param);
-        $value = '' unless defined $value;
-        $value =~ tr/+/ /;
-        $value =~ s/%([0-9a-fA-F]{2})/chr(hex($1))/eg;
-        $params{$name} = $value;
-    }
-
-    return %params;
+	print "HTTP/1.1 405 Method Not Allowed\n";
+	print "Content-Type: text/html; charset=UTF-8\n";
+	print "Connection: close\n";
+	print "Server: $ENV{'SERVER_NAME'}\n\n";
+	print "❌ Method Not Allowed";
+	exit;
 }
