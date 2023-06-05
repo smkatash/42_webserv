@@ -127,16 +127,13 @@ void Core::createResponse(Socket* socket)
 
 static  bool connectionToKeepAlive( std::string response)
 {
-	int index = 0;
+	size_t index = 0;
 
-	std::string substring ("\r\n\r\n");
+	std::string substring ("Connection: close");
 	index = response.find(substring);
-	if(index != -1)
-		response = response.substr(0,index);
-	if (response.find("close") > 0)
+	if(index == std::string::npos)
 		return (false);
-	else 
-		return (true);
+	return (true);
 }
 
 bool Core::sendResponse( Socket *socket)

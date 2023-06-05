@@ -19,7 +19,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.reasonPhrase = "OK";
 	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName(); // TODO: Discuss if you keep this or no
 	res_.gheader.date       = findCurrentTimeGMT();
-	// res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
+	res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
 	if (!checkRequest())
 		return;
 	try
