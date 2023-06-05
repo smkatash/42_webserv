@@ -1,5 +1,5 @@
-#ifndef RESPONSE_UTILS
-#define RESPONSE_UTILS
+#ifndef RESPONSEUTILS
+#define RESPONSEUTILS
 
 #include <iostream>
 #include <vector>
@@ -7,9 +7,9 @@
 
 std::string findCurrentTimeGMT();
 
-std::string	findContentType(std::string fileExtension);
+std::string findContentType(std::string fileExtension);
 
-std::string	findUsableFile(std::vector<std::string> files, std::string directory);
+std::string findUsableFile(std::vector<std::string> files, std::string directory);
 
 bool		isNumber(std::string str);
 
@@ -29,10 +29,10 @@ T	strtonum(std::string const& str)
 	return i;
 }
 
-bool		Pred(char a, char b);
-std::string	removeDuplicateSlashes(const std::string& str);
-std::string	unchunkData(const std::string& data);
+bool Pred(char a, char b);
+std::string removeDuplicateSlashes(const std::string& str);
+std::string unchunkData(const std::string& data);
 
-
+std::string get_uuid();
 
 #endif

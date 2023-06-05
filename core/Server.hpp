@@ -14,7 +14,6 @@
 #include <vector>
 #include "ConfigFile.hpp"
 
-
 class Server
 {
 	private: 
@@ -27,30 +26,29 @@ class Server
 		int timeoutInSecond_;
 
 	public:
-		// Server(ConfigFile conf);
+		//////////////////////////////////////////////////// canonic methods:
 		Server();
 		~Server();
 		Server (ConfigFile config);
 
-		// SET----------------------------------------------------
+		//////////////////////////////////////////////////// set methods:
 		void setServerAddress(struct sockaddr_in address);
 		void setServerSocket(Socket socket);
 		void setClientsSocket(std::vector<Socket> socket);
-		// GET----------------------------------------------------
+		
+		//////////////////////////////////////////////////// get methods:
 		int getPort();
 		int getServerSocketDescriptor();
-		struct sockaddr_in getServerAddress();
 		Socket getServerSocket();
 		ConfigFile getConfig();
+		struct sockaddr_in getServerAddress();
 
-		// INIT---------------------------------------------------
+		//////////////////////////////////////////////////// member functions:
 		std::vector <Socket> initClientsSocket();
 		bool initServerAddress(struct sockaddr_in* serverAdd);
 		bool initServerSocket(Socket *socket);
-		// main---------------------------------------------------
 		bool serverInit();
 		bool appendNewToSocketList(Socket socket);
-
 };
 
 #endif

@@ -1,16 +1,28 @@
 #include "Core.hpp"
 #include "RequestParser.hpp"
 #include "ResponseHandler.hpp"
+#include "color.hpp"
+
 #include <string>
 #include <iostream>
 #include <vector>
 #include <map>
+#include <signal.h>
 #include <ctime>
 
 #define DEBUG
 
-Core::Core(Parser configs)
-: configs_(configs)
+bool loop = true;
+
+static void catchCtrlC(int sigNum)
+{
+	if(sigNum)
+		;
+  	loop = false;
+}
+
+//////////////////////////////////////////////////// canonic functions:
+Core::Core(Parser configs) : configs_(configs)
 {
 	Server server;
 	size_t i = 0;
@@ -18,10 +30,28 @@ Core::Core(Parser configs)
 	while (i < servers_.size())
 	{
 		if ( servers_[i].serverInit() == false)
-			std::cout << "server Initializzation error" << std::endl;
-		i++;
+		{
+			printError("ERROR: Initializzation error \t| SERVER port: ", servers_[i].getPort());
+			servers_.erase(servers_.begin() + i);
+		}
+		else
+			i++;
 	}
 	populateListeningMap(servers_);
+}
+
+Core::~Core()
+{
+}
+
+//////////////////////////////////////////////////// member functions:
+
+bool	Core::status()
+{
+	if( listeningSockets_.empty())
+		return false;
+	else	
+		return true;
 }
 
 std::vector <Server> Core::serversCreate()
@@ -40,10 +70,6 @@ std::vector <Server> Core::serversCreate()
 	return servers;
 }
 
-Core::~Core()
-{
-}
-
 void Core::populateListeningMap(std::vector <Server> servers)
 {
 	size_t i = 0;
@@ -58,24 +84,21 @@ void Core::populateListeningMap(std::vector <Server> servers)
 void Core::populateMap(Socket socket)
 {
 	int sD;
-	
+
 	sD = socket.getSocketDescriptor();
 	sockets_.insert(std::pair<int, Socket>(sD, socket));
 }
 
 bool Core::setNewConnection(Server server)
 {
-	Socket newSocket(server.getPort(), server.getServerAddress(), server.getServerSocketDescriptor(), server.getConfig());
+	Socket newSocket(server.getPort(), \
+		server.getServerAddress(), \
+		server.getServerSocketDescriptor(),\
+		server.getConfig());
 	if(newSocket.socketInit() == false)
-	{
-		printf("error socket init");
-		return (false);
-	}
+		return(printError("ERROR: error socket init \t\t| SERVER port:", server.getPort()));
 	if (server.appendNewToSocketList(newSocket) == false)
-	{
-		printf("error append new socket");
-		return (false);
-	}
+		return(printError("ERROR: error in socket list \t\t| SERVER port:", server.getPort()));
 	populateMap(newSocket);
 	return (true);
 }
@@ -88,55 +111,73 @@ static struct timespec setTimer(int sec, int nsec)
 	return (timeout);
 }
 
-void Core::receiver(RequestParser *request, Socket* socket)
+void Core::createResponse(Socket* socket)
 {
+	RequestParser request;
+
 	#ifdef DEBUG
-		std::cout << "LA DEMANDE ---------------------------------------------------------------------------------------------------------------->>" << std::endl;
-		std::cout << socket->getData() << std::endl;
-		std::cout << "<<------------------------------------------------------------------------------------------------------------------------END" << std::endl;
+		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
-	request->initParser(socket->getData());
-	ResponseHandler response(request->getRequest(), socket->getServerConfiguration());
+	request.initParser(socket->getData());
+	ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
 	response.handle();
 	socket->setResponse(response.generate());
 }
 
-bool Core::sender( Socket *socket)
+static  bool connectionToKeepAlive( std::string response)
+{
+	int index = 0;
+
+	std::string substring ("\r\n\r\n");
+	index = response.find(substring);
+	if(index != -1)
+		response = response.substr(0,index);
+	if (response.find("close") > 0)
+		return (false);
+	else 
+		return (true);
+}
+
+bool Core::sendResponse( Socket *socket)
 {
 	#ifdef DEBUG
-		std::cout << "LA RESPONSE--------------------------------------------------------------------------------------------------------------->>" << std::endl;
-		std::cout << socket->getResponse() << std::endl;
-		std::cout << "<<-----------------------------------------------------------------------------------------------------------------------END" << std::endl;
+		printLaResponse(socket->getResponse(), socket->getPort());
 	#endif
-	
-	if (socket->writeHandler(socket->getResponse()) == false)
+
+	bool connection = connectionToKeepAlive(socket->getResponse());
+	if (socket->writeHandler(socket->getResponse(), connection) == false)
 	{
 		socket->closeConnection();
 		sockets_.erase(socket->getSocketDescriptor());
 		return (false);
 	}
-	else 
+	else
 		return true;
 }
 
-// static bool checkTimeout(Socket *socket)
-// {
-// 	time_t check;
-// 	time_t start;
+static std::map<int, Socket> checkTimeout(std::map<int, Socket> sockets)
+{
+	time_t check;
+	time_t start;
 
-// 	check = time(NULL);
-// 	start = socket->getConnectionTimer();
-// 	if (check - start > 10) //should be the variable in the config file;
-// 	{
-// 		ResponseHandler response(RequestParser request, ConfigFile file);
-// 		socket->closeConnection();
-// 		return (false);
-// 	}
-// 	else
-// 		socket->setConnectionTimer();
-// 	return (true);
-// }
+	std::map<int, Socket> socketsCopy;
+	socketsCopy = sockets;
+
+	check = time(NULL);
+	std::map<int, Socket>::iterator socket;
+	for (socket = socketsCopy.begin(); socket != socketsCopy.end(); socket++)
+	{
+		start = socket->second.getConnectionTimer();
+		if((int)(check - start) > TIMEOUT)
+		{
+			printAction("ACTION: \033[38;5;189mTIMED OUT \t\t\t\t\033[38;5;49m| SOCKET sd: ", socket->first);
+			socket->second.closingConnectionServerSide();
+			sockets.erase(socket->second.getSocketDescriptor());
+		}
+	}
+	return (sockets);
+}
 
 void Core::connectionHandler(struct kevent currentEvent)
 {
@@ -144,59 +185,56 @@ void Core::connectionHandler(struct kevent currentEvent)
 	std::map<int, Socket>::iterator socketIterator = sockets_.find(socketDescriptor);
 	if(socketIterator != sockets_.end())
 	{
-		RequestParser request;
-		if (currentEvent.filter == EVFILT_READ \
-			 && socketIterator->second.getConnectionStatus() == true \
-			 && socketIterator->second.getRequestStatus() == false)
+		////////////////////////////// READ EVENT //////////////////////
+		if (currentEvent.filter == EVFILT_READ && \
+			socketIterator->second.getConnectionStatus() == true && \
+			socketIterator->second.getRequestStatus() == false)
 		{
-			// if(checkTimeout(&(socketIterator->second)) == true)
-			// {
-				int read_status = 0;
-				read_status = socketIterator->second.readHandler(currentEvent.data);
-				if(read_status == 0 )
-					sockets_.erase(socketIterator->second.getSocketDescriptor());
-				else if(socketIterator->second.getRequestStatus() == true)// && socketIterator->second.getRequestStatus() == false)
-					receiver(&request, &(socketIterator->second)); //receiver is a request maker;
-			// }
+			if( socketIterator->second.readHandler(currentEvent.data) == 0)
+				sockets_.erase(socketIterator->second.getSocketDescriptor());
+			else if(socketIterator->second.getRequestStatus() == true)
+				createResponse(&(socketIterator->second));
+			else
+				;
 		}
-		if (currentEvent.filter == EVFILT_WRITE && socketIterator->second.getRequestStatus() == true)
+		////////////////////////////// WRITE EVENT /////////////////////
+		if (currentEvent.filter == EVFILT_WRITE && \
+			socketIterator->second.getConnectionStatus() == true && \
+			socketIterator->second.getRequestStatus() == true)
 		{
-			// if(checkTimeout(&(socketIterator->second)) == true)
-			// {
-				if (socketIterator->second.getConnectionStatus() == true)
-				{
-					if(sender(&(socketIterator->second)) == false)
-					;
-						// sockets_.erase(socketIterator->second.getSocketDescriptor());
-				}
-				if (socketIterator->second.getConnectionStatus() == false)
-					sockets_.erase(socketIterator->second.getSocketDescriptor());
-			// }
+			if (socketIterator->second.getConnectionStatus() == true)
+			{
+				if(sendResponse(&(socketIterator->second)) == false)
+				;
+					// sockets_.erase(socketIterator->second.getSocketDescriptor());
+			}
+			if (socketIterator->second.getConnectionStatus() == false)
+				sockets_.erase(socketIterator->second.getSocketDescriptor());
 		}
 	}
 }
 
 void	Core::run()
 {
+	signal(SIGINT, catchCtrlC);
+
 	int i;
 	int tmpEventDescriptor;
 	int numOfEvent;
+
 	struct timespec refresh = setTimer(1,0);
 	struct kevent currentEvent;
 
+
 	for(i = 0; i < MAX_EVENT; i++)
 		memset(&eventlist_[i], 0, sizeof(eventlist_[i]));
-	std::cout << "Server Listening...   ╭∩╮ʕ•ᴥ•ʔ╭∩╮   <><   " << std::endl;
+	printHeader();
 
-	while (1)
+	while (loop)
 	{
 		i = 0;
 		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &refresh);
-		// numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, NULL);
-		// if(numOfEvent == 0)
-		// {
-			
-		// }
+		sockets_ = checkTimeout(sockets_);
 		while (i < numOfEvent)
 		{
 			currentEvent = eventlist_[i];
@@ -206,7 +244,7 @@ void	Core::run()
 			{
 				if(setNewConnection(serversIterator->second) == false) // map populated with socket
 				{
-					printf("setNewConnectionError\n");
+					std::cout << "setNewConnectionError\n" << std::endl;
 					exit(0); //! We shouldn't exit and risk breaking the server, we should instead continue to the next event
 				}
 			}
@@ -215,4 +253,6 @@ void	Core::run()
 			i++;
 		}
 	}
+	printFooter();
+	return;
 }

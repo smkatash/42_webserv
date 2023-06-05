@@ -6,62 +6,77 @@
 #include "ConfigFile.hpp"
 #include "Parser.hpp" // Methods enum
 
-#define AUTH_FILE_PATH "./authentication_db/session_ids"
+#define HTTPVERSION "HTTP/1.1"
+#define SIDPATH     "./authentication_db/session_ids"
+
+static const struct s_methods
+{
+	std::string methodStr;
+	Methods     methodVal;
+}
+m[] =
+{
+	{"GET", GET},
+	{"POST", POST},
+	{"DELETE", DELETE}
+};
 
 class ResponseHandler
 {
-private:
-	Response	res_;
-	Request		req_;
-	ConfigFile	conf_;
-
-	std::string	uri_;
-	std::string	endpoint_;
-	t_endpoint	location_;
-
-	// Response Generating
-	std::string	responseLine();
-	std::string	generalHeader();
-	std::string	responseHeader();
-	std::string	entityHeader();
-	void		setBodyErrorPage(int code);
-
-	// Response Handling
-	void		processCGIResponse(std::string& cgiResponse);
-	bool		checkRequest();
-	bool		isMethodAllowed(Methods method);
-	void		setCode(int code);
-	std::string	findUriEndpoint(const std::string& uri);
-	void		prepUriFile(std::string& uri, const t_endpoint& loc);
-	void		setResponseBody(std::string fileName);
-	void		returnResponse(t_endpoint loc);
-	void		autoIndexResponse(t_endpoint loc, std::string ep);
-	void		dirResponse(t_endpoint loc, std::string ep);
-	void		normalResponse(t_endpoint loc, std::string uri);
-
-	// TODO: Not clean needs fixing
-	void		normalDelResponse(t_endpoint loc, std::string uri);
-	void		dirDelResponse(t_endpoint loc, std::string ep);
-
-	void		addToSessionIds(std::string id);
-	bool		validCookie();
-	bool		authorized(std::string authorization);
-	bool		authenticated();
-	void		authenticate();
-
-	void		get();
-	void		post();
-	void		del();
-
 public:
 	ResponseHandler(Request req, ConfigFile conf);
 	~ResponseHandler();
 
-	void		handle();
+	void        handle();
+	std::string generate();
 
-	std::string	generate();
+private:
+	Response    res_;
+	Request     req_;
+	ConfigFile  conf_;
+
+	std::string uri_;
+	std::string endpoint_;
+	t_endpoint  location_;
+
+	/* Methods */
+	void        get();
+	void        post();
+	void        del();
+
+	/* Response Handling */
+	void        processCGIResponse(std::string& cgiResponse);
+	std::string findUriEndpoint(const std::string& uri);
+	void        prepUriFile();
+	void        setResponseBody(std::string fileName);
+	void        returnResponse();
+	void        autoIndexResponse(t_endpoint loc, std::string ep);
+	void        dirResponse(Methods method);
+	void        normalResponse(Methods method);
+
+	/* Response Code Setting */
+	void        setBodyErrorPage(int code);
+	void        setCode(int code);
+
+	/* Session Handling */
+	void        addToSessionIds(const std::string& id);
+	bool        validCookie();
+	bool        authorized(std::string authorization);
+	bool        authenticated();
+	void        authenticate();
+
+	/* Checks */
+	bool        checkRequest();
+	bool        checkMethod();
+	bool        isMethodAllowed(Methods method);
+
+	/* Response Generating */
+	std::string responseLine();
+	std::string generalHeader();
+	std::string responseHeader();
+	std::string entityHeader();
 };
 
-std::string		initAutoIndex(std::string endpoint, std::string root);
+std::string     initAutoIndex(std::string endpoint, std::string root);
 
 #endif

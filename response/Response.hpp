@@ -25,6 +25,30 @@
 #define	UNIMPLEMENTED   501    // "501 Not Implemeneted" /* Method not implemented */
 #define	HTTPNONO        505    // "505 HTTP Version Not Supported"
 
+static const struct requestCodes
+{
+	int                statusCode;
+	std::string        reasonPhrase;
+	bool               withBody;
+}
+rc[] =
+{
+	{OK,            "OK",                         false},
+	{CREATED,       "Created",                    false},
+	{ACCEPTED,      "Accepted",                   false},
+	{MOVEDPERMAN,   "Moved Permanently",          false},
+	{FOUND,         "Found",                      false},
+	{BADREQ,        "Bad Request",                true},
+	{UNAUTHORIZED,  "Unauthorized",               true},
+	{NOTFOUND,      "Not Found",                  true},
+	{NOTALLOWED,    "Not Allowed",                true},
+	{LENGTHPLS,     "Length Required",            true},
+	{TOOLARGE,      "Content Too Large",          true},
+	{LONGURI,       "URI Too Long",               true},
+	{INTERNALERROR, "Internal Server Error",      true},
+	{UNIMPLEMENTED, "Not Implemented",            true},
+	{HTTPNONO,      "HTTP Version Not Supported", true},
+};
 
 struct response_line {
 	std::string         version;
