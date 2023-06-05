@@ -17,7 +17,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.version      = HTTPVERSION;
 	res_.rline.statusCode   = "200";
 	res_.rline.reasonPhrase = "OK";
-	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName();
+	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName(); // TODO: Discuss if you keep this or no
 	res_.gheader.date       = findCurrentTimeGMT();
 	// res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
 	if (!checkRequest())
@@ -44,6 +44,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 
 ResponseHandler::~ResponseHandler() {}
 
+
 /* Methods ---------------------------------------------------------------------------------------------- */
 
 void ResponseHandler::get()
@@ -52,7 +53,7 @@ void ResponseHandler::get()
 		return setCode(NOTALLOWED);
 
 	/* Check if you have to send to cgi handler by checking if
-	there's a query */
+	there's a query and if there's cgi in config file */
 	if (!location_.lcgi.second.empty() && uri_.find('?') != std::string::npos)
 	{
 		CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
@@ -60,13 +61,12 @@ void ResponseHandler::get()
 		res_.cgiResponse = cgi.getCGIResponse();
 		return ;
 	}
-
-	// TODO: Should do get if there's no cgi
+	/* if there's no cgi or query for cgi we do normal get */
 	if (!location_.lredirect.empty())
 		return returnResponse();
 	if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
-		return dirResponse();
-	return normalResponse();
+		return dirResponse(GET);
+	return normalResponse(GET);
 }
 
 void ResponseHandler::post()
@@ -97,7 +97,8 @@ void ResponseHandler::post()
 		processCGIResponse(res_.cgiResponse);
 		return ;
 	}
-	// TODO: Should do get if there's no cgi
+	/* if there's no cgi we do normal get */
+	return get();
 }
 
 void ResponseHandler::del()
@@ -105,8 +106,8 @@ void ResponseHandler::del()
 	if (!isMethodAllowed(DELETE))
 		return setCode(NOTALLOWED);
 	if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
-		return dirDelResponse();
-	return normalDelResponse();
+		return dirResponse(DELETE);
+	return normalResponse(DELETE);
 }
 
 void ResponseHandler::handle()
@@ -130,7 +131,141 @@ void ResponseHandler::handle()
 	return setCode(UNIMPLEMENTED);
 }
 
+
 /* Response Handling ------------------------------------------------------------------------------------ */
+
+std::string ResponseHandler::findUriEndpoint(const std::string& uri)
+{
+	if (uri == "")
+		return "/";
+	std::string ep = conf_.getEndPoint(uri);
+	if (ep == "")
+		return findUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start until '/' (basically with every function call we step back a directory)
+	return ep;
+}
+
+/* Prepares URI to be opened as a file by appending it to the root folder,
+	removing a forward slash from the end, and adding a '.' to the front */
+void ResponseHandler::prepUriFile()
+{
+	if (uri_[0] == '/')
+		uri_.erase(uri_.begin());
+	if (location_.lroot.empty())
+		uri_.insert(0, conf_.getRoot(""));
+	else
+		uri_.insert(0, location_.lroot);
+	if (uri_[uri_.size() - 1] == '/')
+		uri_.erase(uri_.end());
+	if (uri_[0] == '/')
+		uri_.insert(0, ".");
+}
+
+void ResponseHandler::setResponseBody(std::string fileName)
+{
+	std::ifstream file;
+	file.open(fileName.c_str());
+	if (!file.is_open())
+		return setCode(NOTFOUND);
+	if (!file.good())
+		return setCode(INTERNALERROR);
+	std::string temp;
+	while (std::getline(file, temp))
+	{
+		if (file.eof())
+			res_.rbody += temp;
+		else
+			res_.rbody += temp + '\n';
+	}
+	res_.eheader.contentLength = toString(res_.rbody.length());
+	file.close();
+	return setCode(OK);
+}
+
+/* In case there's redirection defined in config file */
+void ResponseHandler::returnResponse()
+{
+	res_.rheader.location = location_.lredirect;
+	res_.rbody = "\r\n";
+	if (location_.lredirect.substr(0, 4) == "http")
+		return setCode(FOUND);
+	else
+		return setCode(MOVEDPERMAN);
+}
+
+/* In case there's autoindexing in config file */
+void ResponseHandler::autoIndexResponse(t_endpoint loc, std::string ep)
+{
+	std::string templateFile;
+	if (loc.lroot.empty())
+		templateFile = initAutoIndex(ep, conf_.getRoot(""));
+	else
+		templateFile = initAutoIndex(ep, loc.lroot);
+	if (templateFile.empty())
+		return setCode(NOTFOUND);
+	res_.rbody = templateFile;
+	res_.eheader.contentType = findContentType(".html");
+	res_.eheader.contentLength = toString(templateFile.size());
+	return setCode(OK);
+}
+
+/* In case the URI is a directory we find the index file inside that directory */
+void ResponseHandler::dirResponse(Methods method)
+{
+	if (location_.lautoindex)
+		return autoIndexResponse(location_, endpoint_);
+	if (location_.lindex.empty())
+		return setCode(NOTFOUND);
+
+	std::string dir;
+	if (location_.lroot.empty())
+		dir = conf_.getRoot("") + endpoint_.substr(1);
+	else
+		dir = location_.lroot + endpoint_.substr(1);
+
+	uri_ = findUsableFile(location_.lindex, dir);
+	if (uri_.empty())
+		return setCode(NOTFOUND);
+
+	uri_ = endpoint_ + '/' + uri_;
+	return normalResponse(method);
+}
+
+/* For a normal GET or DELETE request (i.e. URI is not a directory) */
+void ResponseHandler::normalResponse(Methods method)
+{
+	prepUriFile();
+	std::string uriPath = uri_.substr(0, uri_.find('?'));
+	res_.eheader.contentType = findContentType(uriPath.substr(uri_.find_last_of('.')));
+	if (method == GET)
+		return setResponseBody(uriPath);
+	/* else the method is DELETE */
+	unlink(uri_.c_str());
+	setCode(ACCEPTED);
+}
+
+/* Take response from CGI and parse the necessary values from it */
+void ResponseHandler::processCGIResponse(std::string& cgi)
+{
+	// TODO: If no content_length is set from the cgi. The server should set it manually.
+	std::istringstream iss(cgi);
+	std::string buffer;
+	iss >> buffer;
+	if (buffer.compare(0, 4, "HTTP") == 0) // There's nothing to change
+		return;
+
+	size_t statusLocation = cgi.find("Status: ");
+	if (statusLocation == std::string::npos) // Extra safety
+		return ;
+
+	std::string status = cgi.substr(statusLocation + 8);
+	setCode(strtonum<int>(status));
+	cgi = cgi.erase(statusLocation, cgi.find('\n', statusLocation) + 1);
+	std::string rline = res_.rline.version + ' ' + res_.rline.statusCode + ' ' + res_.rline.reasonPhrase + "\r\n";
+	cgi.insert(0, rline);
+}
+
+
+/* Response Code Setting -------------------------------------------------------------------------------- */
 
 void ResponseHandler::setBodyErrorPage(int code)
 {
@@ -232,162 +367,6 @@ void ResponseHandler::setCode(int code)
 	}
 }
 
-std::string ResponseHandler::findUriEndpoint(const std::string& uri)
-{
-	if (uri == "")
-		return "/";
-	std::string ep = conf_.getEndPoint(uri);
-	if (ep == "")
-		return findUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start until '/' (basically with every function call we step back a directory)
-	return ep;
-}
-
-/* Prepares URI to be opened as a file by appending it to the root folder,
-	removing a forward slash from the end, and adding a '.' to the front */
-void ResponseHandler::prepUriFile()
-{
-	if (uri_[0] == '/')
-		uri_.erase(uri_.begin());
-	if (location_.lroot.empty())
-		uri_.insert(0, conf_.getRoot(""));
-	else
-		uri_.insert(0, location_.lroot);
-	if (uri_[uri_.size() - 1] == '/')
-		uri_.erase(uri_.end());
-	if (uri_[0] == '/')
-		uri_.insert(0, ".");
-}
-
-void ResponseHandler::setResponseBody(std::string fileName)
-{
-	std::ifstream file;
-	file.open(fileName.c_str());
-	if (!file.is_open())
-		return setCode(NOTFOUND);
-	if (!file.good())
-		return setCode(INTERNALERROR);
-	std::string temp;
-	while (std::getline(file, temp))
-	{
-		if (file.eof())
-			res_.rbody += temp;
-		else
-			res_.rbody += temp + '\n';
-	}
-	res_.eheader.contentLength = toString(res_.rbody.length());
-	file.close();
-	return setCode(OK);
-}
-
-void ResponseHandler::returnResponse()
-{
-	res_.rheader.location = location_.lredirect;
-	res_.rbody = "\r\n";
-	if (location_.lredirect.substr(0, 4) == "http")
-		return setCode(FOUND);
-	else
-		return setCode(MOVEDPERMAN);
-}
-
-void ResponseHandler::autoIndexResponse(t_endpoint loc, std::string ep)
-{
-	std::string templateFile;
-	if (loc.lroot.empty())
-		templateFile = initAutoIndex(ep, conf_.getRoot(""));
-	else
-		templateFile = initAutoIndex(ep, loc.lroot);
-	if (templateFile.empty())
-		return setCode(NOTFOUND);
-	res_.rbody = templateFile;
-	res_.eheader.contentType = findContentType(".html");
-	res_.eheader.contentLength = toString(templateFile.size());
-	return setCode(OK);
-}
-
-void ResponseHandler::dirResponse()
-{
-	std::cout << location_.lautoindex << std::endl;
-	if (location_.lautoindex)
-		return autoIndexResponse(location_, endpoint_);
-	if (location_.lindex.empty())
-		return setCode(NOTFOUND);
-
-	std::string dir;
-	if (location_.lroot.empty())
-		dir = conf_.getRoot("") + endpoint_.substr(1);
-	else
-		dir = location_.lroot + endpoint_.substr(1);
-
-	uri_ = findUsableFile(location_.lindex, dir);
-	if (uri_.empty())
-		return setCode(NOTFOUND);
-
-	uri_ = endpoint_ + '/' + uri_;
-	return normalResponse();
-}
-
-void ResponseHandler::normalResponse()
-{
-	prepUriFile();
-	std::string uriPath = uri_.substr(0, uri_.find('?'));
-	res_.eheader.contentType = findContentType(uriPath.substr(uri_.find_last_of('.')));
-	return setResponseBody(uriPath);
-}
-
-void ResponseHandler::processCGIResponse(std::string& cgi)
-{
-	// TODO: If no content_length is set from the cgi. The server should set it manually.
-	std::istringstream iss(cgi);
-	std::string buffer;
-	iss >> buffer;
-	if (buffer.compare(0, 4, "HTTP") == 0) // There's nothing to change
-		return;
-
-	size_t statusLocation = cgi.find("Status: ");
-	if (statusLocation == std::string::npos) // Extra safety
-		return ;
-
-	std::string status = cgi.substr(statusLocation + 8);
-	setCode(strtonum<int>(status));
-	cgi = cgi.erase(statusLocation, cgi.find('\n', statusLocation) + 1);
-	std::string rline = res_.rline.version + ' ' + res_.rline.statusCode + ' ' + res_.rline.reasonPhrase + "\r\n";
-	cgi.insert(0, rline);
-}
-
-
-
-void ResponseHandler::normalDelResponse()
-{
-	prepUriFile();
-	res_.eheader.contentType = findContentType(uri_.substr(uri_.find_last_of('.')));
-	unlink(uri_.c_str());
-	setCode(ACCEPTED);
-	return ;
-}
-
-void ResponseHandler::dirDelResponse()
-{
-	if (location_.lautoindex)
-		return autoIndexResponse(location_, endpoint_);
-	if (location_.lindex.empty())
-		return setCode(NOTFOUND);
-	std::string dir;
-	if (location_.lroot.empty())
-		dir = conf_.getRoot("") + endpoint_.substr(1);
-	else
-		dir = location_.lroot + endpoint_.substr(1);
-	uri_ = findUsableFile(location_.lindex, dir);
-	if (uri_.empty())
-		return setCode(NOTFOUND);
-	uri_ = endpoint_ + '/' + uri_;
-	return normalDelResponse();
-}
-
-
-
-
-
-
 
 /* Session Handling ------------------------------------------------------------------------------------- */
 
@@ -463,6 +442,7 @@ void ResponseHandler::authenticate()
 	setCode(UNAUTHORIZED);
 }
 
+
 /* Checks ----------------------------------------------------------------------------------------------- */
 
 bool ResponseHandler::checkRequest()
@@ -490,6 +470,7 @@ bool ResponseHandler::isMethodAllowed(Methods method)
 	}
 	return true;
 }
+
 
 /* Response Generation ---------------------------------------------------------------------------------- */
 

@@ -11,6 +11,13 @@
 
 class ResponseHandler
 {
+public:
+	ResponseHandler(Request req, ConfigFile conf);
+	~ResponseHandler();
+
+	void        handle();
+	std::string generate();
+
 private:
 	Response    res_;
 	Request     req_;
@@ -20,29 +27,24 @@ private:
 	std::string endpoint_;
 	t_endpoint  location_;
 
-	/* Response Generating */
-	std::string responseLine();
-	std::string generalHeader();
-	std::string responseHeader();
-	std::string entityHeader();
-	void        setBodyErrorPage(int code);
+	/* Methods */
+	void        get();
+	void        post();
+	void        del();
 
 	/* Response Handling */
 	void        processCGIResponse(std::string& cgiResponse);
-	bool        checkRequest();
-	bool        isMethodAllowed(Methods method);
-	void        setCode(int code);
 	std::string findUriEndpoint(const std::string& uri);
 	void        prepUriFile();
 	void        setResponseBody(std::string fileName);
 	void        returnResponse();
 	void        autoIndexResponse(t_endpoint loc, std::string ep);
-	void        dirResponse();
-	void        normalResponse();
+	void        dirResponse(Methods method);
+	void        normalResponse(Methods method);
 
-	// TODO: Not clean needs fixing
-	void        normalDelResponse();
-	void        dirDelResponse();
+	/* Response Code Setting */
+	void        setBodyErrorPage(int code);
+	void        setCode(int code);
 
 	/* Session Handling */
 	void        addToSessionIds(const std::string& id);
@@ -51,18 +53,15 @@ private:
 	bool        authenticated();
 	void        authenticate();
 
-	/* Methods */
-	void        get();
-	void        post();
-	void        del();
+	/* Checks */
+	bool        checkRequest();
+	bool        isMethodAllowed(Methods method);
 
-public:
-	ResponseHandler(Request req, ConfigFile conf);
-	~ResponseHandler();
-
-	void        handle();
-
-	std::string generate();
+	/* Response Generating */
+	std::string responseLine();
+	std::string generalHeader();
+	std::string responseHeader();
+	std::string entityHeader();
 };
 
 std::string     initAutoIndex(std::string endpoint, std::string root);
