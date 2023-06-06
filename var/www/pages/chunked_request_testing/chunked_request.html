@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>File Upload</title>
+</head>
+<body>
+  <form id="uploadForm" enctype="multipart/form-data">
+	<input type="file" name="file" id="file">
+	<input type="submit" value="Upload">
+  </form>
+
+  <script>
+	const uploadForm = document.getElementById('uploadForm');
+	const fileInput = document.getElementById('file');
+
+	uploadForm.addEventListener('submit', (e) => {
+	  e.preventDefault();
+
+	  const file = fileInput.files[0];
+	  if (!file) {
+		alert('Please select a file.');
+		return;
+	  }
+
+	  const formData = new FormData();
+	  formData.append('file', file);
+
+	  fetch('/upload', {
+		method: 'POST',
+		body: formData,
+		headers: {
+		  'Transfer-Encoding': 'chunked'
+		}
+	  })
+		.then(response => {
+		  // Handle the response
+		  console.log('Upload completed!');
+		})
+		.catch(error => {
+		  // Handle errors
+		  console.error('Error:', error);
+		});
+	});
+  </script>
+</body>
+</html>

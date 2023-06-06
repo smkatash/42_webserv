@@ -291,6 +291,7 @@ void ResponseHandler::setBodyErrorPage(int code)
 			res_.rbody += temp + '\n';
 	}
 	res_.eheader.contentLength = toString(res_.rbody.length());
+	res_.eheader.contentType = findContentType(".html");
 	file.close();
 }
 
@@ -303,6 +304,7 @@ void ResponseHandler::setCode(int code)
 	{
 		if (rc[i].statusCode == code)
 		{
+			res_.rline.reasonPhrase = rc[i].reasonPhrase;
 			if (rc[i].withBody == true)
 				setBodyErrorPage(code);
 			break;
