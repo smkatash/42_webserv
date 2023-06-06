@@ -1,6 +1,0 @@
-@endpoint = www.nginx.com
-
-
-GET {{endpoint}}
-
-
