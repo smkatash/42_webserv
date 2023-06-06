@@ -19,7 +19,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.reasonPhrase = "OK";
 	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName(); // TODO: Discuss if you keep this or no
 	res_.gheader.date       = findCurrentTimeGMT();
-	res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
+	// res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
 	if (!checkRequest())
 		return;
 	try
@@ -253,7 +253,10 @@ void ResponseHandler::processCGIResponse(std::string& cgi)
 		return ;
 
 	std::string status = cgi.substr(statusLocation + 8);
-	setCode(strtonum<int>(status));
+	if (status.compare(0, 2, "OK") == 0)
+		setCode(OK);
+	else
+		setCode(strtonum<int>(status));
 	cgi = cgi.erase(statusLocation, cgi.find('\n', statusLocation) + 1);
 	std::string rline = res_.rline.version + ' ' + res_.rline.statusCode + ' ' + res_.rline.reasonPhrase + "\r\n";
 	cgi.insert(0, rline);
@@ -288,6 +291,7 @@ void ResponseHandler::setBodyErrorPage(int code)
 			res_.rbody += temp + '\n';
 	}
 	res_.eheader.contentLength = toString(res_.rbody.length());
+	res_.eheader.contentType = findContentType(".html");
 	file.close();
 }
 
@@ -300,6 +304,7 @@ void ResponseHandler::setCode(int code)
 	{
 		if (rc[i].statusCode == code)
 		{
+			res_.rline.reasonPhrase = rc[i].reasonPhrase;
 			if (rc[i].withBody == true)
 				setBodyErrorPage(code);
 			break;
