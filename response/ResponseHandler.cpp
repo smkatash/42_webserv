@@ -344,7 +344,7 @@ bool ResponseHandler::authorized(std::string authorization)
 	std::string buffer;
 	while (std::getline(htpassFile, buffer))
 	{
-		std::cout << buffer << std::endl;
+		std::cout << auth << "|" << buffer << std::endl;
 		if (buffer == auth)
 		{
 			std::string id = get_uuid();
@@ -365,7 +365,8 @@ bool ResponseHandler::validCookie()
 	std::string	buffer;
 	while (std::getline(sessionIds, buffer))
 	{
-		if (buffer.compare(0, buffer.size(), cookie) == 0)
+		std::cout << cookie << " | " << buffer << std::endl;
+		if (cookie.compare(0, buffer.size(), buffer) == 0)
 			return true;
 	}
 	return false;
@@ -384,7 +385,7 @@ void ResponseHandler::authenticate()
 {
 	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
 	res_.rbody = "\r\n";
-	res_.gheader.connection = "close";
+	// res_.gheader.connection = "close";
 	res_.eheader.contentLength = "0";
 	setCode(UNAUTHORIZED);
 }

@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <ctime>
 
-#define DEBUG
+// #define DEBUG
 
 bool loop = true;
 

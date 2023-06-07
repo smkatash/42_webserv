@@ -10,37 +10,53 @@
   </form>
 
   <script>
-	const uploadForm = document.getElementById('uploadForm');
-	const fileInput = document.getElementById('file');
+const uploadForm = document.getElementById('uploadForm');
+const fileInput = document.getElementById('file');
 
-	uploadForm.addEventListener('submit', (e) => {
-	  e.preventDefault();
+uploadForm.addEventListener('submit', (e) => {
+  e.preventDefault();
 
-	  const file = fileInput.files[0];
-	  if (!file) {
-		alert('Please select a file.');
-		return;
-	  }
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('Please select a file.');
+    return;
+  }
 
-	  const formData = new FormData();
-	  formData.append('file', file);
+  const chunkSize = 1024; // Chunk size in bytes (e.g., 1 MB)
+  let offset = 0;
 
-	  fetch('/upload', {
-		method: 'POST',
-		body: formData,
-		headers: {
-		  'Transfer-Encoding': 'chunked'
-		}
-	  })
-		.then(response => {
-		  // Handle the response
-		  console.log('Upload completed!');
-		})
-		.catch(error => {
-		  // Handle errors
-		  console.error('Error:', error);
-		});
-	});
+  function uploadChunk() {
+    const chunk = file.slice(offset, offset + chunkSize);
+    const isLastChunk = offset + chunkSize >= file.size;
+
+    const formData = new FormData();
+    formData.append('file', chunk, file.name);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/chunked_request_testing', true);
+
+    if (!isLastChunk) {
+      xhr.setRequestHeader('Transfer-Encoding', 'chunked');
+    }
+
+    xhr.onload = function () {
+      if (xhr.status === 200) {
+        if (isLastChunk) {
+          console.log('Upload completed!');
+        } else {
+          offset += chunkSize;
+          uploadChunk();
+        }
+      } else {
+        console.error('Error:', xhr.status);
+      }
+    };
+
+    xhr.send(formData);
+  }
+
+  uploadChunk();
+});
   </script>
 </body>
 </html>
