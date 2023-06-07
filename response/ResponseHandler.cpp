@@ -71,10 +71,15 @@ void ResponseHandler::get()
 
 void ResponseHandler::post()
 {
-	if (req_.eheader.contentLength.empty())
-		return setCode(LENGTHPLS);
-
 	/* TODO: Handle cases where content length isn't known */
+	if (req_.eheader.contentLength.empty())
+	{
+		if (req_.rheader.expect.compare(0, 12, "100-continue") == 0)
+			return setCode(CONTINUE);
+		if (req_.gheader.transferEncoding != "chunked")
+			return setCode(LENGTHPLS);
+	}
+
 	size_t maxBodySize = conf_.getClientMaxBodySize();
 	size_t reqContentLength = strtonum<unsigned long>(req_.eheader.contentLength);
 	if (maxBodySize != 0 && maxBodySize < reqContentLength)
