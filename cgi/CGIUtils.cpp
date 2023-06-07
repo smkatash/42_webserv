@@ -1,6 +1,5 @@
 #include "CGIHandler.hpp"
 
-/* CGI helpers */
 
 std::string base64Decode(const std::string& data)
 {
@@ -42,58 +41,38 @@ std::string base64Decode(const std::string& data)
 	}
 	return(decoded);
 }
-// std::vector<char> base64Decode(const std::string& data)
-// {
-// 	const char	fillchar = '=';
-// 	static std::string  cvt = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-// 								"abcdefghijklmnopqrstuvwxyz"
-// 								"0123456789+/";
-// 	std::string::size_type  i;
-// 	char c;
-// 	char ch;
-// 	std::string::size_type  len = data.length();
-// 	std::vector<char>  decoded;
 
-// 	for (i = 0; i < len; ++i)
-// 	{
-// 		c = (char) cvt.find(data[i]);
-// 		++i;
-// 		ch = (char) cvt.find(data[i]);
-// 		c = (c << 2) | ((ch >> 4) & 0x3);
-// 		decoded.push_back(c);
-// 		if (++i < len)
-// 		{
-// 			c = data[i];
-// 			if (fillchar == c)
-// 				break;
-// 			c = (char) cvt.find(c);
-// 			ch = ((ch << 4) & 0xf0) | ((c >> 2) & 0xf);
-// 			decoded.push_back(ch);
-// 		}
-// 		if (++i < len)
-// 		{
-// 			ch = data[i];
-// 			if (fillchar == ch)
-// 				break;
-// 			ch = (char) cvt.find(ch);
-// 			c = ((c << 6) & 0xc0) | ch;
-// 			decoded.push_back(c);
-// 		}
-// 	}
-// 	return(decoded);
-// }
-
-std::string	currentDirectory() {
+std::string	getCwd() {
 	char path[MAX_PATH_LEN];
+
 	if (!getcwd(path, MAX_PATH_LEN)) {
 		throw std::runtime_error("Failed to get current working directory.");
 	}
 	return std::string(path);
 }
 
+std::string	getCgiAbsolutePath(int type) {
+	switch (type)
+	{
+		case PHP:
+			return getAbsolutePath(PHP_ROOT, PHP_CGI_PATH);
+			break;
+		case PYTHON:
+			return getAbsolutePath(PHP_ROOT, PYTHON_CGI_PATH);
+			break;
+		case PERL:
+			return getAbsolutePath(PHP_ROOT, PERL_CGI_PATH);
+			break;
+		default:
+			break;
+	}
+	throw std::runtime_error("Script type not recognized.");
+
+}
+
 std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
 
-	std::string currentDir = currentDirectory();
+	std::string currentDir = getCwd();
 	if (rootPath.length() > 0 && rootPath[rootPath.length()] != '/') {
 		rootPath.insert(0, "/");
 	}

@@ -70,7 +70,8 @@ public:
 };
 
 std::string				base64Decode(const std::string& input);
-std::string				currentDirectory();
+std::string				getCwd();
+std::string				getCgiAbsolutePath(int type);
 std::string				getAbsolutePath(std::string rootPath, std::string scriptPath);
 int						check_access(const char* file);
 char**					setArgArray(std::string cgiPath, std::string scripPath);

@@ -3,7 +3,7 @@ header_remove("X-Powered-By");
 ini_set('expose_php', 'off'); // Disable PHP version information in headers
 ini_set('default_mimetype', ''); // Disable automatic "Content-type" header generation
 
-if (getenv('REQUEST_METHOD') == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$database = dirname(dirname(__FILE__)) . '/' . 'data' . '/' . 'kanydb';
 	$session = getenv('SESSION');
 	if (file_exists($database) && $session) {

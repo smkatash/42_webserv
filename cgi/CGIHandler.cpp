@@ -25,7 +25,6 @@ CGIHandler::~CGIHandler() {};
 
 void	CGIHandler::setEnvironment()
 {
-	// set key/value args for cgi to get them from the environment
 	setenv("REQUEST_METHOD", cgi_.method.c_str(), 1);
 	setenv("CONTENT_TYPE", cgi_.contenType.c_str(), 1);
 	setenv("CONTENT_LENGTH", cgi_.contenLength.c_str(), 1);
@@ -57,16 +56,8 @@ void	CGIHandler::setRequestInfo()
 void	CGIHandler::setConfigInfo()
 {
 	int type = conf_.getScriptType(ep_);
-	std::string root = conf_.getRoot(ep_);
-	std::string script = conf_.getScriptCGI(ep_, type);
-	if (type == PHP) {
-		cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PHP_CGI_PATH);
-	} else if (type == PYTHON) {
-		cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PYTHON_CGI_PATH);
-	} else if (type == PERL) {
-		cgi_.cgiPathInfo =  getAbsolutePath(PHP_ROOT, PERL_CGI_PATH);
-	}
-	cgi_.epScriptRoot = getAbsolutePath(root, script);
+	cgi_.cgiPathInfo =  getCgiAbsolutePath(type);
+	cgi_.epScriptRoot = getAbsolutePath(conf_.getRoot(ep_), conf_.getScriptCGI(ep_, type));
 	cgi_.serverName = conf_.getServerName();
 }
 
@@ -91,6 +82,7 @@ void	CGIHandler::execute() {
 		runChildProcess(fd, argv);
 	else
 		runParentProcess(fd);
+	setCGIResponse();
 }
 
 
@@ -158,7 +150,6 @@ void CGIHandler::runParentProcess(int *fd)
 	if (status != 0) {
 		throw std::runtime_error("execution failed");
 	}
-	setCGIResponse();
 }
 
 void	CGIHandler::setCGIResponse()
