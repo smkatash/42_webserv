@@ -10,7 +10,9 @@
 #include <signal.h>
 #include <ctime>
 
-// #define DEBUG
+#define DEBUG
+
+bool g_chunkedEncoding = false;
 
 bool loop = true;
 
@@ -115,14 +117,41 @@ void Core::createResponse(Socket* socket)
 {
 	RequestParser request;
 
+	static std::string initialRequest;
+
 	#ifdef DEBUG
 		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
-	request.initParser(socket->getData());
-	ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
-	response.handle();
-	socket->setResponse(response.generate());
+
+			
+	static std::string buffer;
+	if (g_chunkedEncoding == true)
+	{
+		buffer += socket->getData();
+		socket->setResponse("HTTP/1.1 202 Accepted"); // Initial setting of response, will change in case
+	}
+
+	if (buffer.find("0\r\n\r\n") != std::string::npos)
+		g_chunkedEncoding = false;
+
+	if (g_chunkedEncoding == false)
+	{
+		if (!buffer.empty())
+		{
+			initialRequest.erase(initialRequest.find("Expect: 100-continue"), 22);
+			initialRequest += buffer;
+		}
+		else
+			initialRequest = socket->getData();
+
+		std::cout << initialRequest << std::endl;
+		request.initParser(initialRequest);
+		ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
+		response.handle();
+		socket->setResponse(response.generate());
+		buffer.clear();
+	}
 }
 
 static  bool connectionToKeepAlive( std::string response)

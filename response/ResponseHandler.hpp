@@ -9,6 +9,9 @@
 #define HTTPVERSION "HTTP/1.1"
 #define SIDPATH     "./authentication_db/session_ids"
 
+/* This is in the case when the request is chunked and will be processed using several requests */
+extern bool g_chunkedEncoding;
+
 static const struct s_methods
 {
 	std::string methodStr;

@@ -74,10 +74,13 @@ void ResponseHandler::post()
 	/* TODO: Handle cases where content length isn't known */
 	if (req_.eheader.contentLength.empty())
 	{
-		if (req_.rheader.expect.compare(0, 12, "100-continue") == 0)
-			return setCode(CONTINUE);
-		if (req_.gheader.transferEncoding != "chunked")
+		if (req_.gheader.transferEncoding.compare(0, 7, "chunked") != 0)
 			return setCode(LENGTHPLS);
+		if (req_.rheader.expect.compare(0, 12, "100-continue") == 0)
+		{
+			g_chunkedEncoding = true;
+			return setCode(CONTINUE);
+		}
 	}
 
 	size_t maxBodySize = conf_.getClientMaxBodySize();
