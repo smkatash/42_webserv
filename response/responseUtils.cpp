@@ -111,12 +111,16 @@ std::string unchunkData(const std::string& data) {
 	for (size_t i = 0; i < data.length(); i++) {
 		if (data[i] == '0')
 			break;
-		while (isdigit(data[i])) {
+		while (isxdigit(data[i])) {
 			num.push_back(data[i]);
 			i++;
 		}
 		if (data[i] && data[i] == '\r' && data[++i] == '\n') {
-			byt = std::stoi(num);
+			std::stringstream ss;
+			ss << std::hex << num;
+			ss >> byt;
+
+			// byt = std::stoi(num);
 			num.clear();
 		}
 

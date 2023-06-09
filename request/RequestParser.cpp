@@ -30,6 +30,8 @@ void	RequestParser::initParser(std::string input) {
 			parseEntityHeader_(line);
 		else if (line.compare("\r") == 0) {
 			std::getline(ss, line);
+			if (isxdigit(line[0]))
+				std::getline(ss, line);
 			if (isBoundary(line, req_.eheader.boundaryName)) {
 				while (std::getline(ss, line)) {
 					if (line.compare("\r") == 0)

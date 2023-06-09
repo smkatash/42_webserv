@@ -35,6 +35,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 			setCode(NOTFOUND);
 		else
 			setCode(INTERNALERROR);
+		return;
 	}
 	if (!checkMethod())
 		return;
@@ -71,7 +72,8 @@ void ResponseHandler::get()
 
 void ResponseHandler::post()
 {
-	/* TODO: Handle cases where content length isn't known */
+	// std::cerr << "After dechunking and stuff:" << std::endl;
+	// std::cerr << req_. << std::endl;
 	if (req_.eheader.contentLength.empty())
 	{
 		if (req_.gheader.transferEncoding.compare(0, 7, "chunked") != 0)
@@ -92,9 +94,12 @@ void ResponseHandler::post()
 	there's a body and if there's cgi in config file */
 	if (!req_.rbody.empty() && !location_.lcgi.second.empty())
 	{
+		std::cout << req_.rbody << std::endl;
+		std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n" << std::endl;
 		/* check if chunked and dechunk accordingly */
 		if (req_.gheader.transferEncoding.compare("chunked") == 0)
 			req_.rbody = unchunkData(req_.rbody);
+		std::cout << req_.rbody << std::endl;
 
 		CGIHandler cgi(req_, conf_, endpoint_);
 		cgi.execute();

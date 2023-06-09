@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <ctime>
 
-#define DEBUG
+// #define DEBUG
 
 bool g_chunkedEncoding = false;
 
@@ -115,17 +115,14 @@ static struct timespec setTimer(int sec, int nsec)
 
 void Core::createResponse(Socket* socket)
 {
-	RequestParser request;
-
+	RequestParser      request;
 	static std::string initialRequest;
+	static std::string buffer;
 
 	#ifdef DEBUG
 		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
-
-			
-	static std::string buffer;
 	if (g_chunkedEncoding == true)
 	{
 		buffer += socket->getData();
@@ -145,7 +142,6 @@ void Core::createResponse(Socket* socket)
 		else
 			initialRequest = socket->getData();
 
-		std::cout << initialRequest << std::endl;
 		request.initParser(initialRequest);
 		ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
 		response.handle();
