@@ -102,40 +102,93 @@ std::string removeDuplicateSlashes(const std::string& str)
 	return beforeQuery;
 }
 
-std::string unchunkData(const std::string& data) {
+// std::string unchunkData(const std::string& data) {
+// 	std::string num;
+// 	std::string chunk;
+// 	std::string body;
+// 	u_long	byt;
+
+// 	for (size_t i = 0; i < data.length(); i++) {
+// 		if (data[i] == '0')
+// 			break;
+// 		while (isxdigit(data[i])) {
+// 			num.push_back(data[i]);
+// 			i++;
+// 		}
+// 		if (data[i] && data[i] == '\r' && data[++i] == '\n') {
+// 			std::stringstream ss;
+// 			ss << std::hex << num;
+// 			ss >> byt;
+
+// 			// byt = std::stoi(num);
+// 			num.clear();
+// 		}
+
+// 		while (data[++i]) {
+// 			if (data[i] && data[i] == '\r' && data[++i] == '\n') {
+// 				break;
+// 			}
+// 			chunk.push_back(data[i]);
+// 		}
+// 		if (chunk.length() != byt)
+// 			chunk = chunk.substr(0, byt);
+// 		body += chunk;
+// 		chunk.clear();
+// 	}
+// 	return body;
+// }
+
+size_t determineChunkSize(const std::string& data, size_t& i)
+{
 	std::string num;
-	std::string chunk;
-	std::string body;
-	u_long	byt;
 
-	for (size_t i = 0; i < data.length(); i++) {
-		if (data[i] == '0')
-			break;
-		while (isxdigit(data[i])) {
+
+	size_t lineBr = data.find("\r\n", i);
+	if (lineBr == std::string::npos)
+		return 0;
+	for (; i < lineBr; i++) {
+		if (isxdigit(data[i]))
 			num.push_back(data[i]);
-			i++;
-		}
-		if (data[i] && data[i] == '\r' && data[++i] == '\n') {
-			std::stringstream ss;
-			ss << std::hex << num;
-			ss >> byt;
-
-			// byt = std::stoi(num);
-			num.clear();
-		}
-
-		while (data[++i]) {
-			if (data[i] && data[i] == '\r' && data[++i] == '\n') {
-				break;
-			}
-			chunk.push_back(data[i]);
-		}
-		if (chunk.length() != byt)
-			chunk = chunk.substr(0, byt);
-		body += chunk;
-		chunk.clear();
+		else
+			return 0;
 	}
-	return body;
+	std::stringstream ss;
+	size_t ret;
+	ss << std::hex << num;
+	ss >> ret;
+	i += 2;
+	return ret;
+}
+
+std::string unchunkData(const std::string& data)
+{
+	std::string newData;
+	std::string chunk;
+	size_t      chunkSize;
+
+	// std::cout << data << std::endl;
+	// exit(0);
+	size_t dataLen = data.length();
+	for (size_t i = 0; i < dataLen; i++) {
+		chunkSize = determineChunkSize(data, i); // 0 means that an error happened while determining chunk size or chunk size is actually 0
+		if (chunkSize == 0)
+			break;
+		chunk = data.substr(i, chunkSize);
+		i += chunkSize + 1;
+		newData += chunk;
+	}
+	// std::cout << newData.substr(0, chunkSize) << std::endl;
+	return newData;
+}
+
+void dechunk(std::string& data)
+{
+	size_t seperation = data.find("\r\n\r\n");
+	if (seperation == std::string::npos)
+		return;
+	std::string headers = data.substr(0, seperation);
+	std::string body = unchunkData(data.substr(seperation + 4));
+	data = headers + "\r\nContent-Length: " + toString(body.length()) + "\r\n\r\n" + body;
 }
 
 std::string get_uuid()

@@ -1,6 +1,7 @@
 #include "Core.hpp"
 #include "RequestParser.hpp"
 #include "ResponseHandler.hpp"
+#include "responseUtils.hpp"
 #include "color.hpp"
 
 #include <string>
@@ -116,8 +117,8 @@ static struct timespec setTimer(int sec, int nsec)
 void Core::createResponse(Socket* socket)
 {
 	RequestParser      request;
-	static std::string initialRequest;
-	static std::string buffer;
+	static std::string firstRequest;
+	static std::string chunks;
 
 	#ifdef DEBUG
 		printLaDemande(socket->getData(), socket->getPort());
@@ -125,28 +126,29 @@ void Core::createResponse(Socket* socket)
 
 	if (g_chunkedEncoding == true)
 	{
-		buffer += socket->getData();
-		socket->setResponse("HTTP/1.1 202 Accepted"); // Initial setting of response, will change in case
+		chunks += socket->getData();
+		socket->setResponse("HTTP/1.1 202 Accepted");
 	}
 
-	if (buffer.find("0\r\n\r\n") != std::string::npos)
-		g_chunkedEncoding = false;
+	if (chunks.find("0\r\n\r\n") != std::string::npos)
+		g_chunkedEncoding = false; // We reached the last chunk, we stop storing in chunks string
 
 	if (g_chunkedEncoding == false)
 	{
-		if (!buffer.empty())
+		if (!chunks.empty())
 		{
-			initialRequest.erase(initialRequest.find("Expect: 100-continue"), 22);
-			initialRequest += buffer;
+			firstRequest.erase(firstRequest.find("Expect: 100-continue"), 22); // size of header + 2 Because we erase the \r\n as well
+			firstRequest.erase(firstRequest.find("Transfer-Encoding: chunked"), 28); // size of header + 2 Because we erase the \r\n as well
+			firstRequest += chunks;
+			dechunk(firstRequest);
 		}
 		else
-			initialRequest = socket->getData();
-
-		request.initParser(initialRequest);
+			firstRequest = socket->getData();
+		request.initParser(firstRequest);
 		ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
 		response.handle();
 		socket->setResponse(response.generate());
-		buffer.clear();
+		chunks.clear();
 	}
 }
 

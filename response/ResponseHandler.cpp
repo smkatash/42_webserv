@@ -94,13 +94,6 @@ void ResponseHandler::post()
 	there's a body and if there's cgi in config file */
 	if (!req_.rbody.empty() && !location_.lcgi.second.empty())
 	{
-		std::cout << req_.rbody << std::endl;
-		std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n" << std::endl;
-		/* check if chunked and dechunk accordingly */
-		if (req_.gheader.transferEncoding.compare("chunked") == 0)
-			req_.rbody = unchunkData(req_.rbody);
-		std::cout << req_.rbody << std::endl;
-
 		CGIHandler cgi(req_, conf_, endpoint_);
 		cgi.execute();
 		res_.cgiResponse = cgi.getCGIResponse();
