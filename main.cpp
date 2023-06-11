@@ -26,24 +26,14 @@ void	configFileOpen(int argc, char* argv[], std::ifstream& file)
 Parser configInit(std::ifstream& file)
 {
 	Parser	confParser;
-	try
-	{
+
+	try {
 		confParser.openFile(file);
 		confParser.setConfigFile();
 	}
-	catch (std::invalid_argument& e)
-	{
-		std::cerr << e.what() << '\n';
+	catch (const std::exception& e) {
+		std::cerr << "Error: " << e.what() << '\n';
 		exit(EXIT_FAILURE);
-	}
-	catch (const std::out_of_range & e)
-	{
-		std::cerr << e.what() << "\n";
-		exit(EXIT_FAILURE);
-	}
-	catch(const std::runtime_error& e)
-	{
-		std::cout << e.what() << std::endl;
 	}
 	return confParser;
 }
@@ -76,20 +66,3 @@ int main(int argc, char **argv)
 	core.run();
 	return (EXIT_SUCCESS);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* 	RequestParser req(requestUpload);
-	ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
-	resp.post();
-	std::cout << resp.generateResponse() << std::endl; */
