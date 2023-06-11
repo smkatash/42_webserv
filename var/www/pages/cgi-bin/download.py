@@ -3,11 +3,6 @@ import os
 import sys
 import cgi
 
-# Remove PHP related headers
-sys.stdout.write("Content-Type: text/html; charset=UTF-8\n")
-sys.stdout.write("X-Powered-By: \n")
-sys.stdout.write("\n")
-
 if os.environ['REQUEST_METHOD'] == 'GET':
 	destinationDirectory = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/' + 'documents' + '/'
 	file = cgi.FieldStorage().getvalue('file', '')
@@ -15,7 +10,9 @@ if os.environ['REQUEST_METHOD'] == 'GET':
 
 	if os.path.exists(FilePath):
 		# Set appropriate headers for file download
-		with open("./download_link.html", 'r') as f:
+		currentDir = os.path.dirname(os.path.abspath(__file__))
+		file_path = os.path.join(currentDir, "download_link.html")
+		with open(file_path, 'r') as f:
 			response = f.read()
 		sys.stdout.write("HTTP/1.1 200 OK\n")
 	else:
