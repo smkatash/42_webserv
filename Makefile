@@ -13,26 +13,29 @@ SRC		=	main.cpp \
 			autoindex.cpp \
 			responseUtils.cpp ResponseHandler.cpp
 
-OBJ		=	$(addprefix obj/,$(notdir $(SRC:.cpp=.o)))
+OBJ_DIR =   server/obj
+OBJ     =   $(addprefix $(OBJ_DIR)/,$(notdir $(SRC:.cpp=.o)))
 INC		=	-I server/cgi -I server/colored_output -I server/config_parser -I server/core -I server/request -I server/response
+
+.SILENT:
 
 all : $(NAME)
 
 $(NAME) : $(OBJ)
-	@$(CC) $(CFLAGS) $(INC) -o $@ $^ 
+	$(CC) $(CFLAGS) $(INC) -o $@ $^ 
 	@echo "webserv is ready"
 
-obj/%.o : %.cpp | obj
-	@$(CC) $(CFLAGS) -c $(INC) $< -o $@
+$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $(INC) $< -o $@
 
-obj :
-	@mkdir obj
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
 
-clean :
-	@rm -rf obj
+clean:
+	rm -rf $(OBJ_DIR)
 
 fclean : clean
-	@rm -f $(NAME)
+	rm -f $(NAME)
 
 re : clean all
 
