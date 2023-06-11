@@ -119,10 +119,15 @@ void Core::createResponse(Socket* socket)
 		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
-	request.initParser(socket->getData());
-	ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
-	response.handle();
-	socket->setResponse(response.generate());
+	try {
+		// TODO Jad, please check here
+		request.initParser(socket->getData());
+		ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
+		response.handle();
+		socket->setResponse(response.generate());
+	} catch (std::exception& err) {
+		std::cerr << err.what() << std::endl;
+	}
 }
 
 static  bool connectionToKeepAlive( std::string response)
