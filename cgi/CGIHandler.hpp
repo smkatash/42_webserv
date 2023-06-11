@@ -42,38 +42,36 @@ struct cgi_handler {
 
 typedef cgi_handler WebservCGI;
 
-class CGIHandler
-{
-private:
-	Request				req_;
-	ConfigFile			conf_;
-	std::string			ep_;
-	WebservCGI			cgi_;
-	FILE*				responseFile_;
-	std::string			cgiResponse_;
+class CGIHandler {
+	private:
+		Request				req_;
+		ConfigFile			conf_;
+		std::string			ep_;
+		WebservCGI			cgi_;
+		FILE*				responseFile_;
+		std::string			cgiResponse_;
 
-	void				setRequestInfo();
-	void				setConfigInfo();
-	void				setEnvironment();
-	void				setFileUpload();
+		void				setRequestInfo();
+		void				setConfigInfo();
+		void				setEnvironment();
+		void				setFileUpload();
+		void				setCGIResponse();
 
-	void				runChildProcess(int *fd, char** argv);
-	void				runParentProcess(int *fd);
-	void				setCGIResponse();
+		void				runChildProcess(int *fd, char** argv);
+		void				runParentProcess(int *fd);
 
-public:
-	CGIHandler(Request req, ConfigFile conf, std::string location);
-	CGIHandler(Request req, ConfigFile conf, std::string location, std::string query);
-	~CGIHandler();
-	void				execute();
-	std::string			getCGIResponse();
+	public:
+		CGIHandler(Request req, ConfigFile conf, std::string location);
+		CGIHandler(Request req, ConfigFile conf, std::string location, std::string query);
+		~CGIHandler();
+		void				execute();
+		std::string			getCGIResponse();
 };
 
 std::string				base64Decode(const std::string& input);
 std::string				getCwd();
 std::string				getCgiAbsolutePath(int type);
 std::string				getAbsolutePath(std::string rootPath, std::string scriptPath);
-int						check_access(const char* file);
 char**					setArgArray(std::string cgiPath, std::string scripPath);
 void					freeArgArray(char** argv);
 

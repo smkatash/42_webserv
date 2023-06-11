@@ -1,8 +1,7 @@
 #include "CGIHandler.hpp"
 
 
-std::string base64Decode(const std::string& data)
-{
+std::string base64Decode(const std::string& data) {
 	const char	fillchar = '=';
 	static std::string  cvt = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 								"abcdefghijklmnopqrstuvwxyz"
@@ -54,8 +53,7 @@ std::string	getCwd() {
 }
 
 std::string	getCgiAbsolutePath(int type) {
-	switch (type)
-	{
+	switch (type) {
 		case PHP:
 			return getAbsolutePath(PHP_ROOT, PHP_CGI_PATH);
 			break;
@@ -92,20 +90,12 @@ std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
 	else
 		throw std::runtime_error("Failed to get absolute path to the cgi script.");
 
-	// Check last time and remove double-slash within absolute path
 	for (size_t i = 0; i < currentDir.length() - 1; ++i) {
 		if (currentDir[i] == '/' && currentDir[i + 1] == '/') {
 			currentDir.erase(i + 1, 1);
 		}
 	}
 	return currentDir;
-}
-
-int		check_access(const char* file) {
-	if (access(file, X_OK) == 0)
-		return 1;
-	else
-		return 0;
 }
 
 char **setArgArray(std::string cgiPath, std::string scripPath) {

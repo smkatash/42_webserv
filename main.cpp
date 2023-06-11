@@ -30,8 +30,7 @@ Parser configInit(std::ifstream& file)
 	try {
 		confParser.openFile(file);
 		confParser.setConfigFile();
-	}
-	catch (const std::exception& e) {
+	} catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << '\n';
 		exit(EXIT_FAILURE);
 	}
