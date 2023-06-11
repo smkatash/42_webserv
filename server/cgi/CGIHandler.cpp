@@ -76,8 +76,8 @@ void	CGIHandler::execute() {
 
 
 void CGIHandler::setFileUpload() {
-	if (std::string(getenv("CONTENT_TYPE")) == MULTIPART) {
-		std::string tmpPath = getAbsolutePath(PHP_ROOT, "uploaded_file.tmp");
+	if (std::string(getenv("CONTENT_TYPE")).compare(MULTIPART) == 0) {
+		std::string tmpPath = getAbsolutePath(PHP_ROOT, TEMPFILE_PATH);
 		std::ofstream tempFile(tmpPath, std::ios::binary);
 		if (tempFile) {
 			tempFile.write(&cgi_.body[0], cgi_.body.size());
