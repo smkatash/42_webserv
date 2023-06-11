@@ -7,7 +7,7 @@
 #include "Parser.hpp" // Methods enum
 
 #define HTTPVERSION "HTTP/1.1"
-#define SIDPATH     "./authentication_db/session_ids"
+#define SIDPATH     "../authentication_db/session_ids"
 
 static const struct s_methods
 {

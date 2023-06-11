@@ -1,4 +1,4 @@
-VPATH	=	cgi colored_output config_parser core request response response/autoindex
+VPATH	=	server/cgi server/colored_output server/config_parser server/core server/request server/response server/response/autoindex
 CC		=	c++
 CFLAGS	=	-std=c++98 -Wall -Wextra -MD -fsanitize=address -Werror
 
@@ -14,7 +14,7 @@ SRC		=	main.cpp \
 			responseUtils.cpp ResponseHandler.cpp
 
 OBJ		=	$(addprefix obj/,$(notdir $(SRC:.cpp=.o)))
-INC		=	-I cgi -I colored_output -I config_parser -I core -I request -I response
+INC		=	-I server/cgi -I server/colored_output -I server/config_parser -I server/core -I server/request -I server/response
 
 all : $(NAME)
 
