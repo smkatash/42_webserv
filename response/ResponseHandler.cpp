@@ -339,7 +339,6 @@ bool ResponseHandler::authorized(std::string authorization)
 	std::ifstream htpassFile(filename);
 	if (!htpassFile.is_open() || htpassFile.bad())
 		exit(EXIT_FAILURE);
-
 	std::string auth = base64Decode(&authorization[6]); // from 6 because I want to skip "Basic "
 	std::string buffer;
 	while (std::getline(htpassFile, buffer))

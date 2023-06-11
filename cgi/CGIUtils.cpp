@@ -15,6 +15,8 @@ std::string base64Decode(const std::string& data)
 
 	for (i = 0; i < len; ++i)
 	{
+		if (data[i] == ' ')
+			continue;
 		c = (char) cvt.find(data[i]);
 		++i;
 		ch = (char) cvt.find(data[i]);
