@@ -191,10 +191,14 @@ void ResponseHandler::returnResponse()
 void ResponseHandler::autoIndexResponse(t_endpoint loc, std::string ep)
 {
 	std::string templateFile;
-	if (loc.lroot.empty())
-		templateFile = initAutoIndex(ep, conf_.getRoot(""));
-	else
-		templateFile = initAutoIndex(ep, loc.lroot);
+	try {
+		if (loc.lroot.empty())
+			templateFile = initAutoIndex(ep, conf_.getRoot(""));
+		else
+			templateFile = initAutoIndex(ep, loc.lroot);
+	} catch (std::runtime_error& err) {
+		return setCode(INTERNALERROR);
+	}
 	if (templateFile.empty())
 		return setCode(NOTFOUND);
 	res_.rbody = templateFile;
@@ -276,8 +280,7 @@ void ResponseHandler::setBodyErrorPage(int code)
 		fileName.insert(fileName.begin(), '.');
 	}
 	else
-		fileName = "./error_pages/" + toString(code) + ".html";
-
+		fileName = "server/error_pages/" + toString(code) + ".html";
 	std::ifstream file;
 	file.open(fileName.c_str());
 	if (!file.is_open() || !file.good())
@@ -290,9 +293,10 @@ void ResponseHandler::setBodyErrorPage(int code)
 		else
 			res_.rbody += temp + '\n';
 	}
+	file.close();
 	res_.eheader.contentLength = toString(res_.rbody.length());
 	res_.eheader.contentType = findContentType(".html");
-	file.close();
+	std::cout << "The body: " << res_.rbody << std::endl;
 }
 
 void ResponseHandler::setCode(int code)

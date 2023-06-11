@@ -8,6 +8,7 @@
 
 #define HTTPVERSION "HTTP/1.1"
 #define SIDPATH     "server/authentication_db/session_ids"
+#define AUTOINDEX_TEMPLATE_PATH "server/response/autoindex/template.html"
 
 static const struct s_methods
 {
