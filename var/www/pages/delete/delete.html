@@ -58,7 +58,7 @@
 				<br>
 				<br>
 				<label for="file_name">Delete a file:</label>
-				<input type="text" id="fileToDelete" placeholder="e.g. /path/to/file.txt" required>
+				<input type="text" id="fileToDelete" placeholder="e.g. file.txt" required>
 				<input type="submit" value="Delete File">
 			</div>
 			<div>
@@ -71,7 +71,8 @@
 		<script>
 			function deleteFile() {
 				event.preventDefault();
-				var fileToDelete = document.getElementById("fileToDelete").value;
+				var path = "/documents/";
+  				var fileToDelete = `${path}${document.getElementById("fileToDelete").value}`;
 				var xhr = new XMLHttpRequest();
 				xhr.open("DELETE", fileToDelete, true);
 				xhr.onreadystatechange = function ()
