@@ -6,6 +6,8 @@
 #include "ConfigFile.hpp"
 #include "Parser.hpp" // Methods enum
 
+#include "Socket.hpp"
+
 #define HTTPVERSION "HTTP/1.1"
 #define SIDPATH     "./authentication_db/session_ids"
 
@@ -27,7 +29,7 @@ m[] =
 class ResponseHandler
 {
 public:
-	ResponseHandler(Request req, ConfigFile conf);
+	ResponseHandler(Request req, Socket* sock);
 	~ResponseHandler();
 
 	void        handle();
@@ -36,6 +38,7 @@ public:
 private:
 	Response    res_;
 	Request     req_;
+	Socket*     sock_;
 	ConfigFile  conf_;
 
 	std::string uri_;

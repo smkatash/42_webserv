@@ -32,6 +32,7 @@ class Socket
 
 	bool connectionUp_;
 	bool requestIsComplete_;
+	bool chunkedRequest_;
 
 	ConfigFile serverConfiguration_;
 	struct kevent event_;
@@ -46,36 +47,38 @@ class Socket
 		~Socket();
 
 		//////////////////////////////////////////////////// set methods:
-		bool setSocketDescriptor();
-		bool setSocketOption();
-		bool setSocketBind();
-		bool setSocketPassive();
-		bool setSocketConnection();
-		bool setKevent();
-		bool setKeventForWrite();
-		bool unsetKevent(int filter);
-		void setResponse(std::string response);
-		void setConnectionStatus(bool status);
-		void setDestinationAddress(struct sockaddr_in address);
-		void setAddress();
-		void setRequestStatus(bool status);
-		void setRequestLength();
-		void setConnectionTimer();
+		bool                setSocketDescriptor();
+		bool                setSocketOption();
+		bool                setSocketBind();
+		bool                setSocketPassive();
+		bool                setSocketConnection();
+		bool                setKevent();
+		bool                setKeventForWrite();
+		bool                unsetKevent(int filter);
+		void                setResponse(std::string response);
+		void                setConnectionStatus(bool status);
+		void                setDestinationAddress(struct sockaddr_in address);
+		void                setAddress();
+		void                setRequestStatus(bool status);
+		void                setRequestLength();
+		void                setConnectionTimer();
+		void                setChunkedOpt(bool val);
 
 		//////////////////////////////////////////////////// get methods:
-		int					getPort();
-		int					getSocketDescriptor();
-		bool				getConnectionStatus();
-		bool				getRequestStatus();
-		time_t				getConnectionTimer();
-		size_t				getContentLength();
-		ConfigFile			getServerConfiguration();
-		std::string			getResponse();
-		std::string			getData();
-		struct kevent		getEvent();
-		struct kevent*		getEvents();
-		struct sockaddr_in&	getSocketDestinationAddress();
-		struct sockaddr_in&	getSocketSourceAddress();
+		int                 getPort();
+		int                 getSocketDescriptor();
+		bool                getConnectionStatus();
+		bool                getChunkedOpt();
+		bool                getRequestStatus();
+		time_t              getConnectionTimer();
+		size_t              getContentLength();
+		ConfigFile          getServerConfiguration();
+		std::string         getResponse();
+		std::string         getData();
+		struct kevent       getEvent();
+		struct kevent*      getEvents();
+		struct sockaddr_in& getSocketDestinationAddress();
+		struct sockaddr_in& getSocketSourceAddress();
 
 		//////////////////////////////////////////////////// member functions:
 		int closeConnection();

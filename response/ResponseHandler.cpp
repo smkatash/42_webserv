@@ -9,9 +9,10 @@
 
 #define COOKIES
 
-ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
+ResponseHandler::ResponseHandler(Request req, Socket* sock)
 : req_(req)
-, conf_(conf)
+, sock_(sock)
+, conf_(sock->getServerConfiguration())
 {
 	/* basic setup for creating a response */
 	res_.rline.version      = HTTPVERSION;
@@ -76,15 +77,14 @@ void ResponseHandler::post()
 	// std::cerr << req_. << std::endl;
 	if (req_.eheader.contentLength.empty())
 	{
-		if (req_.gheader.transferEncoding.compare(0, 7, "chunked") != 0)
+		if (req_.gheader.transferEncoding.compare(0, 7, "chunked") != 0) // If there's no chunked encoding then we need length
 			return setCode(LENGTHPLS);
-		if (req_.rheader.expect.compare(0, 12, "100-continue") == 0)
+		if (req_.rheader.expect.compare(0, 12, "100-continue") == 0) // If there is chunked and 100-Continue then we return 100
 		{
-			g_chunkedEncoding = true;
+			sock_->setChunkedOpt(true);
 			return setCode(CONTINUE);
 		}
 	}
-
 	size_t maxBodySize = conf_.getClientMaxBodySize();
 	size_t reqContentLength = strtonum<unsigned long>(req_.eheader.contentLength);
 	if (maxBodySize != 0 && maxBodySize < reqContentLength)

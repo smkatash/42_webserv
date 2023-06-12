@@ -117,35 +117,41 @@ static struct timespec setTimer(int sec, int nsec)
 void Core::createResponse(Socket* socket)
 {
 	RequestParser      request;
-	static std::string firstRequest;
-	static std::string chunks;
+	static std::string firstRequest; // This should be inside socket
+	static std::string chunks; // This should be inside socket
 
 	#ifdef DEBUG
 		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
-	if (g_chunkedEncoding == true)
+	if (socket->getChunkedOpt() == true)
 	{
 		chunks += socket->getData();
 		socket->setResponse("HTTP/1.1 202 Accepted");
 	}
 
 	if (chunks.find("0\r\n\r\n") != std::string::npos)
-		g_chunkedEncoding = false; // We reached the last chunk, we stop storing in chunks string
+		socket->setChunkedOpt(false); // We reached the last chunk, we stop storing in chunks string
 
-	if (g_chunkedEncoding == false)
+	if (socket->getChunkedOpt() == false)
 	{
 		if (!chunks.empty())
 		{
-			firstRequest.erase(firstRequest.find("Expect: 100-continue"), 22); // size of header + 2 Because we erase the \r\n as well
-			firstRequest.erase(firstRequest.find("Transfer-Encoding: chunked"), 28); // size of header + 2 Because we erase the \r\n as well
+			size_t headerLoc = firstRequest.find("Expect: 100-continue");
+			if (headerLoc != std::string::npos)
+				firstRequest.erase(headerLoc, 22); // size of header + 2 Because we erase the \r\n as well
+
+			headerLoc = firstRequest.find("Transfer-Encoding: chunked");
+			if (headerLoc != std::string::npos)
+				firstRequest.erase(headerLoc, 28); // size of header + 2 Because we erase the \r\n as well
+
 			firstRequest += chunks;
 			dechunk(firstRequest);
 		}
 		else
 			firstRequest = socket->getData();
 		request.initParser(firstRequest);
-		ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
+		ResponseHandler response(request.getRequest(), socket);
 		response.handle();
 		socket->setResponse(response.generate());
 		chunks.clear();
