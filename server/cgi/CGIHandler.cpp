@@ -1,4 +1,5 @@
 #include "CGIHandler.hpp"
+#include "responseUtils.hpp"
 
 CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep)
 : req_(req), conf_(conf), ep_(ep) {
@@ -78,7 +79,8 @@ void	CGIHandler::execute() {
 
 void CGIHandler::setFileUpload() {
 	if (std::string(getenv("CONTENT_TYPE")).compare(MULTIPART) == 0) {
-		std::string tmpPath = getAbsolutePath(PHP_ROOT, TEMPFILE_PATH);
+		std::string temp = TEMPFILE_PATH + get_uuid() + ".tmp";
+		std::string tmpPath = getAbsolutePath(PHP_ROOT, temp);
 		std::ofstream tempFile(tmpPath, std::ios::binary);
 		if (tempFile) {
 			tempFile.write(&cgi_.body[0], cgi_.body.size());
