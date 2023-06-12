@@ -5,6 +5,8 @@
 #include "Request.hpp"
 
 /* Most common status codes, may be add more later*/
+#define	CONTINUE        100    // "100 Continue" /* If there is Expect header the 100 response indicates that the server wishes to receive the request content. */
+
 #define	OK              200    // "200 OK" /* Request is okay, entity body contains requested resource. */
 #define	CREATED         201    // "201 Created" /* For requests that create server objects (e.g., PUT). */
 #define	ACCEPTED        202    // "202 Accepted" /* the action will likely succeed but has not yet been enacted */
@@ -33,6 +35,7 @@ static const struct requestCodes
 }
 rc[] =
 {
+	{CONTINUE,      "Continue",                   false},
 	{OK,            "OK",                         false},
 	{CREATED,       "Created",                    false},
 	{ACCEPTED,      "Accepted",                   false},
@@ -47,7 +50,7 @@ rc[] =
 	{LONGURI,       "URI Too Long",               true},
 	{INTERNALERROR, "Internal Server Error",      true},
 	{UNIMPLEMENTED, "Not Implemented",            true},
-	{HTTPNONO,      "HTTP Version Not Supported", true},
+	{HTTPNONO,      "HTTP Version Not Supported", true}
 };
 
 struct response_line {

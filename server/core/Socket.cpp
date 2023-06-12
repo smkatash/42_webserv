@@ -6,7 +6,7 @@
 #define SOCKET_VERBOSE
 
 //////////////////////////////////////////////////// static helper:
-static size_t getHeaderLength(std::string string);
+static size_t getHeaderLength(const std::string& string);
 
 static int errorOut(std::string message, int returnValue)
 {
@@ -195,24 +195,25 @@ struct sockaddr_in& Socket::getSocketSourceAddress() { return (sourceAddress_); 
 
 size_t Socket::getContentLength()
 {
-	size_t contentLenght;
-	int index;
+	size_t      contentLenght;
+	size_t      index;
 	std::string substring( "Content-Length:");
+
 	index = data_.find(substring);
-	if(index == -1)
+	if(index == std::string::npos)
 		return (0);
 	contentLenght = atoi((&data_[index + substring.size()]));
 	return (contentLenght);
 }
 
 //////////////////////////////////////////////////// member functions:
-static size_t getHeaderLength(std::string string)
+static size_t getHeaderLength(const std::string& string)
 {
-	int index = 0;
+	size_t index = 0;
 
 	std::string substring ("\r\n\r\n");
 	index = string.find(substring);
-	if(index == -1)
+	if(index == std::string::npos)
 		return(string.size());
 	return(index + 4);
 }
@@ -262,6 +263,22 @@ void Socket::reset()
 	return ;
 }
 
+// static bool checkChunkOpt(const std::string& data)
+// {
+// 	if (data.find("Transfer-Encoding: chunked") != std::string::npos)
+// 		return true ;
+// 	return false;
+// }
+
+bool Socket::getChunkedOpt()
+{
+	return (chunkedRequest_);
+}
+
+void Socket::setChunkedOpt(bool val)
+{
+	chunkedRequest_ = val;
+}
 
 int Socket::readHandler(size_t sizeToRead)
 {
@@ -273,9 +290,13 @@ int Socket::readHandler(size_t sizeToRead)
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
 	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m recv()\trequest\t\t\t\033[38;5;49m| CLIENT addr:\t",(int) ntohl(destinationAddress_.sin_addr.s_addr));
 	if(bytes == 0)
+	{
+		delete[] buffer;
 		return (connectionClosedClientSide());
+	}
 	else if (bytes < 0)
 	{
+		delete[] buffer;
 		if(retry() == -1) //we retry 5 tymes;
 			return (-1);
 		else
@@ -283,8 +304,10 @@ int Socket::readHandler(size_t sizeToRead)
 	}
 	buffer[bytes] = '\0';
 	data_.append(buffer, bytes);
+
 	if(requestLength_ == 0)
 		setRequestLength();
+
 	if(data_.size() >= requestLength_)
 	{
 		setRequestStatus(true);

@@ -9,9 +9,10 @@
 
 #define COOKIES
 
-ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
+ResponseHandler::ResponseHandler(Request req, Socket* sock)
 : req_(req)
-, conf_(conf)
+, sock_(sock)
+, conf_(sock->getServerConfiguration())
 {
 	/* basic setup for creating a response */
 	res_.rline.version      = HTTPVERSION;
@@ -35,6 +36,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 			setCode(NOTFOUND);
 		else
 			setCode(INTERNALERROR);
+		return;
 	}
 	if (!checkMethod())
 		return;
@@ -71,10 +73,18 @@ void ResponseHandler::get()
 
 void ResponseHandler::post()
 {
+	// std::cerr << "After dechunking and stuff:" << std::endl;
+	// std::cerr << req_. << std::endl;
 	if (req_.eheader.contentLength.empty())
-		return setCode(LENGTHPLS);
-
-	/* TODO: Handle cases where content length isn't known */
+	{
+		if (req_.gheader.transferEncoding.compare(0, 7, "chunked") != 0) // If there's no chunked encoding then we need length
+			return setCode(LENGTHPLS);
+		if (req_.rheader.expect.compare(0, 12, "100-continue") == 0) // If there is chunked and 100-Continue then we return 100
+		{
+			sock_->setChunkedOpt(true);
+			return setCode(CONTINUE);
+		}
+	}
 	size_t maxBodySize = conf_.getClientMaxBodySize();
 	size_t reqContentLength = strtonum<unsigned long>(req_.eheader.contentLength);
 	if (maxBodySize != 0 && maxBodySize < reqContentLength)
@@ -84,10 +94,6 @@ void ResponseHandler::post()
 	there's a body and if there's cgi in config file */
 	if (!req_.rbody.empty() && !location_.lcgi.second.empty())
 	{
-		/* check if chunked and dechunk accordingly */
-		if (req_.gheader.transferEncoding.compare("chunked") == 0)
-			req_.rbody = unchunkData(req_.rbody);
-
 		CGIHandler cgi(req_, conf_, endpoint_);
 		cgi.execute();
 		res_.cgiResponse = cgi.getCGIResponse();

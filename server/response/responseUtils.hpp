@@ -32,6 +32,7 @@ T	strtonum(std::string const& str)
 bool Pred(char a, char b);
 std::string removeDuplicateSlashes(const std::string& str);
 std::string unchunkData(const std::string& data);
+void dechunk(std::string& data);
 
 std::string get_uuid();
 
