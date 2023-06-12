@@ -107,13 +107,13 @@ std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
 	return currentDir;
 }
 
-char **setArgArray(std::string cgiPath, std::string scripPath) {
-	size_t len1 = strlen(cgiPath.c_str()) + 1;
-	size_t len2 = strlen(scripPath.c_str()) + 1;
+char** setArgArray(std::string cgiPath, std::string scripPath) {
+	size_t len1 = cgiPath.length() + 1;
+	size_t len2 = scripPath.length() + 1;
 
-	char **argv = (char**)malloc(sizeof(char*) * 3);
-	argv[0] = (char *)malloc(sizeof(char) * len1);
-	argv[1] = (char *)malloc(sizeof(char) * len2);
+	char** argv = new char*[3];
+	argv[0] = new char[len1];
+	argv[1] = new char[len2];
 	strcpy(argv[0], cgiPath.c_str());
 	strcpy(argv[1], scripPath.c_str());
 	argv[2] = NULL;
@@ -122,7 +122,7 @@ char **setArgArray(std::string cgiPath, std::string scripPath) {
 }
 
 void	freeArgArray(char** argv) {
-	free(argv[0]);
-	free(argv[1]);
-	free(argv);
+	delete(argv[0]);
+	delete(argv[1]);
+	delete(argv);
 }
