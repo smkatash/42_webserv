@@ -84,14 +84,12 @@ std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
 	if (rootPath.length() > 0 && rootPath[rootPath.length()] != '/') {
 		rootPath.insert(0, "/");
 	}
-	std::cout << currentDir << std::endl;
 	if (currentDir.length() > 0 && currentDir[currentDir.length()] != '/'){
 		currentDir += rootPath;
 		if (scriptPath.length() > 0 && scriptPath[0] != '/') {
 			scriptPath.insert(0, "/");
 		}
 		currentDir += scriptPath;
-		std::cout << currentDir << std::endl;
 	}
 	else if (currentDir.length() > 0 && currentDir[currentDir.length()] == '/') {
 		currentDir.erase(currentDir.length() - 1);
@@ -99,12 +97,10 @@ std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
 	}
 	else
 		throw std::runtime_error("Failed to get absolute path to the cgi script");
-	std::cout << currentDir << std::endl;
 
 	for (size_t i = 0; i < currentDir.length() - 1; ++i) {
 		if (currentDir[i] == '/' && currentDir[i + 1] == '/') {
 			currentDir.erase(i + 1, 1);
-			std::cout << "Erasing: " << currentDir << std::endl;
 		}
 	}
 	checkFilePath(currentDir);

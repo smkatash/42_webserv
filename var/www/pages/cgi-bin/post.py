@@ -6,7 +6,7 @@ import datetime
 
 def http_response_code_message(code):
 	messages = {
-		200: 'OK',
+		201: 'Created',
 		405: 'Method Not Allowed',
 		500: 'Internal Server Error',
 	}
@@ -38,7 +38,7 @@ if os.getenv('REQUEST_METHOD') == 'POST':
 		with open(directory, 'a') as file:
 			file.write(dataEntry)
 			message = "Thanks for your order!"
-			httpStatusCode = 200
+			httpStatusCode = 201
 			response = response.replace('{{message}}', message)
 	except:
 		response = "Internal error 500"
@@ -54,5 +54,5 @@ print("Content-Length: " + str(len(response)))
 print("Connection: close")
 print("Date: " + date)
 print("Server: " + server)
-print
+print("\n")
 print(response)

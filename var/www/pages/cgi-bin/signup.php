@@ -53,6 +53,7 @@ function http_response_code_message($code) {
 	$messages = array(
 		200 => 'OK',
 		500 => 'Internal Server Error',
+		405 => 'Method Not Allowed'
 	);
 	return isset($messages[$code]) ? $messages[$code] : '';
 }

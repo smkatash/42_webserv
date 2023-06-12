@@ -296,7 +296,6 @@ void ResponseHandler::setBodyErrorPage(int code)
 	file.close();
 	res_.eheader.contentLength = toString(res_.rbody.length());
 	res_.eheader.contentType = findContentType(".html");
-	std::cout << "The body: " << res_.rbody << std::endl;
 }
 
 void ResponseHandler::setCode(int code)
@@ -347,7 +346,6 @@ bool ResponseHandler::authorized(std::string authorization)
 	std::string buffer;
 	while (std::getline(htpassFile, buffer))
 	{
-		std::cout << auth << "|" << buffer << std::endl;
 		if (buffer == auth)
 		{
 			std::string id = get_uuid();
@@ -368,7 +366,6 @@ bool ResponseHandler::validCookie()
 	std::string	buffer;
 	while (std::getline(sessionIds, buffer))
 	{
-		std::cout << cookie << " | " << buffer << std::endl;
 		if (cookie.compare(0, buffer.size(), buffer) == 0)
 			return true;
 	}
