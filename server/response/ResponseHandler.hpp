@@ -30,7 +30,7 @@ m[] =
 class ResponseHandler
 {
 public:
-	ResponseHandler(Request req, Socket* sock);
+	ResponseHandler(Request req, ConfigFile conf);
 	~ResponseHandler();
 
 	void        handle();
@@ -39,7 +39,6 @@ public:
 private:
 	Response    res_;
 	Request     req_;
-	Socket*     sock_;
 	ConfigFile  conf_;
 
 	std::string uri_;
