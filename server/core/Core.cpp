@@ -124,6 +124,8 @@ void Core::createResponse(Socket* socket)
 		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
+	// TODO: Try catch for some reason
+
 	if (socket->getChunkedOpt() == true)
 	{
 		chunks += socket->getData();

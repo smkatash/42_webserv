@@ -9,7 +9,8 @@
 #include "Socket.hpp"
 
 #define HTTPVERSION "HTTP/1.1"
-#define SIDPATH     "./authentication_db/session_ids"
+#define SIDPATH     "server/authentication_db/session_ids"
+#define AUTOINDEX_TEMPLATE_PATH "server/response/autoindex/template.html"
 
 /* This is in the case when the request is chunked and will be processed using several requests */
 extern bool g_chunkedEncoding;

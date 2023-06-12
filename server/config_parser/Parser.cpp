@@ -265,8 +265,8 @@ void	Parser::parseSyntax() {
 				conf.setAuthBasicUserFile(locationDir, checkAuthUserFile(input_[++i]));
 				break;
 			default:
-				std::cerr << "Generic Unknown directive " << input_[i] << std::endl;
-				break;
+				throw std::invalid_argument("Config unknown directive: " + input_[i]);
+				break; 
 	}
 	} while(++i < input_.size());
 }

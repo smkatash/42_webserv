@@ -34,7 +34,6 @@ class	ConfigFile {
 		ConfigFile();
 		~ConfigFile();
 
-		/* setters */
 		void								setListenPort(int port);
 		void								setServerName(std::string host);
 		void								setRoot(std::string endpoint, std::string path);
@@ -48,7 +47,7 @@ class	ConfigFile {
 		void								setClientMaxBodySize(unsigned long sizeMax);
 		void								setAuthBasic(std::string endpoint, std::string auth);
 		void								setAuthBasicUserFile(std::string endpoint, std::string auth);
-		/* getters */
+
 		int									getListenPort(void) const;
 		const std::string					getServerName(void) const;
 		const std::string					getRoot(std::string endpoint) const;
@@ -71,4 +70,4 @@ class	ConfigFile {
 
 
 
-#endif // CONFIGFILE_HPP
+#endif

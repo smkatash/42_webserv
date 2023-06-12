@@ -3,59 +3,55 @@
 #include "color.hpp"
 #include <fstream>
 
-void	configFileOpen(int argc, char* argv[], std::ifstream& file)
+bool	configFileOpen(int argc, char* argv[], std::ifstream& file)
 {
-	if (argc < 2)
+	if (argc < 2) {
 		file.open("./config/default.conf");
+		return true;
+	}
 	else if (argc == 2) {
 		const std::string ext = ".conf";
 		std::string input = argv[1];
 		if (input.find_last_of(".") == std::string::npos || \
 			input.substr(input.find_last_of(".")) != ext) {
 			std::cerr << "error: file must have .conf extension" << std::endl;
-			exit(EXIT_FAILURE);
+			return false;
 		}
 		file.open(argv[1]);
+		return true;
 	}
 	else {
 		std::cerr << "usage: ./webserv config_file\n";
-		exit(EXIT_FAILURE);
 	}
+	return false;
 }
 
 Parser configInit(std::ifstream& file)
 {
 	Parser	confParser;
-	try
-	{
+
+	try {
 		confParser.openFile(file);
 		confParser.setConfigFile();
-	}
-	catch (std::invalid_argument& e)
-	{
-		std::cerr << e.what() << '\n';
+	} catch (const std::exception& e) {
+		std::cerr << "Error: " << e.what() << '\n';
 		exit(EXIT_FAILURE);
-	}
-	catch (const std::out_of_range & e)
-	{
-		std::cerr << e.what() << "\n";
-		exit(EXIT_FAILURE);
-	}
-	catch(const std::runtime_error& e)
-	{
-		std::cout << e.what() << std::endl;
 	}
 	return confParser;
 }
 
 int kqFd = 0;
 
-bool kqCreate()
-{
+bool kqCreate() {
 	kqFd = kqueue();
 	if (kqFd < 0 )
 		return (false);
 	return (true);
+}
+
+
+void leaksCheck() {
+	system("leaks webserv");
 }
 
 int main(int argc, char **argv)
@@ -63,33 +59,17 @@ int main(int argc, char **argv)
 	std::ifstream	file;
 	Parser			configs;
 
-	
-	configFileOpen(argc, argv, file);
+	atexit(leaksCheck);
+	if (!configFileOpen(argc, argv, file))
+		return EXIT_FAILURE;
 	configs = configInit(file);
 
-	if( kqCreate() == false )
-		return (0);
+	if (!kqCreate())
+		return EXIT_FAILURE;
 
 	Core core(configs);
 	if(core.status() == false)
 		return(printError("ERROR: shade... \t\t| you could config better next time :(", 0));
 	core.run();
-	return (EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* 	RequestParser req(requestUpload);
-	ResponseHandler resp(req.getRequest(), confParser.getConfigFile());
-	resp.post();
-	std::cout << resp.generateResponse() << std::endl; */

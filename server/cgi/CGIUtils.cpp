@@ -1,8 +1,7 @@
 #include "CGIHandler.hpp"
 
 
-std::string base64Decode(const std::string& data)
-{
+std::string base64Decode(const std::string& data) {
 	const char	fillchar = '=';
 	static std::string  cvt = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 								"abcdefghijklmnopqrstuvwxyz"
@@ -15,6 +14,8 @@ std::string base64Decode(const std::string& data)
 
 	for (i = 0; i < len; ++i)
 	{
+		if (data[i] == ' ')
+			continue;
 		c = (char) cvt.find(data[i]);
 		++i;
 		ch = (char) cvt.find(data[i]);
@@ -52,8 +53,7 @@ std::string	getCwd() {
 }
 
 std::string	getCgiAbsolutePath(int type) {
-	switch (type)
-	{
+	switch (type) {
 		case PHP:
 			return getAbsolutePath(PHP_ROOT, PHP_CGI_PATH);
 			break;
@@ -68,6 +68,14 @@ std::string	getCgiAbsolutePath(int type) {
 	}
 	throw std::runtime_error("Script type not recognized.");
 
+}
+
+static void	checkFilePath(const std::string& path) {
+	if (path.find(".tmp") == std::string::npos) {
+		std::ifstream file(path, std::ios::binary);
+		if (!file.is_open())
+			throw std::runtime_error("Failed to find file");
+	}
 }
 
 std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
@@ -88,31 +96,24 @@ std::string getAbsolutePath(std::string rootPath, std::string scriptPath) {
 		currentDir += scriptPath;
 	}
 	else
-		throw std::runtime_error("Failed to get absolute path to the cgi script.");
+		throw std::runtime_error("Failed to get absolute path to the cgi script");
 
-	// Check last time and remove double-slash within absolute path
 	for (size_t i = 0; i < currentDir.length() - 1; ++i) {
 		if (currentDir[i] == '/' && currentDir[i + 1] == '/') {
 			currentDir.erase(i + 1, 1);
 		}
 	}
+	checkFilePath(currentDir);
 	return currentDir;
 }
 
-int		check_access(const char* file) {
-	if (access(file, X_OK) == 0)
-		return 1;
-	else
-		return 0;
-}
+char** setArgArray(std::string cgiPath, std::string scripPath) {
+	size_t len1 = cgiPath.length() + 1;
+	size_t len2 = scripPath.length() + 1;
 
-char **setArgArray(std::string cgiPath, std::string scripPath) {
-	size_t len1 = strlen(cgiPath.c_str()) + 1;
-	size_t len2 = strlen(scripPath.c_str()) + 1;
-
-	char **argv = (char**)malloc(sizeof(char*) * 3);
-	argv[0] = (char *)malloc(sizeof(char) * len1);
-	argv[1] = (char *)malloc(sizeof(char) * len2);
+	char** argv = new char*[3];
+	argv[0] = new char[len1];
+	argv[1] = new char[len2];
 	strcpy(argv[0], cgiPath.c_str());
 	strcpy(argv[1], scripPath.c_str());
 	argv[2] = NULL;
@@ -121,7 +122,7 @@ char **setArgArray(std::string cgiPath, std::string scripPath) {
 }
 
 void	freeArgArray(char** argv) {
-	free(argv[0]);
-	free(argv[1]);
-	free(argv);
+	delete(argv[0]);
+	delete(argv[1]);
+	delete(argv);
 }

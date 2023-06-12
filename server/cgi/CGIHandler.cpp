@@ -1,21 +1,14 @@
 #include "CGIHandler.hpp"
+#include "responseUtils.hpp"
 
 CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep)
-: req_(req)
-, conf_(conf)
-, ep_(ep)
-{
-	// get data from Request and ConfigFile into CGI struct
+: req_(req), conf_(conf), ep_(ep) {
 	setRequestInfo();
 	setConfigInfo();
 }
 
 CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep, std::string query)
-: req_(req)
-, conf_(conf)
-, ep_(ep)
-{
-	// get data from Request and ConfigFile into CGI struct
+: req_(req), conf_(conf) , ep_(ep) {
 	setRequestInfo();
 	setConfigInfo();
 	cgi_.queryString = query;
@@ -23,8 +16,7 @@ CGIHandler::CGIHandler(Request req, ConfigFile conf, std::string ep, std::string
 
 CGIHandler::~CGIHandler() {};
 
-void	CGIHandler::setEnvironment()
-{
+void	CGIHandler::setEnvironment() {
 	setenv("REQUEST_METHOD", cgi_.method.c_str(), 1);
 	setenv("CONTENT_TYPE", cgi_.contenType.c_str(), 1);
 	setenv("CONTENT_LENGTH", cgi_.contenLength.c_str(), 1);
@@ -39,8 +31,7 @@ void	CGIHandler::setEnvironment()
 	setenv("REDIRECT_STATUS", "200", 1);
 }
 
-void	CGIHandler::setRequestInfo()
-{
+void	CGIHandler::setRequestInfo() {
 	cgi_.method = req_.rline.method;
 	cgi_.uri =  req_.rline.uri;
 	cgi_.contenType = req_.eheader.contentType;
@@ -53,8 +44,7 @@ void	CGIHandler::setRequestInfo()
 	cgi_.postType = (cgi_.contenType == MULTIPART) ? 0 : 1;
 }
 
-void	CGIHandler::setConfigInfo()
-{
+void	CGIHandler::setConfigInfo() {
 	int type = conf_.getScriptType(ep_);
 	cgi_.cgiPathInfo =  getCgiAbsolutePath(type);
 	cgi_.epScriptRoot = getAbsolutePath(conf_.getRoot(ep_), conf_.getScriptCGI(ep_, type));
@@ -82,13 +72,15 @@ void	CGIHandler::execute() {
 		runChildProcess(fd, argv);
 	else
 		runParentProcess(fd);
+	freeArgArray(argv);
 	setCGIResponse();
 }
 
 
 void CGIHandler::setFileUpload() {
-	if (std::string(getenv("CONTENT_TYPE")) == MULTIPART) {
-		std::string tmpPath = getAbsolutePath(PHP_ROOT, "uploaded_file.tmp");
+	if (std::string(getenv("CONTENT_TYPE")).compare(MULTIPART) == 0) {
+		std::string temp = TEMPFILE_PATH + get_uuid() + ".tmp";
+		std::string tmpPath = getAbsolutePath(PHP_ROOT, temp);
 		std::ofstream tempFile(tmpPath, std::ios::binary);
 		if (tempFile) {
 			tempFile.write(&cgi_.body[0], cgi_.body.size());
@@ -123,12 +115,13 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 
 	close(fd[0]);
 	close(filefd);
-	if (!check_access(argv[0]) || !check_access(argv[1]))
+	if (access(argv[0], X_OK) != 0 || access(argv[1], X_OK) != 0)
 		throw std::runtime_error("Unauthorized");
 
 	extern char** environ;
 	if (execve(argv[0], argv, environ) == -1) {
 		std::cerr << "execve failed: " << std::strerror(errno) << std::endl;
+		freeArgArray(argv);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -136,7 +129,6 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 void CGIHandler::runParentProcess(int *fd)
 {
 	int status = 0;
-	
 	close(fd[0]);
 	if (cgi_.postType && !cgi_.body.empty())
 		write(fd[1], cgi_.body.c_str(), cgi_.body.length());

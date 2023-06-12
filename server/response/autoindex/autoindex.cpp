@@ -5,12 +5,12 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include "ResponseHandler.hpp"
 
 static std::string getTemplateHtml() {
-	std::ifstream templateFile("./response/autoindex/template.html");
+	std::ifstream templateFile(AUTOINDEX_TEMPLATE_PATH);
 	if (!templateFile.is_open() || !templateFile.good()) {
-		std::cerr << "Autoindex html failed to open!" << std::endl;
-		return "";
+		throw std::runtime_error("Autoindex html failed to open!");
 	}
 	std::stringstream	buffer;
 	buffer << templateFile.rdbuf();
@@ -49,7 +49,6 @@ static std::string getListedDir(std::string root) {
 		}
 		closedir(dh);
 	}
-	/* sorted content */
 	std::sort(dir_content.begin(), dir_content.end());
 	
 	std::vector<std::string>::iterator it = dir_content.begin();
