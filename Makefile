@@ -1,6 +1,6 @@
 VPATH	=	server/cgi server/colored_output server/config_parser server/core server/request server/response server/response/autoindex
 CC		=	c++
-CFLAGS	=	-std=c++98 -Wall -Wextra -MD -fsanitize=address -Werror
+CFLAGS	=	-std=c++98 -Wall -Wextra -MD -Werror
 
 NAME	=	webserv
 

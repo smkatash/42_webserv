@@ -71,6 +71,7 @@ void	CGIHandler::execute() {
 		runChildProcess(fd, argv);
 	else
 		runParentProcess(fd);
+	freeArgArray(argv);
 	setCGIResponse();
 }
 
@@ -118,6 +119,7 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 	extern char** environ;
 	if (execve(argv[0], argv, environ) == -1) {
 		std::cerr << "execve failed: " << std::strerror(errno) << std::endl;
+		freeArgArray(argv);
 		exit(EXIT_FAILURE);
 	}
 }
