@@ -12,9 +12,6 @@
 #define SIDPATH     "server/authentication_db/session_ids"
 #define AUTOINDEX_TEMPLATE_PATH "server/response/autoindex/template.html"
 
-/* This is in the case when the request is chunked and will be processed using several requests */
-extern bool g_chunkedEncoding;
-
 static const struct s_methods
 {
 	std::string methodStr;
@@ -30,7 +27,7 @@ m[] =
 class ResponseHandler
 {
 public:
-	ResponseHandler(Request req, Socket* sock);
+	ResponseHandler(Request req, ConfigFile conf);
 	~ResponseHandler();
 
 	void        handle();
@@ -39,7 +36,6 @@ public:
 private:
 	Response    res_;
 	Request     req_;
-	Socket*     sock_;
 	ConfigFile  conf_;
 
 	std::string uri_;

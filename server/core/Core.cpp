@@ -13,15 +13,13 @@
 
 // #define DEBUG
 
-bool g_chunkedEncoding = false;
-
 bool loop = true;
 
 static void catchCtrlC(int sigNum)
 {
 	if(sigNum)
 		;
-  	loop = false;
+	loop = false;
 }
 
 //////////////////////////////////////////////////// canonic functions:
@@ -114,51 +112,34 @@ static struct timespec setTimer(int sec, int nsec)
 	return (timeout);
 }
 
-void Core::createResponse(Socket* socket)
+void Core::createResponse(Socket *socket)
 {
 	RequestParser      request;
-	static std::string firstRequest; // This should be inside socket
-	static std::string chunks; // This should be inside socket
 
 	#ifdef DEBUG
 		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
 	// TODO: Try catch for some reason
-
-	if (socket->getChunkedOpt() == true)
+	std::string& data = socket->getDataRef();
+	if (socket->getChunkedOpt() == true && socket->getData().find("0\r\n\r\n") != std::string::npos)
 	{
-		chunks += socket->getData();
-		socket->setResponse("HTTP/1.1 202 Accepted");
-	}
-
-	if (chunks.find("0\r\n\r\n") != std::string::npos)
+		size_t headerLoc = data.find("Transfer-Encoding: chunked");
+		if (headerLoc != std::string::npos)
+			data.erase(headerLoc, 28); // size of header + 2 Because we erase the \r\n as well
+		dechunk(data);
 		socket->setChunkedOpt(false); // We reached the last chunk, we stop storing in chunks string
-
-	if (socket->getChunkedOpt() == false)
-	{
-		if (!chunks.empty())
-		{
-			size_t headerLoc = firstRequest.find("Expect: 100-continue");
-			if (headerLoc != std::string::npos)
-				firstRequest.erase(headerLoc, 22); // size of header + 2 Because we erase the \r\n as well
-
-			headerLoc = firstRequest.find("Transfer-Encoding: chunked");
-			if (headerLoc != std::string::npos)
-				firstRequest.erase(headerLoc, 28); // size of header + 2 Because we erase the \r\n as well
-
-			firstRequest += chunks;
-			dechunk(firstRequest);
-		}
-		else
-			firstRequest = socket->getData();
-		request.initParser(firstRequest);
-		ResponseHandler response(request.getRequest(), socket);
-		response.handle();
-		socket->setResponse(response.generate());
-		chunks.clear();
 	}
+	request.initParser(data);
+	size_t headerLoc = data.find("Expect: 100-continue");
+	if (headerLoc != std::string::npos)
+		data.erase(headerLoc, 22); // size of header + 2 Because we erase the \r\n as well
+
+	ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
+	response.handle();
+	socket->setResponse(response.generate());
 }
+
 
 static  bool connectionToKeepAlive( std::string response)
 {

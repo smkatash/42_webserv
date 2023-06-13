@@ -9,10 +9,9 @@
 
 #define COOKIES
 
-ResponseHandler::ResponseHandler(Request req, Socket* sock)
+ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 : req_(req)
-, sock_(sock)
-, conf_(sock->getServerConfiguration())
+, conf_(conf)
 {
 	/* basic setup for creating a response */
 	res_.rline.version      = HTTPVERSION;
@@ -75,15 +74,14 @@ void ResponseHandler::post()
 {
 	// std::cerr << "After dechunking and stuff:" << std::endl;
 	// std::cerr << req_. << std::endl;
+	if (req_.rheader.expect.compare(0, 12, "100-continue") == 0)
+		return setCode(CONTINUE);
 	if (req_.eheader.contentLength.empty())
 	{
 		if (req_.gheader.transferEncoding.compare(0, 7, "chunked") != 0) // If there's no chunked encoding then we need length
 			return setCode(LENGTHPLS);
-		if (req_.rheader.expect.compare(0, 12, "100-continue") == 0) // If there is chunked and 100-Continue then we return 100
-		{
-			sock_->setChunkedOpt(true);
-			return setCode(CONTINUE);
-		}
+		// Otherwise, there's chunked encoding but no content length (meaning the chunks haven't been fully recieved)
+		return setCode(ACCEPTED);
 	}
 	size_t maxBodySize = conf_.getClientMaxBodySize();
 	size_t reqContentLength = strtonum<unsigned long>(req_.eheader.contentLength);

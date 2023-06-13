@@ -75,6 +75,7 @@ class Socket
 		ConfigFile          getServerConfiguration();
 		std::string         getResponse();
 		std::string         getData();
+		std::string&        getDataRef();
 		struct kevent       getEvent();
 		struct kevent*      getEvents();
 		struct sockaddr_in& getSocketDestinationAddress();

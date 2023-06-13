@@ -25,28 +25,31 @@ int Socket::retry()
 }
 //////////////////////////////////////////////////// canonic methods:
 Socket::Socket() :
-requestIsComplete_(false)
+requestLength_(0),
+requestIsComplete_(false),
+chunkedRequest_(false)
 {
 }
 
 Socket::Socket(int port, struct sockaddr_in servAddr) :
 port_(port),
-sourceAddress_(servAddr)
+sourceAddress_(servAddr),
+requestLength_(0),
+requestIsComplete_(false),
+chunkedRequest_(false)
 {
-	requestIsComplete_= false;
-	requestLength_ = 0;
 	setConnectionTimer();
 }
 
 Socket::Socket(int port, struct sockaddr_in servAddr, int fd, ConfigFile serverConfig): port_(port),
 serverSd_(fd),
 sourceAddress_(servAddr),
+requestLength_(0),
+requestIsComplete_(false),
+chunkedRequest_(false),
 serverConfiguration_(serverConfig)
 {
-	requestIsComplete_= false;
-	requestLength_ = 0;
 	setConnectionTimer();
-
 }
 
 Socket::~Socket()
@@ -88,7 +91,7 @@ bool Socket::setSocketOption()
 	statusFnctl = fcntl(clientSd_, F_SETFL, O_NONBLOCK);
 	if (statusFnctl == -1)
 	{
-  		perror("calling fcntl");
+		perror("calling fcntl");
 	}
 	if( setsockopt(clientSd_, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(int)) == -1)
 		return (false);
@@ -188,6 +191,7 @@ time_t Socket::getConnectionTimer() { return (connectionTimer_); }
 ConfigFile Socket::getServerConfiguration() { return (serverConfiguration_); }
 std::string Socket::getResponse() { return(response_); }
 std::string Socket::getData() {return (data_); }
+std::string& Socket::getDataRef() {return (data_); }
 struct kevent Socket::getEvent() { return (event_); }
 struct kevent* Socket::getEvents() { return (events_); }
 struct sockaddr_in& Socket::getSocketDestinationAddress() { return (destinationAddress_); }
@@ -197,7 +201,7 @@ size_t Socket::getContentLength()
 {
 	size_t      contentLenght;
 	size_t      index;
-	std::string substring( "Content-Length:");
+	std::string substring("Content-Length:");
 
 	index = data_.find(substring);
 	if(index == std::string::npos)
@@ -230,7 +234,7 @@ int Socket::connectionClosedClientSide()
 	#ifdef SOCKET_VERBOSE
 		printAction("ACTION:\033[38;5;189m CLIENT\033[38;5;197m Connection closed \t\t\033[38;5;49m| CLIENT addr:\t", (int) ntohl(destinationAddress_.sin_addr.s_addr));
 	#endif
-	data_ = "";
+	data_.clear();
 	requestLength_ = 0;
 	requestIsComplete_ = false;
 	setConnectionStatus(false);
@@ -240,7 +244,7 @@ int Socket::connectionClosedClientSide()
 
 int Socket::closingConnectionServerSide()
 {
-	data_ = "";
+	data_.clear();
 	requestLength_ = 0;
 	requestIsComplete_ = false;
 	setRequestStatus(false);
@@ -253,7 +257,6 @@ int Socket::closingConnectionServerSide()
 
 void Socket::reset()
 {
-	data_ = "";
 	requestLength_ = 0;
 	requestIsComplete_ = false;
 	setRequestStatus(false);
@@ -263,12 +266,12 @@ void Socket::reset()
 	return ;
 }
 
-// static bool checkChunkOpt(const std::string& data)
-// {
-// 	if (data.find("Transfer-Encoding: chunked") != std::string::npos)
-// 		return true ;
-// 	return false;
-// }
+static bool checkChunkOpt(const std::string& data)
+{
+	if (data.find("Transfer-Encoding: chunked") != std::string::npos)
+		return true ;
+	return false;
+}
 
 bool Socket::getChunkedOpt()
 {
@@ -279,6 +282,7 @@ void Socket::setChunkedOpt(bool val)
 {
 	chunkedRequest_ = val;
 }
+
 
 int Socket::readHandler(size_t sizeToRead)
 {
@@ -304,6 +308,9 @@ int Socket::readHandler(size_t sizeToRead)
 	}
 	buffer[bytes] = '\0';
 	data_.append(buffer, bytes);
+
+	if(chunkedRequest_ == false && getContentLength() == 0)
+		chunkedRequest_ = checkChunkOpt(data_);
 
 	if(requestLength_ == 0)
 		setRequestLength();
@@ -331,6 +338,8 @@ bool Socket::writeHandler(std::string response, bool closeConnection)
 	if (bytes < 0)
 		return false;
 	response_ = response_.substr(bytes);
+	if (response_.empty() && closeConnection == false && chunkedRequest_ == false) // TODO: Ask Francesco if it's okay like this
+		data_.clear();
 	if (response_.empty() && closeConnection == false)
 		reset();
 	if (response_.empty() && closeConnection == true)
