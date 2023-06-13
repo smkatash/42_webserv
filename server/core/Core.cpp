@@ -13,15 +13,13 @@
 
 // #define DEBUG
 
-bool g_chunkedEncoding = false;
-
 bool loop = true;
 
 static void catchCtrlC(int sigNum)
 {
 	if(sigNum)
 		;
-  	loop = false;
+	loop = false;
 }
 
 //////////////////////////////////////////////////// canonic functions:
