@@ -234,7 +234,7 @@ int Socket::connectionClosedClientSide()
 	#ifdef SOCKET_VERBOSE
 		printAction("ACTION:\033[38;5;189m CLIENT\033[38;5;197m Connection closed \t\t\033[38;5;49m| CLIENT addr:\t", (int) ntohl(destinationAddress_.sin_addr.s_addr));
 	#endif
-	data_ = "";
+	data_.clear();
 	requestLength_ = 0;
 	requestIsComplete_ = false;
 	setConnectionStatus(false);
@@ -244,7 +244,7 @@ int Socket::connectionClosedClientSide()
 
 int Socket::closingConnectionServerSide()
 {
-	data_ = "";
+	data_.clear();
 	requestLength_ = 0;
 	requestIsComplete_ = false;
 	setRequestStatus(false);
@@ -257,7 +257,6 @@ int Socket::closingConnectionServerSide()
 
 void Socket::reset()
 {
-	// data_ = "";
 	requestLength_ = 0;
 	requestIsComplete_ = false;
 	setRequestStatus(false);
