@@ -59,7 +59,7 @@ class CGIHandler {
 		void				setCGIResponse();
 
 		void				runChildProcess(int *fd, char** argv);
-		void				runParentProcess(int *fd);
+		void				runParentProcess(int *fd, char** argv);
 
 	public:
 		CGIHandler(Request req, ConfigFile conf, std::string location);
@@ -73,6 +73,7 @@ std::string				base64Decode(const std::string& input);
 std::string				getCwd();
 std::string				getCgiAbsolutePath(int type);
 std::string				getAbsolutePath(std::string rootPath, std::string scriptPath);
+bool					isEmptyAfterStrip(const std::string& str);
 char**					setArgArray(std::string cgiPath, std::string scripPath);
 void					freeArgArray(char** argv);
 

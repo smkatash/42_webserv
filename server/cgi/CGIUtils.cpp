@@ -122,7 +122,18 @@ char** setArgArray(std::string cgiPath, std::string scripPath) {
 }
 
 void	freeArgArray(char** argv) {
-	delete(argv[0]);
-	delete(argv[1]);
-	delete(argv);
+	delete[] argv[0];
+	delete[] argv[1];
+	delete[] argv;
+}
+
+bool	isEmptyAfterStrip(const std::string& str) {
+	std::string dest = str;
+	if (!dest.empty()) {
+		dest.erase(std::remove(dest.begin(), dest.end(), '\n'), dest.end());
+		dest.erase(std::remove(dest.begin(), dest.end(), '\r'), dest.end());
+	}
+	if (dest.empty())
+		return true;
+	return false;
 }

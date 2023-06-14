@@ -56,11 +56,14 @@ void	CGIHandler::execute() {
 	char **argv = setArgArray(cgi_.cgiPathInfo, cgi_.epScriptRoot);
 	responseFile_ = tmpfile();
 	if (responseFile_ == nullptr) {
+		freeArgArray(argv);
 		throw std::runtime_error("Failed to create a temporary file");
 	}
 
-	if (pipe(fd) == -1)
+	if (pipe(fd) == -1) {
+		freeArgArray(argv);
 		throw std::runtime_error("Failed to pipe");
+	}
 
 	pid_t pid = fork();
 	if (pid == -1) {
@@ -71,14 +74,15 @@ void	CGIHandler::execute() {
 	if (pid == 0)
 		runChildProcess(fd, argv);
 	else
-		runParentProcess(fd);
+		runParentProcess(fd, argv);
 	freeArgArray(argv);
 	setCGIResponse();
 }
 
 
 void CGIHandler::setFileUpload() {
-	if (std::string(getenv("CONTENT_TYPE")).compare(MULTIPART) == 0) {
+	if (std::string(getenv("CONTENT_TYPE")).compare(MULTIPART) == 0 &&
+		!isEmptyAfterStrip(cgi_.body)) {
 		std::string temp = TEMPFILE_PATH + get_uuid() + ".tmp";
 		std::string tmpPath = getAbsolutePath(PHP_ROOT, temp);
 		std::ofstream tempFile(tmpPath, std::ios::binary);
@@ -100,23 +104,29 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 	setEnvironment();
 	setFileUpload();
 
-	if (dup2(fd[0], STDIN_FILENO) == -1)
+	if (dup2(fd[0], STDIN_FILENO) == -1) {
+		freeArgArray(argv);
 		std::runtime_error("Failed to redirect stdout");
+	}
 
 	int filefd = fileno(responseFile_);
 	if (filefd == -1) {
 		close(filefd);
+		freeArgArray(argv);
 		throw std::runtime_error("Failed to retrieve file descriptor");
 	}
 
 	if (dup2(filefd, STDOUT_FILENO) == -1) {
+		freeArgArray(argv);
 		throw std::runtime_error("Failed to redirect stdout");
 	}
 
 	close(fd[0]);
 	close(filefd);
-	if (access(argv[0], X_OK) != 0 || access(argv[1], X_OK) != 0)
+	if (access(argv[0], X_OK) != 0 || access(argv[1], X_OK) != 0) {
+		freeArgArray(argv);
 		throw std::runtime_error("Unauthorized");
+	}
 
 	extern char** environ;
 	if (execve(argv[0], argv, environ) == -1) {
@@ -126,11 +136,11 @@ void	CGIHandler::runChildProcess(int *fd, char** argv)
 	}
 }
 
-void CGIHandler::runParentProcess(int *fd)
+void CGIHandler::runParentProcess(int *fd, char** argv)
 {
 	int status = 0;
 	close(fd[0]);
-	if (cgi_.postType && !cgi_.body.empty())
+	if (cgi_.postType && !isEmptyAfterStrip(cgi_.body))
 		write(fd[1], cgi_.body.c_str(), cgi_.body.length());
 	close(fd[1]);
 
@@ -140,6 +150,7 @@ void CGIHandler::runParentProcess(int *fd)
 	else if (WIFSIGNALED(status))
 		status = WTERMSIG(status) + 128;
 	if (status != 0) {
+		freeArgArray(argv);
 		throw std::runtime_error("execution failed");
 	}
 }
