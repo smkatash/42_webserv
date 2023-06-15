@@ -166,8 +166,6 @@ std::string unchunkData(const std::string& data)
 	std::string chunk;
 	size_t      chunkSize;
 
-	// std::cout << data << std::endl;
-	// exit(0);
 	size_t dataLen = data.length();
 	for (size_t i = 0; i < dataLen; i++) {
 		chunkSize = determineChunkSize(data, i); // 0 means that an error happened while determining chunk size or chunk size is actually 0

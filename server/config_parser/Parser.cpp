@@ -293,12 +293,6 @@ void	Parser::setConfigFile() {
 	parseSyntax();
 }
 
-/********************* getter *************************/
-
-ConfigFile	Parser::getConfigFile() {
-	return conf_.front(); // TODO: Needs attention
-}
-
 /********************* debugger *************************/
 
 void	Parser::debugConfigVector() {

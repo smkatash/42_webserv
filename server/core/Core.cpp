@@ -120,20 +120,19 @@ void Core::createResponse(Socket *socket)
 		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
-	// TODO: Try catch for some reason
 	std::string& data = socket->getDataRef();
 	if (socket->getChunkedOpt() == true && socket->getData().find("0\r\n\r\n") != std::string::npos)
 	{
-		size_t headerLoc = data.find("Transfer-Encoding: chunked");
+		size_t headerLoc = data.find("Transfer-Encoding: chunked\r\n");
 		if (headerLoc != std::string::npos)
-			data.erase(headerLoc, 28); // size of header + 2 Because we erase the \r\n as well
+			data.erase(headerLoc, 28);
 		dechunk(data);
 		socket->setChunkedOpt(false); // We reached the last chunk, we stop storing in chunks string
 	}
 	request.initParser(data);
-	size_t headerLoc = data.find("Expect: 100-continue");
+	size_t headerLoc = data.find("Expect: 100-continue\r\n");
 	if (headerLoc != std::string::npos)
-		data.erase(headerLoc, 22); // size of header + 2 Because we erase the \r\n as well
+		data.erase(headerLoc, 22);
 
 	ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
 	response.handle();
