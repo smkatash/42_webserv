@@ -313,6 +313,7 @@ void ResponseHandler::setCode(int code)
 		{
 			res_.rline.reasonPhrase = rc[i].reasonPhrase;
 			res_.eheader.contentLength = "0";
+			res_.rbody = "\r\n";
 			if (rc[i].withBody == true)
 				setBodyErrorPage(code);
 			break;

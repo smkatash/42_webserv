@@ -21,7 +21,7 @@
 #define LENGTHPLS       411    // "411 Length Required"
 #define TOOLARGE        413    // "413 Content Too Large"
 #define LONGURI         414    // "414 URI Too Long"
-// #define UNSUPPORTED  415    // "415 Unsupported Media Type"
+// #define UNSUPPORTED  415    // "415 Unsupported Media Type" TODO
 
 #define	INTERNALERROR   500    // "500 Internal Server Error" /* generic server error */
 #define	UNIMPLEMENTED   501    // "501 Not Implemeneted" /* Method not implemented */
