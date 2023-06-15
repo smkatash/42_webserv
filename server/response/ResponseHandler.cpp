@@ -243,8 +243,8 @@ void ResponseHandler::normalResponse(Methods method)
 		return setResponseBody(uriPath);
 	/* else the method is DELETE */
 	unlink(uri_.c_str());
-	res_.eheader.contentLength = "0";
-	setCode(ACCEPTED);
+	// res_.eheader.contentLength = "0";
+	setCode(NOCONTENT);
 }
 
 /* Take response from CGI and parse the necessary values from it */
