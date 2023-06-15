@@ -140,12 +140,12 @@ void Core::createResponse(Socket *socket)
 }
 
 
-static  bool connectionToKeepAlive( std::string response)
+static  bool connectionToKeepAlive(const std::string& request)
 {
 	size_t index = 0;
 
 	std::string substring ("Connection: close");
-	index = response.find(substring);
+	index = request.find(substring);
 	if(index == std::string::npos)
 		return (false);
 	return (true);
@@ -157,7 +157,7 @@ bool Core::sendResponse( Socket *socket)
 		printLaResponse(socket->getResponse(), socket->getPort());
 	#endif
 
-	bool connection = connectionToKeepAlive(socket->getResponse());
+	bool connection = connectionToKeepAlive(socket->getData());
 	if (socket->writeHandler(socket->getResponse(), connection) == false)
 	{
 		socket->closeConnection();

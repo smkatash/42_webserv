@@ -7,7 +7,7 @@
 #include <map>
 
 #define MAX_EVENT 10000
-#define TIMEOUT 20
+#define TIMEOUT 0
 
 class Core
 {

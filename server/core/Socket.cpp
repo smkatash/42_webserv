@@ -232,7 +232,7 @@ int Socket::closeConnection()
 int Socket::connectionClosedClientSide()
 {
 	#ifdef SOCKET_VERBOSE
-		printAction("ACTION:\033[38;5;189m CLIENT\033[38;5;197m Connection closed \t\t\033[38;5;49m| CLIENT addr:\t", (int) ntohl(destinationAddress_.sin_addr.s_addr));
+		printAction("ACTION:\033[38;5;189m CLIENT\033[38;5;197m Connection closed \t\t\033[38;5;49m| CLIENT fdes:\t", clientSd_);
 	#endif
 	data_.clear();
 	requestLength_ = 0;
@@ -292,23 +292,29 @@ int Socket::readHandler(size_t sizeToRead)
 
 	buffer = new char[sizeToRead + 1];
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
-	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m recv()\trequest\t\t\t\033[38;5;49m| CLIENT addr:\t",(int) ntohl(destinationAddress_.sin_addr.s_addr));
+	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m recv()\trequest\t\t\t\033[38;5;49m| CLIENT fdes:\t",clientSd_);
 	if(bytes == 0)
 	{
 		delete[] buffer;
+		std::cout << "\n\n\n\n ZEROOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n\n\n" <<std::endl;
 		return (connectionClosedClientSide());
 	}
 	else if (bytes < 0)
 	{
 		delete[] buffer;
-		if(retry() == -1) //we retry 5 tymes;
-			return (-1);
-		else
+		// if(retry() == -1) //we retry 5 tymes;
+		// 	return (-1);
+		// else
+		{
+			data_ = "GET / HTTP/1.1\r\nConnection: close\r\n";
+			setRequestStatus(true);
+			requestLength_ = 0;
+			return (1);
 			return (closingConnectionServerSide());
+		}
 	}
 	buffer[bytes] = '\0';
 	data_.append(buffer, bytes);
-
 	if(chunkedRequest_ == false && getContentLength() == 0)
 		chunkedRequest_ = checkChunkOpt(data_);
 
@@ -332,11 +338,17 @@ bool Socket::writeHandler(std::string response, bool closeConnection)
 	int bytes;
 	if (connectionUp_ == false)
 		return false;
-
+	std::cout << "\n\n\n\n"
+			  << " \n\nDRESPNSE\n\n"
+			  << response << " \n\n\n"
+			  << std::endl;
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
-	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m send()\tresponse \t\t\033[38;5;49m| CLIENT addr:\t", ntohl(destinationAddress_.sin_addr.s_addr));
+	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m send()\tresponse \t\t\033[38;5;49m| CLIENT fdes:\t", clientSd_);
 	if (bytes < 0)
+	{
+		std::cout << "\n\n\n\n -1111111111111111111111111111111111111111111111111111111111111111111111111111111111111\n\n\n" <<std::endl;
 		return false;
+	}
 	response_ = response_.substr(bytes);
 	if (response_.empty() && closeConnection == false && chunkedRequest_ == false) // TODO: Ask Francesco if it's okay like this
 		data_.clear();
