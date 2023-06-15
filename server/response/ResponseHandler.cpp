@@ -243,6 +243,7 @@ void ResponseHandler::normalResponse(Methods method)
 		return setResponseBody(uriPath);
 	/* else the method is DELETE */
 	unlink(uri_.c_str());
+	res_.eheader.contentLength = "0";
 	setCode(ACCEPTED);
 }
 
@@ -312,8 +313,6 @@ void ResponseHandler::setCode(int code)
 		if (rc[i].statusCode == code)
 		{
 			res_.rline.reasonPhrase = rc[i].reasonPhrase;
-			res_.eheader.contentLength = "0";
-			res_.rbody = "\r\n";
 			if (rc[i].withBody == true)
 				setBodyErrorPage(code);
 			break;
