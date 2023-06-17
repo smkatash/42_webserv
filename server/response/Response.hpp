@@ -10,6 +10,7 @@
 #define	OK              200    // "200 OK" /* Request is okay, entity body contains requested resource. */
 #define	CREATED         201    // "201 Created" /* For requests that create server objects (e.g., PUT). */
 #define	ACCEPTED        202    // "202 Accepted" /* the action will likely succeed but has not yet been enacted */
+#define	NOCONTENT       204    // "204 No Content" /* The server successfully processed the request, but is not returning any content */
 
 #define	MOVEDPERMAN     301    // "301 Moved Permanently" /* page moved to a different url*/
 #define	FOUND           302    // "302 Found" /* used for temporary redirect */
@@ -21,7 +22,7 @@
 #define LENGTHPLS       411    // "411 Length Required"
 #define TOOLARGE        413    // "413 Content Too Large"
 #define LONGURI         414    // "414 URI Too Long"
-// #define UNSUPPORTED  415    // "415 Unsupported Media Type"
+// #define UNSUPPORTED  415    // "415 Unsupported Media Type" TODO
 
 #define	INTERNALERROR   500    // "500 Internal Server Error" /* generic server error */
 #define	UNIMPLEMENTED   501    // "501 Not Implemeneted" /* Method not implemented */
@@ -39,6 +40,7 @@ rc[] =
 	{OK,            "OK",                         false},
 	{CREATED,       "Created",                    false},
 	{ACCEPTED,      "Accepted",                   false},
+	{NOCONTENT,     "No Content",                 false},
 	{MOVEDPERMAN,   "Moved Permanently",          false},
 	{FOUND,         "Found",                      false},
 	{BADREQ,        "Bad Request",                true},

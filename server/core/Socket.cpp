@@ -8,21 +8,6 @@
 //////////////////////////////////////////////////// static helper:
 static size_t getHeaderLength(const std::string& string);
 
-static int errorOut(std::string message, int returnValue)
-{
-	printError(message, 0);
-	return (returnValue);
-}
-
-int Socket::retry()
-{
-	static int counter;
-	counter++;
-	if(counter != 5)
-		return (errorOut("ERROR: SOCKET PROBABLY BLOCKING... RETRY", -1));
-	else
-		return (errorOut("ERROR: SOCKET PROBABLY BLOCKING... RETRY", 0));
-}
 //////////////////////////////////////////////////// canonic methods:
 Socket::Socket() :
 requestLength_(0),
@@ -112,7 +97,7 @@ bool Socket::setSocketPassive()
 {
 	int retValue;
 
-	retValue = listen(clientSd_, 5);
+	retValue = listen(clientSd_, 30);
 	return(retValue == 0 ? true : false);
 }
 
@@ -126,10 +111,10 @@ std::ostream& operator<<(std::ostream& out, struct kevent event)
 	return out;
 }
 
-bool Socket::setKeventForWrite()
+bool Socket::setKeventListeningSocket()
 {
-	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
-	if (kevent(kqFd, events_, 1, NULL, 0, NULL) == -1)
+	EV_SET(&event_, clientSd_, EVFILT_READ,  EV_ADD, 0, 0, 0);
+	if (kevent(kqFd, &event_, 1, NULL, 0, NULL) == -1)
 		return false;
 	return true;
 }
@@ -164,11 +149,11 @@ bool Socket::setSocketConnection()
 	clientSd_ = accept(serverSd_, reinterpret_cast<sockaddr*>(&destinationAddress_), &destAddrLen);
 	if (clientSd_ >= 0)
 	{
-		setConnectionStatus(true);
-		return (true);
+		connectionUp_ = true;
+		return true;
 	}
-	setConnectionStatus(false);
-	return (false);
+	connectionUp_ = false;
+	return false;
 }
 
 void Socket::setRequestLength()
@@ -178,22 +163,20 @@ void Socket::setRequestLength()
 	requestLength_ = contentLength + headerLength_;
 }
 
-void Socket::setRequestStatus( bool status) { requestIsComplete_ = status; }
-void Socket::setDestinationAddress( struct sockaddr_in address) { destinationAddress_ = address; }
-void Socket::setConnectionStatus( bool status) { connectionUp_ = status; }
+void Socket::setDestinationAddress(struct sockaddr_in address) { destinationAddress_ = address; }
 
 //////////////////////////////////////////////////// get methods:
-int Socket::getPort() { return (port_); }
-int Socket::getSocketDescriptor() { return (clientSd_); }
-bool Socket::getConnectionStatus() { return (connectionUp_); }
-bool Socket::getRequestStatus() { return (requestIsComplete_); }
-time_t Socket::getConnectionTimer() { return (connectionTimer_); }
-ConfigFile Socket::getServerConfiguration() { return (serverConfiguration_); }
-std::string Socket::getResponse() { return(response_); }
-std::string Socket::getData() {return (data_); }
-std::string& Socket::getDataRef() {return (data_); }
-struct kevent Socket::getEvent() { return (event_); }
-struct kevent* Socket::getEvents() { return (events_); }
+int                 Socket::getPort() { return (port_); }
+int                 Socket::getSocketDescriptor() { return (clientSd_); }
+bool                Socket::getConnectionStatus() { return (connectionUp_); }
+bool                Socket::getRequestStatus() { return (requestIsComplete_); }
+time_t              Socket::getConnectionTimer() { return (connectionTimer_); }
+ConfigFile          Socket::getServerConfiguration() { return (serverConfiguration_); }
+std::string         Socket::getResponse() { return(response_); }
+std::string         Socket::getData() {return (data_); }
+std::string&        Socket::getDataRef() {return (data_); }
+struct kevent       Socket::getEvent() { return (event_); }
+struct kevent*      Socket::getEvents() { return (events_); }
 struct sockaddr_in& Socket::getSocketDestinationAddress() { return (destinationAddress_); }
 struct sockaddr_in& Socket::getSocketSourceAddress() { return (sourceAddress_); }
 
@@ -231,14 +214,12 @@ int Socket::closeConnection()
 
 int Socket::connectionClosedClientSide()
 {
-	#ifdef SOCKET_VERBOSE
-		printAction("ACTION:\033[38;5;189m CLIENT\033[38;5;197m Connection closed \t\t\033[38;5;49m| CLIENT addr:\t", (int) ntohl(destinationAddress_.sin_addr.s_addr));
-	#endif
 	data_.clear();
 	requestLength_ = 0;
 	requestIsComplete_ = false;
-	setConnectionStatus(false);
-	setRequestStatus(false);
+	#ifdef SOCKET_VERBOSE
+		printAction("ACTION:\033[38;5;189m CLIENT\033[38;5;197m Connection closed \t\t\033[38;5;49m| CLIENT fdes:\t", clientSd_);
+	#endif
 	return(closeConnection());
 }
 
@@ -247,19 +228,16 @@ int Socket::closingConnectionServerSide()
 	data_.clear();
 	requestLength_ = 0;
 	requestIsComplete_ = false;
-	setRequestStatus(false);
-	setConnectionStatus(false);
 	#ifdef SOCKET_VERBOSE
 		printAction("ACTION: \033[38;5;45mSERVER\033[38;5;197m Connection closed \t\t\033[38;5;49m| SOCKET fdes:\t" ,clientSd_);
 	#endif
-	return (closeConnection());
+	return(closeConnection());
 }
 
 void Socket::reset()
 {
 	requestLength_ = 0;
 	requestIsComplete_ = false;
-	setRequestStatus(false);
 	#ifdef SOCKET_VERBOSE
 		printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m reset()\tvalues \t\t\t\033[38;5;49m| SOCKET fdes:\t" ,clientSd_);
 	#endif
@@ -283,7 +261,6 @@ void Socket::setChunkedOpt(bool val)
 	chunkedRequest_ = val;
 }
 
-
 int Socket::readHandler(size_t sizeToRead)
 {
 	setConnectionTimer();
@@ -292,32 +269,30 @@ int Socket::readHandler(size_t sizeToRead)
 
 	buffer = new char[sizeToRead + 1];
 	bytes = recv(clientSd_, buffer, sizeToRead, 0);
-	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m recv()\trequest\t\t\t\033[38;5;49m| CLIENT addr:\t",(int) ntohl(destinationAddress_.sin_addr.s_addr));
+	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m recv()\trequest\t\t\t\033[38;5;49m| CLIENT fdes:\t",clientSd_);
 	if(bytes == 0)
 	{
 		delete[] buffer;
+		std::cout << "\n\n\n recv() returned 0 \n\n\n" <<std::endl;
 		return (connectionClosedClientSide());
 	}
 	else if (bytes < 0)
 	{
 		delete[] buffer;
-		if(retry() == -1) //we retry 5 tymes;
-			return (-1);
-		else
-			return (closingConnectionServerSide());
+		std::cout << "\n\n\n recv() returned -1 \n\n\n" <<std::endl;
+		return (closingConnectionServerSide());
 	}
 	buffer[bytes] = '\0';
 	data_.append(buffer, bytes);
-
-	if(chunkedRequest_ == false && getContentLength() == 0)
+	if (chunkedRequest_ == false && getContentLength() == 0)
 		chunkedRequest_ = checkChunkOpt(data_);
 
-	if(requestLength_ == 0)
+	if (requestLength_ == 0)
 		setRequestLength();
 
-	if(data_.size() >= requestLength_)
+	if (data_.size() >= requestLength_)
 	{
-		setRequestStatus(true);
+		requestIsComplete_ = true;
 		requestLength_ = 0;
 	}
 	delete[] buffer;
@@ -330,20 +305,20 @@ bool Socket::writeHandler(std::string response, bool closeConnection)
 	setConnectionTimer();
 
 	int bytes;
-	if (connectionUp_ == false)
+	if (connectionUp_ == false) // if there is no connection, we can't write
 		return false;
-
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
-	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m send()\tresponse \t\t\033[38;5;49m| CLIENT addr:\t", ntohl(destinationAddress_.sin_addr.s_addr));
+	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m send()\tresponse \t\t\033[38;5;49m| CLIENT fdes:\t", clientSd_);
 	if (bytes < 0)
 		return false;
+
 	response_ = response_.substr(bytes);
-	if (response_.empty() && closeConnection == false && chunkedRequest_ == false) // TODO: Ask Francesco if it's okay like this
+	if (response_.empty() && closeConnection == false && chunkedRequest_ == false)
 		data_.clear();
 	if (response_.empty() && closeConnection == false)
 		reset();
 	if (response_.empty() && closeConnection == true)
-		closingConnectionServerSide();
+		return closingConnectionServerSide();
 	return true;
 }
 
@@ -358,7 +333,7 @@ bool Socket::socketPassiveInit()
 		return( printError("ERROR: bind() \t\t\t| SERVER port: ", port_));
 	if (setSocketPassive() == false)
 		return(  printError("ERROR: connect() \t\t\t| SERVER port: ", port_));
-	if (setKevent() == false)
+	if (setKeventListeningSocket() == false)
 		return( printError("ERROR: kevent() \t\t\t| SERVER port: ", port_));
 	printAction("ACTION: server listening ...\t\t\t| SERVER port: ", port_);
 	return true;

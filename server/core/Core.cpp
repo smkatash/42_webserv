@@ -30,7 +30,7 @@ Core::Core(Parser configs) : configs_(configs)
 	servers_ = serversCreate();
 	while (i < servers_.size())
 	{
-		if ( servers_[i].serverInit() == false)
+		if (servers_[i].serverInit() == false)
 		{
 			printError("ERROR: Initializzation error \t| SERVER port: ", servers_[i].getPort());
 			servers_.erase(servers_.begin() + i);
@@ -120,20 +120,19 @@ void Core::createResponse(Socket *socket)
 		printLaDemande(socket->getData(), socket->getPort());
 	#endif
 
-	// TODO: Try catch for some reason
 	std::string& data = socket->getDataRef();
 	if (socket->getChunkedOpt() == true && socket->getData().find("0\r\n\r\n") != std::string::npos)
 	{
-		size_t headerLoc = data.find("Transfer-Encoding: chunked");
+		size_t headerLoc = data.find("Transfer-Encoding: chunked\r\n");
 		if (headerLoc != std::string::npos)
-			data.erase(headerLoc, 28); // size of header + 2 Because we erase the \r\n as well
+			data.erase(headerLoc, 28);
 		dechunk(data);
 		socket->setChunkedOpt(false); // We reached the last chunk, we stop storing in chunks string
 	}
 	request.initParser(data);
-	size_t headerLoc = data.find("Expect: 100-continue");
+	size_t headerLoc = data.find("Expect: 100-continue\r\n");
 	if (headerLoc != std::string::npos)
-		data.erase(headerLoc, 22); // size of header + 2 Because we erase the \r\n as well
+		data.erase(headerLoc, 22);
 
 	ResponseHandler response(request.getRequest(), socket->getServerConfiguration());
 	response.handle();
@@ -141,18 +140,18 @@ void Core::createResponse(Socket *socket)
 }
 
 
-static  bool connectionToKeepAlive( std::string response)
+static bool connectionToKeepAlive(const std::string& response)
 {
 	size_t index = 0;
 
 	std::string substring ("Connection: close");
 	index = response.find(substring);
-	if(index == std::string::npos)
-		return (false);
-	return (true);
+	if (index != std::string::npos)
+		return true; // If we find Connection: close header this means we need to close connection
+	return false;
 }
 
-bool Core::sendResponse( Socket *socket)
+void Core::sendResponse(Socket *socket)
 {
 	#ifdef DEBUG
 		printLaResponse(socket->getResponse(), socket->getPort());
@@ -163,10 +162,7 @@ bool Core::sendResponse( Socket *socket)
 	{
 		socket->closeConnection();
 		sockets_.erase(socket->getSocketDescriptor());
-		return (false);
 	}
-	else
-		return true;
 }
 
 static std::map<int, Socket> checkTimeout(std::map<int, Socket> sockets)
@@ -198,29 +194,27 @@ void Core::connectionHandler(struct kevent currentEvent)
 	std::map<int, Socket>::iterator socketIterator = sockets_.find(socketDescriptor);
 	if(socketIterator != sockets_.end())
 	{
-		////////////////////////////// READ EVENT //////////////////////
+		/* --------------------> Read Event <-------------------- */
+		// We can only read from the socket when the event is EVFILT_READ and
+		// there is a socket connection and the request hasn't finished receiving
 		if (currentEvent.filter == EVFILT_READ && \
 			socketIterator->second.getConnectionStatus() == true && \
 			socketIterator->second.getRequestStatus() == false)
 		{
-			if( socketIterator->second.readHandler(currentEvent.data) == 0)
+			if (socketIterator->second.readHandler(currentEvent.data) == 0)
 				sockets_.erase(socketIterator->second.getSocketDescriptor());
-			else if(socketIterator->second.getRequestStatus() == true)
+			else if (socketIterator->second.getRequestStatus() == true)
 				createResponse(&(socketIterator->second));
-			else
-				;
 		}
-		////////////////////////////// WRITE EVENT /////////////////////
+		/* --------------------> Write Event <-------------------- */
+		// We can only write to the socket when the event is EVFILT_WRITE and
+		// there is a socket connection and the request is fully received
 		if (currentEvent.filter == EVFILT_WRITE && \
 			socketIterator->second.getConnectionStatus() == true && \
 			socketIterator->second.getRequestStatus() == true)
 		{
 			if (socketIterator->second.getConnectionStatus() == true)
-			{
-				if(sendResponse(&(socketIterator->second)) == false)
-				;
-					// sockets_.erase(socketIterator->second.getSocketDescriptor());
-			}
+				sendResponse(&(socketIterator->second));
 			if (socketIterator->second.getConnectionStatus() == false)
 				sockets_.erase(socketIterator->second.getSocketDescriptor());
 		}
@@ -231,7 +225,6 @@ void	Core::run()
 {
 	signal(SIGINT, catchCtrlC);
 
-	int i;
 	int tmpEventDescriptor;
 	int numOfEvent;
 
@@ -239,32 +232,18 @@ void	Core::run()
 	struct kevent currentEvent;
 
 
-	for(i = 0; i < MAX_EVENT; i++)
-		memset(&eventlist_[i], 0, sizeof(eventlist_[i]));
+	memset(&currentEvent, 0, sizeof(currentEvent));
 	printHeader();
 
 	while (loop)
 	{
-		i = 0;
-		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &refresh);
 		sockets_ = checkTimeout(sockets_);
-		while (i < numOfEvent)
-		{
-			currentEvent = eventlist_[i];
 			tmpEventDescriptor = currentEvent.ident;
 			std::map<int, Server>::iterator serversIterator = listeningSockets_.find(tmpEventDescriptor);
 			if (serversIterator != listeningSockets_.end()) //here we should check a vector of serverFd;
-			{
-				if(setNewConnection(serversIterator->second) == false) // map populated with socket
-				{
-					std::cout << "setNewConnectionError\n" << std::endl;
-					exit(0); //! We shouldn't exit and risk breaking the server, we should instead continue to the next event
-				}
-			}
+				setNewConnection(serversIterator->second); // map populated with socket
 			else
 				connectionHandler(currentEvent);
-			i++;
-		}
 	}
 	printFooter();
 	return;

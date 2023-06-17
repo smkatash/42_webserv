@@ -19,7 +19,6 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.reasonPhrase = "OK";
 	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName(); // TODO: Discuss if you keep this or no
 	res_.gheader.date       = findCurrentTimeGMT();
-	// res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
 	if (!checkRequest())
 		return;
 	try
@@ -72,8 +71,6 @@ void ResponseHandler::get()
 
 void ResponseHandler::post()
 {
-	// std::cerr << "After dechunking and stuff:" << std::endl;
-	// std::cerr << req_. << std::endl;
 	if (req_.rheader.expect.compare(0, 12, "100-continue") == 0)
 		return setCode(CONTINUE);
 	if (req_.eheader.contentLength.empty())
@@ -176,6 +173,7 @@ void ResponseHandler::setResponseBody(std::string fileName)
 			res_.rbody += temp + '\n';
 	}
 	res_.eheader.contentLength = toString(res_.rbody.length());
+
 	file.close();
 	return setCode(OK);
 }
@@ -228,7 +226,6 @@ void ResponseHandler::dirResponse(Methods method)
 	uri_ = findUsableFile(location_.lindex, dir);
 	if (uri_.empty())
 		return setCode(NOTFOUND);
-
 	uri_ = endpoint_ + '/' + uri_;
 	return normalResponse(method);
 }
@@ -243,13 +240,15 @@ void ResponseHandler::normalResponse(Methods method)
 		return setResponseBody(uriPath);
 	/* else the method is DELETE */
 	unlink(uri_.c_str());
-	setCode(ACCEPTED);
+	setCode(NOCONTENT);
 }
 
 /* Take response from CGI and parse the necessary values from it */
 void ResponseHandler::processCGIResponse(std::string& cgi)
 {
 	// TODO: If no content_length is set from the cgi. The server should set it manually.
+
+	addContentLength(cgi);
 	std::istringstream iss(cgi);
 	std::string buffer;
 	iss >> buffer;
@@ -265,6 +264,11 @@ void ResponseHandler::processCGIResponse(std::string& cgi)
 		setCode(OK);
 	else
 		setCode(strtonum<int>(status));
+	if (strtonum<int>(status) >= 400)
+	{
+		cgi.clear();
+		return;
+	}
 	cgi = cgi.erase(statusLocation, cgi.find('\n', statusLocation) + 1);
 	std::string rline = res_.rline.version + ' ' + res_.rline.statusCode + ' ' + res_.rline.reasonPhrase + "\r\n";
 	cgi.insert(0, rline);
@@ -346,7 +350,14 @@ bool ResponseHandler::authorized(std::string authorization)
 	std::ifstream htpassFile(filename);
 	if (!htpassFile.is_open() || htpassFile.bad())
 		exit(EXIT_FAILURE);
-	std::string auth = base64Decode(&authorization[6]); // from 6 because I want to skip "Basic "
+	std::string auth;
+	try {
+		auth = base64Decode(&authorization[6]); // from 6 because I want to skip "Basic "
+	}
+	catch(const std::exception& e) {
+		return false;
+	}
+	
 	std::string buffer;
 	while (std::getline(htpassFile, buffer))
 	{
@@ -354,7 +365,7 @@ bool ResponseHandler::authorized(std::string authorization)
 		{
 			std::string id = get_uuid();
 			addToSessionIds(id);
-			res_.rheader.setCookie = "session_id=" + id; // TODO: Add expiration date for cookie
+			res_.rheader.setCookie = "session_id=" + id;
 			return true;
 		}
 	}
@@ -388,8 +399,6 @@ bool ResponseHandler::authenticated()
 void ResponseHandler::authenticate()
 {
 	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
-	res_.rbody = "\r\n";
-	// res_.gheader.connection = "close";
 	res_.eheader.contentLength = "0";
 	setCode(UNAUTHORIZED);
 }
@@ -407,6 +416,8 @@ bool ResponseHandler::checkRequest()
 		return (setCode(LONGURI), false);
 	if (req_.rline.httpVersion != HTTPVERSION)
 		return (setCode(HTTPNONO), false);
+	if (req_.gheader.connection.compare(0, 5, "close") == 0)
+		res_.gheader.connection = "close";
 
 	return true;
 }
@@ -446,12 +457,12 @@ std::string ResponseHandler::generate()
 {
 	if (!res_.cgiResponse.empty())
 		return res_.cgiResponse;
-	std::string	header;
-	header = responseLine() + generalHeader()
-				+ responseHeader() + entityHeader();
+	std::string	response;
+	response = responseLine() + generalHeader()
+				+ responseHeader() + entityHeader() + "\r\n";
 	if (!res_.rbody.empty())
-		header.append("\r\n" + res_.rbody);
-	return header;
+		response.append(res_.rbody);
+	return response;
 }
 
 std::string ResponseHandler::responseLine()
