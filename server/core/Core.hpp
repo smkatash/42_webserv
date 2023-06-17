@@ -16,7 +16,6 @@ class Core
 	Server	server_;
 	std::vector <Server> servers_;
 
-	struct kevent eventlist_[MAX_EVENT];
 	std::map<int, Server> listeningSockets_; //this are the servers
 	std::map<int, Socket> sockets_;
 	

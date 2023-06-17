@@ -36,4 +36,6 @@ void dechunk(std::string& data);
 
 std::string get_uuid();
 
+void addContentLength(std::string& cgi);
+
 #endif

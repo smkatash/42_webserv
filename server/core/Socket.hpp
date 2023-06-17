@@ -53,7 +53,7 @@ class Socket
 		bool                setSocketPassive();
 		bool                setSocketConnection();
 		bool                setKevent();
-		bool                setKeventForWrite();
+		bool                setKeventListeningSocket();
 		bool                unsetKevent(int filter);
 		void                setResponse(std::string response);
 		void                setDestinationAddress(struct sockaddr_in address);

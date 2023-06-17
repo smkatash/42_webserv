@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 	}
 } else {
 	http_response_code(405);
-	$response = "❌ Method Not Allowed\r\n";
+	$response = "❌ Method Not Allowed";
 }
 $date = gmdate('D, d M Y H:i:s T');
 $server = getenv('SERVER_NAME');

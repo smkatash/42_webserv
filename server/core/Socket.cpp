@@ -8,21 +8,6 @@
 //////////////////////////////////////////////////// static helper:
 static size_t getHeaderLength(const std::string& string);
 
-static int errorOut(std::string message, int returnValue)
-{
-	printError(message, 0);
-	return (returnValue);
-}
-
-int Socket::retry()
-{
-	static int counter;
-	counter++;
-	if(counter != 5)
-		return (errorOut("ERROR: SOCKET PROBABLY BLOCKING... RETRY", -1));
-	else
-		return (errorOut("ERROR: SOCKET PROBABLY BLOCKING... RETRY", 0));
-}
 //////////////////////////////////////////////////// canonic methods:
 Socket::Socket() :
 requestLength_(0),
@@ -126,10 +111,10 @@ std::ostream& operator<<(std::ostream& out, struct kevent event)
 	return out;
 }
 
-bool Socket::setKeventForWrite()
+bool Socket::setKeventListeningSocket()
 {
-	EV_SET(&(events_[1]), clientSd_, EVFILT_WRITE,  EV_ADD, 0, 0, 0);
-	if (kevent(kqFd, events_, 1, NULL, 0, NULL) == -1)
+	EV_SET(&event_, clientSd_, EVFILT_READ,  EV_ADD, 0, 0, 0);
+	if (kevent(kqFd, &event_, 1, NULL, 0, NULL) == -1)
 		return false;
 	return true;
 }
@@ -348,7 +333,7 @@ bool Socket::socketPassiveInit()
 		return( printError("ERROR: bind() \t\t\t| SERVER port: ", port_));
 	if (setSocketPassive() == false)
 		return(  printError("ERROR: connect() \t\t\t| SERVER port: ", port_));
-	if (setKevent() == false)
+	if (setKeventListeningSocket() == false)
 		return( printError("ERROR: kevent() \t\t\t| SERVER port: ", port_));
 	printAction("ACTION: server listening ...\t\t\t| SERVER port: ", port_);
 	return true;

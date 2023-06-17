@@ -247,6 +247,8 @@ void ResponseHandler::normalResponse(Methods method)
 void ResponseHandler::processCGIResponse(std::string& cgi)
 {
 	// TODO: If no content_length is set from the cgi. The server should set it manually.
+
+	addContentLength(cgi);
 	std::istringstream iss(cgi);
 	std::string buffer;
 	iss >> buffer;
@@ -262,7 +264,7 @@ void ResponseHandler::processCGIResponse(std::string& cgi)
 		setCode(OK);
 	else
 		setCode(strtonum<int>(status));
-	if (strtonum<int>(status) >= 400) // TODO: Check with Kany
+	if (strtonum<int>(status) >= 400)
 	{
 		cgi.clear();
 		return;
@@ -348,7 +350,14 @@ bool ResponseHandler::authorized(std::string authorization)
 	std::ifstream htpassFile(filename);
 	if (!htpassFile.is_open() || htpassFile.bad())
 		exit(EXIT_FAILURE);
-	std::string auth = base64Decode(&authorization[6]); // from 6 because I want to skip "Basic "
+	std::string auth;
+	try {
+		auth = base64Decode(&authorization[6]); // from 6 because I want to skip "Basic "
+	}
+	catch(const std::exception& e) {
+		return false;
+	}
+	
 	std::string buffer;
 	while (std::getline(htpassFile, buffer))
 	{
@@ -356,7 +365,7 @@ bool ResponseHandler::authorized(std::string authorization)
 		{
 			std::string id = get_uuid();
 			addToSessionIds(id);
-			res_.rheader.setCookie = "session_id=" + id; // TODO: Add expiration date for cookie
+			res_.rheader.setCookie = "session_id=" + id;
 			return true;
 		}
 	}
@@ -390,8 +399,6 @@ bool ResponseHandler::authenticated()
 void ResponseHandler::authenticate()
 {
 	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
-	// res_.rbody = "\r\n";
-	// res_.gheader.connection = "close";
 	res_.eheader.contentLength = "0";
 	setCode(UNAUTHORIZED);
 }

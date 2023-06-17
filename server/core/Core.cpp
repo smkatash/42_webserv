@@ -225,7 +225,6 @@ void	Core::run()
 {
 	signal(SIGINT, catchCtrlC);
 
-	int i;
 	int tmpEventDescriptor;
 	int numOfEvent;
 
@@ -233,26 +232,18 @@ void	Core::run()
 	struct kevent currentEvent;
 
 
-	for(i = 0; i < MAX_EVENT; i++)
-		memset(&eventlist_[i], 0, sizeof(eventlist_[i]));
+	memset(&currentEvent, 0, sizeof(currentEvent));
 	printHeader();
 
 	while (loop)
 	{
-		i = 0;
-		numOfEvent = kevent(kqFd, NULL, 0, eventlist_, MAX_EVENT, &refresh);
 		sockets_ = checkTimeout(sockets_);
-		while (i < numOfEvent)
-		{
-			currentEvent = eventlist_[i];
 			tmpEventDescriptor = currentEvent.ident;
 			std::map<int, Server>::iterator serversIterator = listeningSockets_.find(tmpEventDescriptor);
 			if (serversIterator != listeningSockets_.end()) //here we should check a vector of serverFd;
 				setNewConnection(serversIterator->second); // map populated with socket
 			else
 				connectionHandler(currentEvent);
-			i++;
-		}
 	}
 	printFooter();
 	return;

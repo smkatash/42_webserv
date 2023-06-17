@@ -102,42 +102,6 @@ std::string removeDuplicateSlashes(const std::string& str)
 	return beforeQuery;
 }
 
-// std::string unchunkData(const std::string& data) {
-// 	std::string num;
-// 	std::string chunk;
-// 	std::string body;
-// 	u_long	byt;
-
-// 	for (size_t i = 0; i < data.length(); i++) {
-// 		if (data[i] == '0')
-// 			break;
-// 		while (isxdigit(data[i])) {
-// 			num.push_back(data[i]);
-// 			i++;
-// 		}
-// 		if (data[i] && data[i] == '\r' && data[++i] == '\n') {
-// 			std::stringstream ss;
-// 			ss << std::hex << num;
-// 			ss >> byt;
-
-// 			// byt = std::stoi(num);
-// 			num.clear();
-// 		}
-
-// 		while (data[++i]) {
-// 			if (data[i] && data[i] == '\r' && data[++i] == '\n') {
-// 				break;
-// 			}
-// 			chunk.push_back(data[i]);
-// 		}
-// 		if (chunk.length() != byt)
-// 			chunk = chunk.substr(0, byt);
-// 		body += chunk;
-// 		chunk.clear();
-// 	}
-// 	return body;
-// }
-
 size_t determineChunkSize(const std::string& data, size_t& i)
 {
 	std::string num;
@@ -206,4 +170,23 @@ std::string get_uuid()
 		res += v[dist(rng)];
 	}
 	return res;
+}
+
+void addContentLength(std::string& cgi)
+{
+	size_t bodyLength;
+
+	if (cgi.find("Content-Length") != std::string::npos)
+		return;
+
+	size_t bodyLoc = cgi.find("\r\n\r\n");
+	if (bodyLoc == std::string::npos)
+		bodyLength = 0;
+	else
+	{
+		std::string body = cgi.substr(bodyLoc + 4);
+		bodyLength = body.size();
+	}
+	std::string contentLength = "Content-Length: " + toString(bodyLength) + "\r\n";
+	cgi.insert(cgi.find("\n") + 1, contentLength);
 }
