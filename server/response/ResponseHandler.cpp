@@ -246,8 +246,7 @@ void ResponseHandler::normalResponse(Methods method)
 /* Take response from CGI and parse the necessary values from it */
 void ResponseHandler::processCGIResponse(std::string& cgi)
 {
-	// TODO: If no content_length is set from the cgi. The server should set it manually.
-
+	std::cout << cgi << std::endl;
 	addContentLength(cgi);
 	std::istringstream iss(cgi);
 	std::string buffer;

@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 		// Set appropriate headers for file download
 		$response = file_get_contents("./download_link.html");
 		http_response_code(200);
+		header("HTTP/1.1" . http_response_code() . " " . "OK");
 	} else {
 		http_response_code(404);
 		$response = "❌ Not Found 404";
