@@ -232,7 +232,7 @@ void	Core::run() {
 
 	while (loop) {
 		if (kevent(kqFd, NULL, 0, &currentEvent, 1, &refresh) == -1)
-			std::cout << "ERROR : kevent" << std::endl;
+			std::cerr << "ERROR : kevent" << std::endl;
 		else {
 			sockets_ = checkTimeout(sockets_);
 			std::map<int, Server>::iterator serversIterator = listeningSockets_.find(currentEvent.ident);

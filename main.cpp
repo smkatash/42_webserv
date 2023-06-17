@@ -50,16 +50,16 @@ bool kqCreate() {
 }
 
 
-void leaksCheck() {
-	system("leaks webserv");
-}
+// void leaksCheck() {
+// 	system("leaks webserv");
+// }
 
 int main(int argc, char **argv)
 {
 	std::ifstream	file;
 	Parser			configs;
 
-	atexit(leaksCheck);
+	//atexit(leaksCheck);
 	if (!configFileOpen(argc, argv, file))
 		return EXIT_FAILURE;
 	configs = configInit(file);

@@ -273,13 +273,11 @@ int Socket::readHandler(size_t sizeToRead)
 	if(bytes == 0)
 	{
 		delete[] buffer;
-		std::cout << "\n\n\n recv() returned 0 \n\n\n" <<std::endl;
 		return (connectionClosedClientSide());
 	}
 	else if (bytes < 0)
 	{
 		delete[] buffer;
-		std::cout << "\n\n\n recv() returned -1 \n\n\n" <<std::endl;
 		return (closingConnectionServerSide());
 	}
 	buffer[bytes] = '\0';

@@ -139,7 +139,6 @@ std::string unchunkData(const std::string& data)
 		i += chunkSize + 1;
 		newData += chunk;
 	}
-	// std::cout << newData.substr(0, chunkSize) << std::endl;
 	return newData;
 }
 

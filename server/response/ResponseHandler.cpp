@@ -17,7 +17,7 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.version      = HTTPVERSION;
 	res_.rline.statusCode   = "200";
 	res_.rline.reasonPhrase = "OK";
-	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName(); // TODO: Discuss if you keep this or no
+	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName();
 	res_.gheader.date       = findCurrentTimeGMT();
 	if (!checkRequest())
 		return;
@@ -172,6 +172,9 @@ void ResponseHandler::setResponseBody(std::string fileName)
 		return setCode(NOTFOUND);
 	if (!file.good())
 		return setCode(INTERNALERROR);
+	res_.eheader.contentType = findContentType(fileName.substr(uri_.find_last_of('.')));
+	if (res_.eheader.contentType == "")
+		return setCode(UNSUPPORTED);
 	std::string temp;
 	while (std::getline(file, temp))
 	{
@@ -243,9 +246,6 @@ void ResponseHandler::normalResponse(Methods method)
 {
 	prepUriFile();
 	std::string uriPath = uri_.substr(0, uri_.find('?'));
-	res_.eheader.contentType = findContentType(uriPath.substr(uri_.find_last_of('.')));
-	if (res_.eheader.contentType == "")
-		return setCode(UNSUPPORTED);
 	if (method == GET)
 		return setResponseBody(uriPath);
 	/* else the method is DELETE */
@@ -256,7 +256,6 @@ void ResponseHandler::normalResponse(Methods method)
 /* Take response from CGI and parse the necessary values from it */
 void ResponseHandler::processCGIResponse(std::string& cgi)
 {
-	std::cout << cgi << std::endl;
 	addContentLength(cgi);
 	std::istringstream iss(cgi);
 	std::string buffer;
@@ -358,15 +357,14 @@ bool ResponseHandler::authorized(std::string authorization)
 	std::string filename = "." + location_.lroot + htPassFileName;
 	std::ifstream htpassFile(filename);
 	if (!htpassFile.is_open() || htpassFile.bad())
-		exit(EXIT_FAILURE);
+		return false;
 	std::string auth;
 	try {
 		auth = base64Decode(&authorization[6]); // from 6 because I want to skip "Basic "
-	}
-	catch(const std::exception& e) {
+	} catch(const std::exception& e) {
 		return false;
 	}
-	
+
 	std::string buffer;
 	while (std::getline(htpassFile, buffer))
 	{
