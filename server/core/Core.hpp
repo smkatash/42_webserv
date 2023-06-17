@@ -7,7 +7,7 @@
 #include <map>
 
 #define MAX_EVENT 10000
-#define TIMEOUT 0
+#define TIMEOUT 5
 
 class Core
 {
@@ -33,7 +33,7 @@ class Core
 
 	void connectionHandler(struct kevent currentEvent);
 	void createResponse(Socket *socket);
-	bool sendResponse(Socket *socket);
+	void sendResponse(Socket *socket);
 	bool setNewConnection(Server server);
 	bool status();
 };

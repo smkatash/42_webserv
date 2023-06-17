@@ -75,14 +75,8 @@
   				var fileToDelete = `${path}${document.getElementById("fileToDelete").value}`;
 				var xhr = new XMLHttpRequest();
 				xhr.open("DELETE", fileToDelete, true);
-				xhr.onreadystatechange = function ()
-				{
-					if (xhr.readyState === 4 && xhr.status === 202)
-						alert("File deletion carried out according to RFC");
-					else if (xhr.readyState === 4 && xhr.status !== 200)
-						alert("Error deleting file.");
-				};
 				xhr.send();
+				alert("File deletion carried out according to RFC");
 			}
 		  </script>
 

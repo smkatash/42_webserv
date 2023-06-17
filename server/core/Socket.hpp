@@ -56,10 +56,8 @@ class Socket
 		bool                setKeventForWrite();
 		bool                unsetKevent(int filter);
 		void                setResponse(std::string response);
-		void                setConnectionStatus(bool status);
 		void                setDestinationAddress(struct sockaddr_in address);
 		void                setAddress();
-		void                setRequestStatus(bool status);
 		void                setRequestLength();
 		void                setConnectionTimer();
 		void                setChunkedOpt(bool val);

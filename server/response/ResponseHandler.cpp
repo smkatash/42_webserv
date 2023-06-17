@@ -19,7 +19,6 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 	res_.rline.reasonPhrase = "OK";
 	res_.rheader.server     = conf_.getServerName().empty() ? "Francesco's Pizzeria/2.0 (MacOS)" : conf_.getServerName(); // TODO: Discuss if you keep this or no
 	res_.gheader.date       = findCurrentTimeGMT();
-	res_.gheader.connection = "close"; // TODO: Try closing only when needed. Discuss with Francesco
 	if (!checkRequest())
 		return;
 	try
@@ -72,8 +71,6 @@ void ResponseHandler::get()
 
 void ResponseHandler::post()
 {
-	// std::cerr << "After dechunking and stuff:" << std::endl;
-	// std::cerr << req_. << std::endl;
 	if (req_.rheader.expect.compare(0, 12, "100-continue") == 0)
 		return setCode(CONTINUE);
 	if (req_.eheader.contentLength.empty())
@@ -393,7 +390,7 @@ bool ResponseHandler::authenticated()
 void ResponseHandler::authenticate()
 {
 	res_.rheader.wwwAuth = "Basic realm=\"" + conf_.getAuthBasic(endpoint_) + "\"";
-	res_.rbody = "\r\n";
+	// res_.rbody = "\r\n";
 	// res_.gheader.connection = "close";
 	res_.eheader.contentLength = "0";
 	setCode(UNAUTHORIZED);
@@ -412,12 +409,8 @@ bool ResponseHandler::checkRequest()
 		return (setCode(LONGURI), false);
 	if (req_.rline.httpVersion != HTTPVERSION)
 		return (setCode(HTTPNONO), false);
-	// if (req_.gheader.connection.compare(0, 5, "close"))
-	// {
-	// 	res_.gheader.connection = "close";
-	// 	res_.eheader.contentLength = "0";
-	// 	return false;
-	// }
+	if (req_.gheader.connection.compare(0, 5, "close") == 0)
+		res_.gheader.connection = "close";
 
 	return true;
 }
