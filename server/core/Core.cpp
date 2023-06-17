@@ -221,29 +221,26 @@ void Core::connectionHandler(struct kevent currentEvent)
 	}
 }
 
-void	Core::run()
-{
+void	Core::run() {
 	signal(SIGINT, catchCtrlC);
-
-	int tmpEventDescriptor;
-	int numOfEvent;
 
 	struct timespec refresh = setTimer(1,0);
 	struct kevent currentEvent;
 
-
 	memset(&currentEvent, 0, sizeof(currentEvent));
 	printHeader();
 
-	while (loop)
-	{
-		sockets_ = checkTimeout(sockets_);
-			tmpEventDescriptor = currentEvent.ident;
-			std::map<int, Server>::iterator serversIterator = listeningSockets_.find(tmpEventDescriptor);
-			if (serversIterator != listeningSockets_.end()) //here we should check a vector of serverFd;
-				setNewConnection(serversIterator->second); // map populated with socket
+	while (loop) {
+		if (kevent(kqFd, NULL, 0, &currentEvent, 1, &refresh) == -1)
+			std::cout << "ERROR : kevent" << std::endl;
+		else {
+			sockets_ = checkTimeout(sockets_);
+			std::map<int, Server>::iterator serversIterator = listeningSockets_.find(currentEvent.ident);
+			if (serversIterator != listeningSockets_.end())
+				setNewConnection(serversIterator->second);
 			else
 				connectionHandler(currentEvent);
+		}
 	}
 	printFooter();
 	return;

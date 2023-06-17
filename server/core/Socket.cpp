@@ -97,7 +97,7 @@ bool Socket::setSocketPassive()
 {
 	int retValue;
 
-	retValue = listen(clientSd_, 30);
+	retValue = listen(clientSd_, 50);
 	return(retValue == 0 ? true : false);
 }
 

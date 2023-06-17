@@ -10,7 +10,6 @@
 
 #include "ConfigFile.hpp"
 
-#define RETRY 5
 extern int kqFd;
 
 class Socket 
