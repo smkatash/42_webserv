@@ -89,6 +89,14 @@ void ResponseHandler::post()
 	there's a body and if there's cgi in config file */
 	if (!req_.rbody.empty() && !location_.lcgi.second.empty())
 	{
+		if (!req_.eheader.fileName.empty())
+		{
+			size_t fileExt = req_.eheader.fileName.find_last_of(".");
+			if (fileExt == std::string::npos ||
+					findContentType(req_.eheader.fileName.substr(fileExt)) == "")
+				return setCode(UNSUPPORTED);
+		}
+
 		CGIHandler cgi(req_, conf_, endpoint_);
 		cgi.execute();
 		res_.cgiResponse = cgi.getCGIResponse();
@@ -204,7 +212,7 @@ void ResponseHandler::autoIndexResponse(t_endpoint loc, std::string ep)
 	if (templateFile.empty())
 		return setCode(NOTFOUND);
 	res_.rbody = templateFile;
-	res_.eheader.contentType = findContentType(".html");
+	res_.eheader.contentType = "text/html";
 	res_.eheader.contentLength = toString(templateFile.size());
 	return setCode(OK);
 }
@@ -236,6 +244,8 @@ void ResponseHandler::normalResponse(Methods method)
 	prepUriFile();
 	std::string uriPath = uri_.substr(0, uri_.find('?'));
 	res_.eheader.contentType = findContentType(uriPath.substr(uri_.find_last_of('.')));
+	if (res_.eheader.contentType == "")
+		return setCode(UNSUPPORTED);
 	if (method == GET)
 		return setResponseBody(uriPath);
 	/* else the method is DELETE */
@@ -302,7 +312,7 @@ void ResponseHandler::setBodyErrorPage(int code)
 	}
 	file.close();
 	res_.eheader.contentLength = toString(res_.rbody.length());
-	res_.eheader.contentType = findContentType(".html");
+	res_.eheader.contentType = "text/html";
 }
 
 void ResponseHandler::setCode(int code)

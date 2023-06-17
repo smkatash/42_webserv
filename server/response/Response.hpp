@@ -22,7 +22,7 @@
 #define LENGTHPLS       411    // "411 Length Required"
 #define TOOLARGE        413    // "413 Content Too Large"
 #define LONGURI         414    // "414 URI Too Long"
-// #define UNSUPPORTED  415    // "415 Unsupported Media Type" TODO
+#define UNSUPPORTED     415    // "415 Unsupported Media Type"
 
 #define	INTERNALERROR   500    // "500 Internal Server Error" /* generic server error */
 #define	UNIMPLEMENTED   501    // "501 Not Implemeneted" /* Method not implemented */
@@ -50,6 +50,7 @@ rc[] =
 	{LENGTHPLS,     "Length Required",            true},
 	{TOOLARGE,      "Content Too Large",          true},
 	{LONGURI,       "URI Too Long",               true},
+	{UNSUPPORTED,   "Unsupported Media Type",     true},
 	{INTERNALERROR, "Internal Server Error",      true},
 	{UNIMPLEMENTED, "Not Implemented",            true},
 	{HTTPNONO,      "HTTP Version Not Supported", true}
