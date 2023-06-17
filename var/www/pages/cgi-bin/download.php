@@ -24,20 +24,10 @@ $server = getenv('SERVER_NAME');
 
 $response = preg_replace('/{{location}}/i', $file, $response);
 
-header("HTTP/1.1" . http_response_code() . " " . http_response_code_message(http_response_code()));
 header("Content-Type: text/html; charset=UTF-8");
 header("Content-Length: " . strlen($response));
 header("Date: " . $date);
 header("Server: " . $server);
 echo $response;
-
-function http_response_code_message($code) {
-	$messages = array(
-		200 => 'OK',
-		404 => 'Not Found',
-		405 => 'Method Not Allowed',
-	);
-	return isset($messages[$code]) ? $messages[$code] : '';
-}
 
 ?>

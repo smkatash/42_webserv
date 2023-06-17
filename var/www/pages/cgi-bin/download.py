@@ -17,10 +17,10 @@ if os.environ['REQUEST_METHOD'] == 'GET':
 		sys.stdout.write("HTTP/1.1 200 OK\n")
 	else:
 		sys.stdout.write("HTTP/1.1 404 Not Found\n")
-		response = "❌ Not Found 404\n"
+		response = "Not Found 404\n"
 else:
 	sys.stdout.write("HTTP/1.1 405 Method Not Allowed\n")
-	response = "❌ Method Not Allowed\r\n"
+	response = "Method Not Allowed\r\n"
 
 date = os.popen('date -R').read().strip()
 server = os.environ['SERVER_NAME']
