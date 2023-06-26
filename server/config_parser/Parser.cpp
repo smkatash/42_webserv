@@ -28,7 +28,6 @@ void	Parser::openFile(std::ifstream &file) {
 		throw std::invalid_argument("parser: empty config_file");
 }
 
-/********************* tokenizer *************************/
 
 Token	Parser::getToken(const std::string& str) {
 	static std::string tokens[16] = {"server", "listen", "server_name",
@@ -43,7 +42,6 @@ Token	Parser::getToken(const std::string& str) {
 	return NA;
 }
 
-/********************* syntax checker *************************/
 
 int		Parser::checkPort(std::string p) {
 	if (stripBrackets(&p) && isdigitString(p))
@@ -168,9 +166,6 @@ bool	Parser::endDirectiveLocation(std::string next, std::string *locationDir) {
 	return false;
 }
 
-
-/********************* parser *************************/
-
 void	Parser::parseSyntax() {
 	ConfigFile					conf;
 	std::string 				locationDir;
@@ -285,15 +280,10 @@ void	Parser::parseBrackets() {
 		throw std::invalid_argument("parser: unbalanced brackets");
 }
 
-
-/********************* setter *************************/
-
 void	Parser::setConfigFile() {
 	parseBrackets();
 	parseSyntax();
 }
-
-/********************* debugger *************************/
 
 void	Parser::debugConfigVector() {
 	std::vector<ConfigFile>::iterator it = conf_.begin();

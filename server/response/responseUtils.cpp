@@ -132,7 +132,7 @@ std::string unchunkData(const std::string& data)
 
 	size_t dataLen = data.length();
 	for (size_t i = 0; i < dataLen; i++) {
-		chunkSize = determineChunkSize(data, i); // 0 means that an error happened while determining chunk size or chunk size is actually 0
+		chunkSize = determineChunkSize(data, i);
 		if (chunkSize == 0)
 			break;
 		chunk = data.substr(i, chunkSize);

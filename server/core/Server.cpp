@@ -10,12 +10,10 @@ Server::Server (ConfigFile config) : config_(config)
 
 Server::~Server () { }
 
-//////////////////////////////////////////////////// set methods:
 void Server::setServerAddress(struct sockaddr_in address) { serverAdd_ = address; }
 void Server::setServerSocket(Socket socket) { serverSocket_ = socket; }
 void Server::setClientsSocket(std::vector<Socket> sockets) { clientsSocket_ = sockets; }
 
-//////////////////////////////////////////////////// get methods:
 int Server:: getPort() { return this->port_; }
 int Server::getServerSocketDescriptor()
 {
@@ -27,7 +25,6 @@ struct sockaddr_in Server::getServerAddress() { return (serverAdd_); }
 Socket Server::getServerSocket() { return (serverSocket_); }
 ConfigFile Server::getConfig() { return config_; }
 
-//////////////////////////////////////////////////// set methods:
 bool Server::initServerAddress(struct sockaddr_in* serverAdd)
 {
 	memset(serverAdd, 0, sizeof(*serverAdd));
@@ -44,7 +41,6 @@ bool Server::initServerSocket(Socket *socket)
 	return (true);
 }
 
-//////////////////////////////////////////////////// set methods:
 bool Server::appendNewToSocketList(Socket socket)
 {
 	clientsSocket_.push_back(socket);

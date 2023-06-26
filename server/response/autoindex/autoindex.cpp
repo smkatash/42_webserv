@@ -38,7 +38,6 @@ static std::string getListedDir(std::string root) {
 
 	root.insert(0, ".");
 	DIR *dh = opendir(root.c_str());
-	/* dir not found or does not exist */
 	if (!dh) {
 		return "";
 	} else {

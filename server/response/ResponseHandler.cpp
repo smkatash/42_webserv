@@ -1,8 +1,8 @@
 #include <map>
 #include <fstream>
 #include <string>
-#include "Response.hpp" // Status codes definitions
-#include "Parser.hpp" // Methods enum
+#include "Response.hpp"
+#include "Parser.hpp"
 #include "responseUtils.hpp"
 #include "CGIHandler.hpp"
 #include "ResponseHandler.hpp"
@@ -13,7 +13,6 @@ ResponseHandler::ResponseHandler(Request req, ConfigFile conf)
 : req_(req)
 , conf_(conf)
 {
-	/* basic setup for creating a response */
 	res_.rline.version      = HTTPVERSION;
 	res_.rline.statusCode   = "200";
 	res_.rline.reasonPhrase = "OK";
@@ -51,8 +50,6 @@ ResponseHandler::~ResponseHandler() {}
 
 void ResponseHandler::get()
 {
-	/* Check if you have to send to cgi handler by checking if
-	there's a query and if there's cgi in config file */
 	if (!location_.lcgi.second.empty() && uri_.find('?') != std::string::npos)
 	{
 		CGIHandler cgi(req_, conf_, endpoint_, uri_.substr(uri_.find('?') + 1));
@@ -61,10 +58,9 @@ void ResponseHandler::get()
 		processCGIResponse(res_.cgiResponse);
 		return ;
 	}
-	/* if there's no cgi or query for cgi we do normal get */
 	if (!location_.lredirect.empty())
 		return returnResponse();
-	if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
+	if (uri_ == endpoint_)
 		return dirResponse(GET);
 	return normalResponse(GET);
 }
@@ -75,9 +71,8 @@ void ResponseHandler::post()
 		return setCode(CONTINUE);
 	if (req_.eheader.contentLength.empty())
 	{
-		if (req_.gheader.transferEncoding.compare(0, 7, "chunked") != 0) // If there's no chunked encoding then we need length
+		if (req_.gheader.transferEncoding.compare(0, 7, "chunked") != 0)
 			return setCode(LENGTHPLS);
-		// Otherwise, there's chunked encoding but no content length (meaning the chunks haven't been fully recieved)
 		return setCode(ACCEPTED);
 	}
 	size_t maxBodySize = conf_.getClientMaxBodySize();
@@ -85,8 +80,6 @@ void ResponseHandler::post()
 	if (maxBodySize != 0 && maxBodySize < reqContentLength)
 		return setCode(TOOLARGE);
 
-	/* Check if you have to send to cgi handler by checking if
-	there's a body and if there's cgi in config file */
 	if (!req_.rbody.empty() && !location_.lcgi.second.empty())
 	{
 		if (!req_.eheader.fileName.empty())
@@ -103,13 +96,12 @@ void ResponseHandler::post()
 		processCGIResponse(res_.cgiResponse);
 		return ;
 	}
-	/* if there's no cgi we do normal get */
 	return get();
 }
 
 void ResponseHandler::del()
 {
-	if (uri_ == endpoint_)	// If the URI matches with the endpoint then we know it's a directory
+	if (uri_ == endpoint_)
 		return dirResponse(DELETE);
 	return normalResponse(DELETE);
 }
@@ -118,7 +110,7 @@ void ResponseHandler::handle()
 {
 	try
 	{
-		if (res_.rline.statusCode != "200") // Probably endpoint not found, or error in constructor
+		if (res_.rline.statusCode != "200")
 			return;
 		if (req_.rline.method == "GET")
 			return get();
@@ -131,7 +123,6 @@ void ResponseHandler::handle()
 	{
 		return setCode(INTERNALERROR);
 	}
-	// Otherwise method not implemented
 	return setCode(UNIMPLEMENTED);
 }
 
@@ -144,12 +135,10 @@ std::string ResponseHandler::findUriEndpoint(const std::string& uri)
 		return "/";
 	std::string ep = conf_.getEndPoint(uri);
 	if (ep == "")
-		return findUriEndpoint(uri.substr(0, uri.find_last_of('/'))); // Here we make a substring from the start until '/' (basically with every function call we step back a directory)
+		return findUriEndpoint(uri.substr(0, uri.find_last_of('/')));
 	return ep;
 }
 
-/* Prepares URI to be opened as a file by appending it to the root folder,
-	removing a forward slash from the end, and adding a '.' to the front */
 void ResponseHandler::prepUriFile()
 {
 	if (uri_[0] == '/')
@@ -189,7 +178,6 @@ void ResponseHandler::setResponseBody(std::string fileName)
 	return setCode(OK);
 }
 
-/* In case there's redirection defined in config file */
 void ResponseHandler::returnResponse()
 {
 	res_.rheader.location = location_.lredirect;
@@ -200,7 +188,6 @@ void ResponseHandler::returnResponse()
 		return setCode(MOVEDPERMAN);
 }
 
-/* In case there's autoindexing in config file */
 void ResponseHandler::autoIndexResponse(t_endpoint loc, std::string ep)
 {
 	std::string templateFile;
@@ -220,7 +207,7 @@ void ResponseHandler::autoIndexResponse(t_endpoint loc, std::string ep)
 	return setCode(OK);
 }
 
-/* In case the URI is a directory we find the index file inside that directory */
+
 void ResponseHandler::dirResponse(Methods method)
 {
 	if (location_.lautoindex)
@@ -241,30 +228,27 @@ void ResponseHandler::dirResponse(Methods method)
 	return normalResponse(method);
 }
 
-/* For a normal GET or DELETE request (i.e. URI is not a directory) */
 void ResponseHandler::normalResponse(Methods method)
 {
 	prepUriFile();
 	std::string uriPath = uri_.substr(0, uri_.find('?'));
 	if (method == GET)
 		return setResponseBody(uriPath);
-	/* else the method is DELETE */
 	unlink(uri_.c_str());
 	setCode(NOCONTENT);
 }
 
-/* Take response from CGI and parse the necessary values from it */
 void ResponseHandler::processCGIResponse(std::string& cgi)
 {
 	addContentLength(cgi);
 	std::istringstream iss(cgi);
 	std::string buffer;
 	iss >> buffer;
-	if (buffer.compare(0, 4, "HTTP") == 0) // There's nothing to change
+	if (buffer.compare(0, 4, "HTTP") == 0)
 		return;
 
 	size_t statusLocation = cgi.find("Status: ");
-	if (statusLocation == std::string::npos) // Extra safety
+	if (statusLocation == std::string::npos)
 		return ;
 
 	std::string status = cgi.substr(statusLocation + 8);
@@ -350,7 +334,7 @@ bool ResponseHandler::authorized(std::string authorization)
 	if (authorization.empty())
 		return false;
 
-	std::string htPassFileName = location_.lauth_basic_user_file; // parse the auth_basic_user_file
+	std::string htPassFileName = location_.lauth_basic_user_file;
 	if (htPassFileName.front() == '/')
 		htPassFileName.erase(0, 1);
 
@@ -360,7 +344,7 @@ bool ResponseHandler::authorized(std::string authorization)
 		return false;
 	std::string auth;
 	try {
-		auth = base64Decode(&authorization[6]); // from 6 because I want to skip "Basic "
+		auth = base64Decode(&authorization[6]);
 	} catch(const std::exception& e) {
 		return false;
 	}

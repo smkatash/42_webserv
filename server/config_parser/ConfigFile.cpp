@@ -4,7 +4,6 @@ ConfigFile::ConfigFile(): listen_(-1), serverName_(""), root_(""), clientMaxBody
 
 ConfigFile::~ConfigFile() {}
 
-/********************* setters *************************/
 
 void	ConfigFile::setListenPort(int port) {
 	listen_ = port;
@@ -106,7 +105,6 @@ void	ConfigFile::setIndexFile(std::string endpoint, std::string file) {
 	}
 }
 
-/********************* getters *************************/
 
 int	ConfigFile::getListenPort(void) const {
 	return listen_;
@@ -210,7 +208,6 @@ void	ConfigFile::clear(void) {
 	errorFile_.clear();
 }
 
-/********************* debugger *************************/
 
 void	ConfigFile::debugConfigFile(void) {
 	std::cout << "Listen port: " << listen_ << std::endl;

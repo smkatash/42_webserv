@@ -62,7 +62,6 @@ class	ConfigFile {
 		const std::string					getAuthBasicUserFile(std::string endpoint) const;
 		void								clear();
 
-		/* print all to debug */
 		void								debugConfigFile(void);
 };
 

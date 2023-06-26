@@ -26,24 +26,20 @@ class Server
 		int timeoutInSecond_;
 
 	public:
-		//////////////////////////////////////////////////// canonic methods:
 		Server();
 		~Server();
 		Server (ConfigFile config);
 
-		//////////////////////////////////////////////////// set methods:
 		void setServerAddress(struct sockaddr_in address);
 		void setServerSocket(Socket socket);
 		void setClientsSocket(std::vector<Socket> socket);
 		
-		//////////////////////////////////////////////////// get methods:
 		int getPort();
 		int getServerSocketDescriptor();
 		Socket getServerSocket();
 		ConfigFile getConfig();
 		struct sockaddr_in getServerAddress();
 
-		//////////////////////////////////////////////////// member functions:
 		std::vector <Socket> initClientsSocket();
 		bool initServerAddress(struct sockaddr_in* serverAdd);
 		bool initServerSocket(Socket *socket);

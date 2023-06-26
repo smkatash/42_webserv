@@ -16,15 +16,13 @@ class Core
 	Server	server_;
 	std::vector <Server> servers_;
 
-	std::map<int, Server> listeningSockets_; //this are the servers
+	std::map<int, Server> listeningSockets_;
 	std::map<int, Socket> sockets_;
 	
 	public:
-	//////////////////////////////////////////////////// canonic functions:
 	Core(Parser configs);
 	~Core();
 
-	//////////////////////////////////////////////////// member functions:
 	void run();
 	void populateListeningMap(std::vector <Server> );
 	void populateMap(Socket socket);

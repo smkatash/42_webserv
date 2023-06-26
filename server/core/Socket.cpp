@@ -5,10 +5,8 @@
 
 #define SOCKET_VERBOSE
 
-//////////////////////////////////////////////////// static helper:
 static size_t getHeaderLength(const std::string& string);
 
-//////////////////////////////////////////////////// canonic methods:
 Socket::Socket() :
 requestLength_(0),
 requestIsComplete_(false),
@@ -53,7 +51,6 @@ Socket &Socket::operator= (const Socket& other)
 	return (*this);
 }
 
-//////////////////////////////////////////////////// set methods:
 void Socket::setConnectionTimer() { connectionTimer_ = time(NULL); }
 
 bool Socket::setSocketDescriptor()
@@ -165,7 +162,6 @@ void Socket::setRequestLength()
 
 void Socket::setDestinationAddress(struct sockaddr_in address) { destinationAddress_ = address; }
 
-//////////////////////////////////////////////////// get methods:
 int                 Socket::getPort() { return (port_); }
 int                 Socket::getSocketDescriptor() { return (clientSd_); }
 bool                Socket::getConnectionStatus() { return (connectionUp_); }
@@ -193,7 +189,6 @@ size_t Socket::getContentLength()
 	return (contentLenght);
 }
 
-//////////////////////////////////////////////////// member functions:
 static size_t getHeaderLength(const std::string& string)
 {
 	size_t index = 0;
@@ -303,7 +298,7 @@ bool Socket::writeHandler(std::string response, bool closeConnection)
 	setConnectionTimer();
 
 	int bytes;
-	if (connectionUp_ == false) // if there is no connection, we can't write
+	if (connectionUp_ == false)
 		return false;
 	bytes = send(clientSd_, response.c_str(), response.size(), 0);
 	printAction("ACTION: \033[38;5;45mSERVER\033[38;5;229m send()\tresponse \t\t\033[38;5;49m| CLIENT fdes:\t", clientSd_);

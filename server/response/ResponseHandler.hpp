@@ -4,7 +4,7 @@
 #include "Response.hpp"
 #include "Request.hpp"
 #include "ConfigFile.hpp"
-#include "Parser.hpp" // Methods enum
+#include "Parser.hpp"
 
 #include "Socket.hpp"
 

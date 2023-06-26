@@ -53,12 +53,10 @@ class Parser {
 
 		void			openFile(std::ifstream &file);
 
-		/* parse */
 		Token			getToken(const std::string& str);
 		void			parseBrackets();
 		void			parseSyntax();
 
-		/* syntax check */
 		std::string		checkServerName(std::string s);
 		std::string 	checkRoot(std::string r);
 		std::string 	checkIndexFile(std::string i);
@@ -76,7 +74,6 @@ class Parser {
 		std::string		checkAuth(std::string auth);
 		std::string		checkAuthUserFile(std::string path);
 
-		/* debug */
 		void			debugConfigVector();
 		void			debugInput();
 };

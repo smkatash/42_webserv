@@ -13,6 +13,7 @@ struct request_line {
 	std::string	uri;
 	std::string	httpVersion;
 
+	// output for debugging
 	friend std::ostream& operator<<(std::ostream& os, const request_line& rl) {
 		os << "method: " << rl.method << std::endl;
     	os << "uri: " << rl.uri << std::endl;

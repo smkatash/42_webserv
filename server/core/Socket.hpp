@@ -20,8 +20,8 @@ class Socket
 	int serverSd_;
 	int clientSd_;
 	time_t connectionTimer_;
-	struct sockaddr_in sourceAddress_; //it stay the same of the Server.
-	struct sockaddr_in destinationAddress_; //it's always different.
+	struct sockaddr_in sourceAddress_;
+	struct sockaddr_in destinationAddress_;
 
 	std::string data_;
 	std::string response_;
@@ -38,14 +38,12 @@ class Socket
 	struct kevent events_[2];
 
 	public: 
-		//////////////////////////////////////////////////// canonic methods:
 		Socket();
 		Socket(int port, struct sockaddr_in servAddr);
 		Socket(int port, struct sockaddr_in servAddr, int fd, ConfigFile serverConfig);
 		Socket &operator= (const Socket& other);
 		~Socket();
 
-		//////////////////////////////////////////////////// set methods:
 		bool                setSocketDescriptor();
 		bool                setSocketOption();
 		bool                setSocketBind();
@@ -61,7 +59,6 @@ class Socket
 		void                setConnectionTimer();
 		void                setChunkedOpt(bool val);
 
-		//////////////////////////////////////////////////// get methods:
 		int                 getPort();
 		int                 getSocketDescriptor();
 		bool                getConnectionStatus();
@@ -78,13 +75,12 @@ class Socket
 		struct sockaddr_in& getSocketDestinationAddress();
 		struct sockaddr_in& getSocketSourceAddress();
 
-		//////////////////////////////////////////////////// member functions:
 		int closeConnection();
 		int retry();
 		int closingConnectionServerSide();
 		int connectionClosedClientSide();
 		int readHandler(size_t sizeToRead);
-		bool writeHandler(std::string response, bool closeConnection); //overload for write;
+		bool writeHandler(std::string response, bool closeConnection);
 		bool socketPassiveInit();
 		bool socketInit();
 		void reset();

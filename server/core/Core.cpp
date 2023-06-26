@@ -22,7 +22,6 @@ static void catchCtrlC(int sigNum)
 	loop = false;
 }
 
-//////////////////////////////////////////////////// canonic functions:
 Core::Core(Parser configs) : configs_(configs)
 {
 	Server server;
@@ -45,7 +44,6 @@ Core::~Core()
 {
 }
 
-//////////////////////////////////////////////////// member functions:
 
 bool	Core::status()
 {
@@ -127,7 +125,7 @@ void Core::createResponse(Socket *socket)
 		if (headerLoc != std::string::npos)
 			data.erase(headerLoc, 28);
 		dechunk(data);
-		socket->setChunkedOpt(false); // We reached the last chunk, we stop storing in chunks string
+		socket->setChunkedOpt(false);
 	}
 	request.initParser(data);
 	size_t headerLoc = data.find("Expect: 100-continue\r\n");
@@ -147,7 +145,7 @@ static bool connectionToKeepAlive(const std::string& response)
 	std::string substring ("Connection: close");
 	index = response.find(substring);
 	if (index != std::string::npos)
-		return true; // If we find Connection: close header this means we need to close connection
+		return true;
 	return false;
 }
 

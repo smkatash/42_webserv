@@ -4,7 +4,6 @@
 #include <iostream>
 #include "Request.hpp"
 
-/* Most common status codes, may be add more later*/
 #define	CONTINUE        100    // "100 Continue" /* If there is Expect header the 100 response indicates that the server wishes to receive the request content. */
 
 #define	OK              200    // "200 OK" /* Request is okay, entity body contains requested resource. */
