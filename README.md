@@ -4,7 +4,7 @@
                          https://https://github.com/smkatash/42_webserv
         
           		    Licensed under WTFPL (see LICENSE file)
-                   *NOTE: this is a 42 Project made by three student at 42Heilbronn*
+                   *NOTE: this is a 42 Project made by three students at 42 Heilbronn*
 
 ### Implementation of a server in C++
 
