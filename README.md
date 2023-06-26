@@ -25,7 +25,7 @@
 ### To compile server run: 
 
 ```
-make
+cd 42_webserv && make
 ```
 
 If you use Ubuntu/Debian, this will not work because we are using kqueue() (shade :( );
