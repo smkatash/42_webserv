@@ -41,6 +41,7 @@ $ ./webserv [optional config.conf]
 
 If no config file is specified, a default one is provided in the config directory.
 
-
+RESOURCES:
+-----------
 [1] https://datatracker.ietf.org/doc/html/rfc2616
 [2] https://habr.com/en/articles/600123/
