@@ -11,8 +11,8 @@
 
 
 Implementation of a server in C++
-The focus of this project is to implement an HTTP/1.1 compliant according to the RFC[1]
-The server is capable of handling multiple connections through kernel event notification mechanism 
+The focus of this project is to implement an HTTP/1.1 compliant server according to the RFC[1].
+The server is capable of handling multiple connections through kernel event notification mechanism.
 
 Supported methods:
 - GET
@@ -27,7 +27,7 @@ Supported CGI scripts:
 To compile server run: 
 $ cd 42_webserv && make
 
-If you use Linux, this will not work because we are using kqueue();
+If you use Linux, this will not work because we are using kqueue()[2];
 
 To run server:
 Run the executable and press enter or: 
@@ -36,4 +36,5 @@ $ ./webserv [optional config.conf]
 If no config file is specified, a default one is provided in the config directory.
 
 
-[1] https://datatracker.ietf.org/doc/html/rfc2616.
+[1] https://datatracker.ietf.org/doc/html/rfc2616
+[2] https://habr.com/en/articles/600123/
