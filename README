@@ -24,14 +24,18 @@ Supported CGI scripts:
 - perl
 - php
 
-To compile server run: 
+To compile server run:
+```
 $ cd 42_webserv && make
+```
 
 If you use Linux, this will not work because we are using kqueue()[2];
 
 To run server:
 Run the executable and press enter or: 
+```
 $ ./webserv [optional config.conf]
+```
 
 If no config file is specified, a default one is provided in the config directory.
 
