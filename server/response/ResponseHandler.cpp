@@ -234,7 +234,7 @@ void ResponseHandler::normalResponse(Methods method)
 	std::string uriPath = uri_.substr(0, uri_.find('?'));
 	if (method == GET)
 		return setResponseBody(uriPath);
-	unlink(uri_.c_str());
+	std::remove(uri_.c_str());
 	setCode(NOCONTENT);
 }
 
