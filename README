@@ -10,9 +10,8 @@
 
 INTRO:
 -----------
-Implementation of a server in C++
-The focus of this project is to implement an HTTP/1.1 compliant server according to the RFC[1].
-The server is capable of handling multiple connections through kernel event notification mechanism.
+The focus of this project is to implement an HTTP/1.1 compliant server according to the RFC[1] using C++.
+It has to be capable of handling multiple connections through kernel event notification mechanism.
 
 Supported methods:
 - GET
